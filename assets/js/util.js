@@ -67,3 +67,35 @@ export function scatter(i) {
 }
 
 export const params = new URLSearchParams(location.search);
+
+/**
+ * Abre un pósit grande desde abajo (misma estética que "¿Tienes dudas?").
+ * Devuelve { el, close }. Se cierra con la ×, el fondo o Escape.
+ */
+export function openSheet(html, { className = '', label = '', onClose } = {}) {
+  document.querySelectorAll('.ask-sheet').forEach((s) => s.remove());
+  const el = document.createElement('div');
+  el.className = `ask-sheet ${className}`;
+  el.innerHTML = `
+    <div class="ask-sheet__backdrop" data-close></div>
+    <div class="ask-sheet__note" role="dialog" aria-modal="true" aria-label="${esc(label)}" tabindex="-1">
+      <span class="pin pin--azul"></span>
+      <button class="ask-sheet__close icon-btn" data-close aria-label="Cerrar">${icon('x')}</button>
+      ${html}
+    </div>`;
+  document.body.append(el);
+  const prevFocus = document.activeElement;
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  function close() {
+    document.removeEventListener('keydown', onKey);
+    el.classList.add('is-closing');
+    setTimeout(() => { el.remove(); prevFocus?.focus?.({ preventScroll: true }); }, 250);
+    onClose?.();
+  }
+  el.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) close(); });
+  document.addEventListener('keydown', onKey);
+  requestAnimationFrame(() => el.classList.add('is-open'));
+  refreshIcons();
+  setTimeout(() => el.querySelector('.ask-sheet__note').focus({ preventScroll: true }), 50);
+  return { el, close };
+}

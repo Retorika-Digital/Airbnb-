@@ -542,3 +542,25 @@ button.ask-fab { border: 0; text-align: left; font: inherit; cursor: pointer; }
   background: var(--ink); transform: rotate(45deg); border-radius: 2px;
 }
 .first-hint.is-gone { opacity: 0; }
+
+/* Ficha de sitio ---------------------------------------------------------- */
+.place { cursor: pointer; transition: transform .2s var(--ease-out), box-shadow .2s; }
+.place:hover { box-shadow: var(--shadow-card); transform: translateY(-1px); }
+.place:focus-visible { outline: 3px solid var(--azul); outline-offset: 2px; }
+.place-detail .ask-sheet__note { background: linear-gradient(180deg, rgba(255,255,255,.5), transparent 40%), var(--paper); }
+.place-detail__photo { max-width: 300px; margin: 6px auto 0; animation: none; }
+.place-detail__photo figcaption { font-size: 1.7rem; }
+.host-says {
+  position: relative; margin: 16px 6px 10px; padding: 18px 16px 12px;
+  background: var(--note-amarillo); box-shadow: var(--shadow-note); transform: rotate(1.2deg);
+  font-family: var(--font-hand); font-size: 1.45rem; line-height: 1.15;
+}
+.host-says .pin { top: -9px; left: 18px; }
+.host-says cite { display: block; text-align: right; font-style: normal; font-size: 1.2rem; color: var(--fucsia); margin-top: 4px; }
+.tag svg { width: 12px; height: 12px; vertical-align: -1px; }
+.ask-sheet__note:focus { outline: none; }
+.trip-grid [data-trip-item] { touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab; }
+.trip-grid .is-dragging { z-index: 50; cursor: grabbing; box-shadow: var(--shadow-lift); transition: none; animation: none; }
+.trip-grid .is-drop-target { outline: 3px dashed #fff; outline-offset: 4px; }
+.muted.small svg { width: 14px; height: 14px; vertical-align: -2px; }
+.trip-grid [data-trip-item] img, .trip-grid [data-trip-item] .ph { -webkit-user-drag: none; pointer-events: none; }

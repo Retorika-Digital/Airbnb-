@@ -1,7 +1,7 @@
 // Secciones de la guía. Cada una define cómo se ve su nota en el tablón
 // (color, chincheta, pista) y cómo se despliega al "levantarla".
 import { t, loc, getLang } from './i18n.js';
-import { esc, icon, photo, toast, copyText, qrSvg, refreshIcons } from './util.js';
+import { esc, icon, photo, toast, copyText, qrSvg, refreshIcons, openSheet } from './util.js';
 import { findNearby } from './places.js';
 import { CATEGORIES } from './places-config.js';
 import { uberLink, directionsLink, telLink, whatsappLink } from './mobility.js';
@@ -84,7 +84,8 @@ function placeCard(g, p, i, { kind, showPhoto = true } = {}) {
     ? photo(p.photo, p.name, 'place__img', kind === 'do' ? '🏛️' : '🍽️')
     : `<span class="place__icon" style="background:var(--${cat.color === 'amarillo' ? 'azul' : cat.color === 'naranja' ? 'fucsia' : cat.color === 'lila' ? 'azul-oscuro' : cat.color || 'azul'})">${icon(cat.icon || 'map-pin')}</span>`;
   const tripPlace = { id: p.id, name: p.name, lat: p.lat, lng: p.lng, photo: p.photo || '', category: loc(p.category) || loc(cat.label) || '', kind: kind || p.cat };
-  return `<article class="place" style="--i:${i}">
+  const full = { ...p, kind: kind || p.cat, catLabel: loc(p.category) || loc(cat.label) || '' };
+  return `<article class="place" style="--i:${i}" tabindex="0" role="button" aria-label="${esc(p.name)}" data-place='${esc(JSON.stringify(full))}'>
     ${visual}
     <div>
       <div class="place__name">${esc(p.name)}</div>
@@ -119,8 +120,11 @@ export function bindCommon(root, g, { onTripChange } = {}) {
     if (heart) {
       const place = JSON.parse(heart.dataset.heart);
       const saved = toggleTrip(g.id, place);
-      heart.classList.toggle('is-on', saved);
-      heart.setAttribute('aria-pressed', saved);
+      document.querySelectorAll('[data-heart]').forEach((h) => {
+        if (JSON.parse(h.dataset.heart).id !== place.id) return;
+        h.classList.toggle('is-on', saved);
+        h.setAttribute('aria-pressed', saved);
+      });
       heart.classList.remove('pop'); void heart.offsetWidth; heart.classList.add('pop');
       if (saved) { track(g.id, 'save'); flyHeart(heart); }
       toast(saved ? t('savedTrip') : t('removedTrip'), saved ? 'heart' : 'x');
@@ -128,7 +132,53 @@ export function bindCommon(root, g, { onTripChange } = {}) {
       return;
     }
     if (e.target.closest('[data-track="contact"]')) track(g.id, 'contact');
+    const card = e.target.closest('[data-place]');
+    if (card && !e.target.closest('a, button')) openPlace(g, JSON.parse(card.dataset.place));
   });
+  root.addEventListener('keydown', (e) => {
+    const card = e.target.closest?.('[data-place]');
+    if (card && e.target === card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openPlace(g, JSON.parse(card.dataset.place)); }
+  });
+}
+
+/** Ficha de un sitio: polaroid grande, nota del anfitrión, mini mapa y acciones. */
+export function openPlace(g, p) {
+  const tripPlace = { id: p.id, name: p.name, lat: p.lat, lng: p.lng, photo: p.photo || '', category: p.catLabel || '', kind: p.kind };
+  const d = withDistance(g, p);
+  const dist = d.distance != null ? `${d.minutes} ${t('min')} ${t('walking')} · ${d.distance < 1000 ? `${d.distance} m` : `${(d.distance / 1000).toFixed(1)} km`}` : '';
+  const sheet = openSheet(`
+    <figure class="polaroid place-detail__photo" style="--r:-2deg">
+      <span class="tape"></span>
+      ${photo(p.photo, p.name, '', p.kind === 'do' ? '🏛️' : p.kind === 'eat' ? '🍽️' : '📍')}
+      <figcaption>${esc(p.name)}</figcaption>
+    </figure>
+    <div class="place__tags" style="justify-content:center;margin:12px 0 4px">
+      ${p.catLabel ? `<span class="tag">${esc(p.catLabel)}</span>` : ''}
+      ${dist ? `<span class="tag">${icon('footprints')} ${dist}</span>` : ''}
+      ${p.rating ? `<span class="tag tag--star">★ ${Number(p.rating).toFixed(1)}${p.reviews ? ` · ${p.reviews}` : ''}</span>` : ''}
+      ${p.is24h ? `<span class="tag tag--green">${t('open24')}</span>` : ''}
+    </div>
+    ${p.desc ? `<blockquote class="host-says"><span class="pin pin--fucsia"></span>“${esc(loc(p.desc))}”<cite>— ${esc(g.host.name)}</cite></blockquote>` : ''}
+    ${p.address ? `<p class="muted small" style="text-align:center">${icon('map-pin')} ${esc(p.address)}</p>` : ''}
+    <div class="map-wrap"><span class="tape tape--amarillo"></span><div class="map" id="place-map" style="height:190px"></div></div>
+    <div class="actions actions--2">
+      <a class="btn btn--primary" href="${esc(directionsLink({ origin: home(g), destination: p, mode: 'walking' }))}" target="_blank" rel="noopener">${icon('navigation')}${t('howToGet')}</a>
+      <a class="btn btn--ghost" href="${esc(uberLink({ pickup: home(g), dropoff: { lat: p.lat, lng: p.lng, name: p.name } }))}" target="_blank" rel="noopener">${icon('car-front')}Uber</a>
+    </div>
+    <button class="btn btn--fucsia btn--block place-detail__save" data-heart='${esc(JSON.stringify(tripPlace))}' style="margin-top:10px">${icon('heart')}<span>${isInTrip(g.id, p.id) ? t('savedTrip') : t('saveTrip')}</span></button>
+  `, { className: 'place-detail', label: p.name });
+  bindCommon(sheet.el, g);
+  sheet.el.addEventListener('click', (e) => {
+    const b = e.target.closest('.place-detail__save');
+    if (b) setTimeout(() => { b.querySelector('span').textContent = isInTrip(g.id, p.id) ? t('savedTrip') : t('saveTrip'); }, 0);
+  });
+  setTimeout(() => {
+    const map = createMap(sheet.el.querySelector('#place-map'), p, { zoom: 15 });
+    homeMarker(map, home(g));
+    pinMarker(map, p, { color: 'fucsia' });
+    fitTo(map, [home(g), p], 30);
+    refreshIcons();
+  }, 350);
 }
 
 /** Un corazón sale volando hacia el botón de "Mi viaje"/tablón. */
@@ -350,6 +400,7 @@ R.trip = (g, ctx) => {
           </div>`).join('')}
       </div>` : `<div class="trip-empty">${esc(t('tripEmpty')).replace('\n', '<br>')}</div>`}
     </div>
+    ${items.length > 1 ? `<p class="muted small" style="text-align:center;margin:-6px 0 12px">${icon('hand')} ${t('dragHint')}</p>` : ''}
     <form class="trip-note-form" id="trip-note-form">
       <input name="text" maxlength="80" placeholder="${t('tripAddNote')}" autocomplete="off">
       <button class="btn btn--primary">${icon('pin')}${t('add')}</button>
@@ -360,7 +411,8 @@ R.trip = (g, ctx) => {
         origin: home(g), destination: items[items.length - 1], mode: 'walking', waypoints: items.slice(0, -1).slice(0, 8),
       }))}">${icon('route')}${t('tripRoute')}</a>
       <button class="btn btn--ghost" data-share>${icon('share-2')}${t('share')}</button>
-    </div>` : `<div class="actions actions--2"><a class="btn btn--fucsia" href="#/s/eat">${icon('utensils')}${t('sec.eat')}</a><a class="btn btn--ghost" href="#/s/do">${icon('camera')}${t('sec.do')}</a></div>`}`;
+    </div>
+    ${items.length > 2 ? `<button class="btn btn--ghost btn--block btn--sm" data-optimize style="margin-top:10px">${icon('wand-sparkles')}${t('optimize')}</button>` : ''}` : `<div class="actions actions--2"><a class="btn btn--fucsia" href="#/s/eat">${icon('utensils')}${t('sec.eat')}</a><a class="btn btn--ghost" href="#/s/do">${icon('camera')}${t('sec.do')}</a></div>`}`;
 };
 
 export function renderSection(id, g, ctx) {
@@ -522,6 +574,35 @@ function mountTrip(g, root, ctx) {
     if (navigator.share) { try { await navigator.share({ title: t('sec.trip'), text }); } catch { /* cancelado */ } } else if (await copyText(text)) toast(t('copied'));
   });
 
+  // Reordenar: mantener pulsada una polaroid y arrastrarla (ratón o dedo).
+  const grid0 = root.querySelector('#trip-grid');
+  if (grid0 && items.length > 1) enableDragSort(grid0, (orderIds) => {
+    const tr = getTrip(g.id);
+    const visible = new Set(orderIds);
+    const queue = orderIds.map((id) => tr.items.find((i) => i.id === id));
+    tr.items = tr.items.map((it) => (visible.has(it.id) ? queue.shift() : it));
+    saveTrip(g.id, tr);
+    ctx.rerender({});
+  });
+  root.querySelector('[data-optimize]')?.addEventListener('click', () => {
+    // Vecino más cercano desde casa: una ruta razonable sin servidor.
+    const tr = getTrip(g.id);
+    const left = [...items];
+    const route = [];
+    let cur = home(g);
+    while (left.length) {
+      left.sort((a, b) => distM(cur, a) - distM(cur, b));
+      cur = left.shift();
+      route.push(cur.id);
+    }
+    const visible = new Set(route);
+    const queue = route.map((id) => tr.items.find((i) => i.id === id));
+    tr.items = tr.items.map((it) => (visible.has(it.id) ? queue.shift() : it));
+    saveTrip(g.id, tr);
+    toast(t('optimized'), 'route');
+    ctx.rerender({});
+  });
+
   // Hilo rojo entre polaroids (en orden) — se dibuja tras el layout.
   const grid = root.querySelector('#trip-grid');
   const svg = grid?.querySelector('.trip-yarn');
@@ -552,4 +633,70 @@ function mountTrip(g, root, ctx) {
     fitTo(map, [home(g), ...items], 40);
     refreshIcons();
   }
+}
+
+function distM(a, b) {
+  return withDistance({ property: { lat: a.lat, lng: a.lng } }, { ...b, distance: undefined }).distance;
+}
+
+/** Arrastrar para reordenar con Pointer Events (funciona en móvil con pulsación larga). */
+function enableDragSort(grid, onDrop) {
+  let drag = null;
+  const cards = () => [...grid.querySelectorAll('[data-trip-item]')];
+  grid.addEventListener('pointerdown', (e) => {
+    const el = e.target.closest('[data-trip-item]');
+    if (!el || e.target.closest('button, select, a') || e.button > 0) return;
+    const start = { x: e.clientX, y: e.clientY };
+    const begin = () => {
+      drag = { el, start, id: el.dataset.tripItem };
+      el.classList.add('is-dragging');
+      el.setPointerCapture?.(e.pointerId);
+      navigator.vibrate?.(12);
+    };
+    const timer = setTimeout(begin, e.pointerType === 'mouse' ? 120 : 280);
+    const cancel = (ev) => {
+      if (!drag && (ev.type !== 'pointermove' || Math.hypot(ev.clientX - start.x, ev.clientY - start.y) > 8)) {
+        clearTimeout(timer);
+        el.removeEventListener('pointermove', cancel);
+      }
+    };
+    el.addEventListener('pointermove', cancel);
+    el.addEventListener('pointerup', () => clearTimeout(timer), { once: true });
+  });
+  grid.addEventListener('touchmove', (e) => { if (drag) e.preventDefault(); }, { passive: false });
+  grid.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const dx = e.clientX - drag.start.x;
+    const dy = e.clientY - drag.start.y;
+    drag.el.style.transform = `translate(${dx}px, ${dy}px) rotate(0deg) scale(1.07)`;
+    const over = nearest(e);
+    cards().forEach((c) => c.classList.toggle('is-drop-target', c === over && c !== drag.el));
+  });
+  const nearest = (e) => {
+    let best = null; let bd = Infinity;
+    cards().forEach((c) => {
+      if (c === drag.el) return;
+      const r = c.getBoundingClientRect();
+      const d = Math.hypot(r.left + r.width / 2 - e.clientX, r.top + r.height / 2 - e.clientY);
+      if (d < bd) { bd = d; best = c; }
+    });
+    return bd < 140 ? best : null;
+  };
+  const end = (e) => {
+    if (!drag) return;
+    const over = nearest(e);
+    const ids = cards().map((c) => c.dataset.tripItem);
+    const from = ids.indexOf(drag.id);
+    drag.el.classList.remove('is-dragging');
+    drag.el.style.transform = '';
+    cards().forEach((c) => c.classList.remove('is-drop-target'));
+    if (over) {
+      ids.splice(from, 1);
+      ids.splice(ids.indexOf(over.dataset.tripItem) + (cards().indexOf(over) > from ? 1 : 0), 0, drag.id);
+      drag = null;
+      onDrop(ids);
+    } else drag = null;
+  };
+  grid.addEventListener('pointerup', end);
+  grid.addEventListener('pointercancel', end);
 }
