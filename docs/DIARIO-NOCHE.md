@@ -22,3 +22,12 @@ Qué se ha ido añadiendo mientras dormías, tanda por tanda.
 ## Tanda 3: Mi viaje se puede reordenar
 - **Mantén pulsada una polaroid y arrástrala** para cambiar el orden del viaje. Funciona con el dedo y con el ratón, y vibra al cogerla. El hilo rojo y la ruta del mapa siguen el nuevo orden.
 - **Botón "Ordenar la ruta por cercanía"**: calcula un orden razonable empezando desde casa, para andar menos.
+
+## Tanda 4: panel con fotos propias y recomendaciones más cuidadas
+- **Subir fotos desde el móvil o el ordenador.** Se comprimen solas, se elige cuál es la portada (la polaroid del tablón) y se pueden quitar.
+- **Foto del anfitrión**: aparece en Contacto en lugar de la inicial.
+- **Recomendaciones**: se ordenan con flechas, se marcan como "favorito del anfitrión" (♥) y cada una lleva **tu nota para el huésped**, que luego sale en el pósit de la ficha del sitio.
+- **Arreglos**:
+  - Al reordenar, las notas se quedaban en la fila equivocada. Lo encontró la prueba automática y está corregido.
+  - Al guardar, el editor ya no cierra las secciones que tenías abiertas.
+  - Las recomendaciones automáticas ya no traen descripciones en inglés tipo "spanish".

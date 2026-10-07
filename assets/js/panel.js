@@ -401,7 +401,7 @@ views.nuevo = async () => {
     const guide = await newGuideFrom({
       ...draft,
       wifiSsid: val('#f-ssid'), wifiPass: val('#f-pass'), building: val('#f-building'), keys: val('#f-keys'), phone: val('#f-phone'),
-      eat: picked.eat.map((p) => ({ id: p.id, name: p.name, category: p.category, desc: p.cuisine || '', lat: p.lat, lng: p.lng, photo: '', rating: p.rating, reviews: p.reviews })),
+      eat: picked.eat.map((p) => ({ id: p.id, name: p.name, category: p.category, desc: '', lat: p.lat, lng: p.lng, photo: '', rating: p.rating, reviews: p.reviews })),
       do: picked.do.map((p) => ({ id: p.id, name: p.name, category: 'Imprescindibles', desc: '', lat: p.lat, lng: p.lng, photo: '' })),
       stations: picked.stations.map((p) => ({ name: p.name, lines: '', minutes: p.minutes })),
       hospital: picked.hospital[0] ? { name: picked.hospital[0].name, desc: picked.hospital[0].address || 'Urgencias', lat: picked.hospital[0].lat, lng: picked.hospital[0].lng } : null,
@@ -425,9 +425,10 @@ const EDITOR_GROUPS = [
   { icon: 'house', title: 'Alojamiento', open: true, fields: [
     F.text('property.name', 'Nombre'), F.text('property.tagline', 'Frase de bienvenida'),
     F.text('property.address', 'Dirección'), F.text('property.city', 'Ciudad'),
-    F.lines('property.photos', 'Fotos (una URL por línea)', { hint: 'Importadas de Airbnb; la primera es la portada.' }),
+    { type: 'photos', path: 'property.photos', label: 'Fotos', hint: 'La primera es la portada (la polaroid del tablón). Puedes subir las tuyas.' },
   ] },
   { icon: 'user', title: 'Anfitrión y contacto', fields: [
+    { type: 'photo1', path: 'host.photo', label: 'Tu foto (opcional)' },
     F.text('host.name', 'Nombre'), F.text('host.whatsapp', 'WhatsApp (solo números con prefijo)'),
     F.text('host.phone', 'Teléfono'), F.text('host.email', 'Email'), F.text('host.responseHours', 'Horario de respuesta'),
   ] },
@@ -457,14 +458,35 @@ function fieldHtml(f, g) {
   if (f.type === 'area') input = `<textarea id="${id}" data-path="${f.path}" data-type="text">${esc(v ?? '')}</textarea>`;
   if (f.type === 'lines') input = `<textarea id="${id}" data-path="${f.path}" data-type="lines">${esc((v || []).join('\n'))}</textarea>`;
   if (f.type === 'pairs') input = `<textarea id="${id}" data-path="${f.path}" data-type="pairs" data-keys="${f.keys.join(',')}">${esc((v || []).map((o) => `${o[f.keys[0]]}: ${o[f.keys[1]]}`).join('\n'))}</textarea>`;
+  if (f.type === 'photos') {
+    input = `<div class="photo-grid">${(v || []).map((src, i) => `
+      <figure class="photo-grid__item${i === 0 ? ' is-cover' : ''}">${photo(src, '', '', '🖼️')}
+        ${i === 0 ? '<span class="photo-grid__badge">Portada</span>' : `<button type="button" class="icon-btn" data-photo-cover="${i}" title="Usar de portada">${icon('star')}</button>`}
+        <button type="button" class="icon-btn photo-grid__rm" data-photo-rm="${i}" title="Quitar">${icon('x')}</button>
+      </figure>`).join('')}
+      <label class="photo-grid__add">${icon('image-plus')}<span>Subir fotos</span><input type="file" accept="image/*" multiple data-photo-upload hidden></label>
+    </div>`;
+  }
+  if (f.type === 'photo1') {
+    input = `<div class="photo-one">${v ? `<img src="${esc(v)}" alt="">` : `<span class="host__avatar" style="width:64px;height:64px;font-size:2rem;border-width:3px">${esc((g.host?.name || '?')[0])}</span>`}
+      <label class="btn btn--ghost btn--sm">${icon('camera')}${v ? 'Cambiar' : 'Subir foto'}<input type="file" accept="image/*" data-host-photo hidden></label>
+      ${v ? `<button type="button" class="btn btn--ghost btn--sm" data-host-photo-rm>${icon('trash-2')}</button>` : ''}</div>`;
+  }
   return `<div class="field${empty ? ' is-missing' : ''}"><label for="${id}">${f.label}</label>${input}${f.hint ? `<small>${f.hint}</small>` : ''}</div>`;
 }
 
 function recoEditor(g, kind) {
   const items = g.recommendations?.[kind] || [];
   return `<div class="reco-edit" data-reco="${kind}">
-    ${items.map((p, i) => `<div class="reco-edit__item"><span><b>${esc(p.name)}</b><small>${esc(p.category || '')}${p.rating ? ` · ★ ${p.rating}` : ''}</small></span>
-      <button class="icon-btn" data-reco-remove="${kind}:${i}" aria-label="Quitar">${icon('trash-2')}</button></div>`).join('') || '<p class="small muted">Aún no hay recomendaciones.</p>'}
+    ${items.map((p, i) => `<div class="reco-edit__item">
+      <span><b>${esc(p.name)}</b><small>${esc(p.category || '')}${p.rating ? ` · ★ ${p.rating}` : ''}</small>
+        <input class="reco-edit__note" data-reco-desc="${kind}:${i}" value="${esc(p.desc || '')}" placeholder="Tu nota para el huésped (sale en un pósit)…"></span>
+      <span class="reco-edit__btns">
+        <button class="icon-btn" data-reco-move="${kind}:${i}:-1" aria-label="Subir" ${i === 0 ? 'disabled' : ''}>${icon('arrow-up')}</button>
+        <button class="icon-btn" data-reco-move="${kind}:${i}:1" aria-label="Bajar" ${i === items.length - 1 ? 'disabled' : ''}>${icon('arrow-down')}</button>
+        <button class="icon-btn" data-reco-pick="${kind}:${i}" aria-label="Favorito" title="Favorito del anfitrión" style="${p.hostPick ? 'color:var(--fucsia);background:#ffe4ec' : ''}">${icon('heart')}</button>
+        <button class="icon-btn" data-reco-remove="${kind}:${i}" aria-label="Quitar">${icon('trash-2')}</button>
+      </span></div>`).join('') || '<p class="small muted">Aún no hay recomendaciones.</p>'}
   </div>
   <div class="row2">
     <button class="btn btn--ghost btn--sm" data-reco-auto="${kind}">${icon('sparkles')}Sugerir automáticamente</button>
@@ -478,6 +500,7 @@ views.editar = async (id) => {
   const previewSrc = () => `${guideUrl(g.id, { embed: '1', g: 'Laura' })}&t=${Date.now()}`;
 
   const render = () => {
+    const open = [...main.querySelectorAll('#editor-form > details')].map((d) => d.open);
     main.innerHTML = `
       <div class="main__head">
         <div><h1>${esc(g.property.name)}</h1><p>Edita tu guía · los cambios se ven en el móvil de la derecha al guardar.</p></div>
@@ -510,6 +533,7 @@ views.editar = async (id) => {
           <div class="phone"><iframe id="preview" title="Vista previa de la guía" src="${previewSrc()}"></iframe></div>
         </aside>
       </div>`;
+    if (open.length) main.querySelectorAll('#editor-form > details').forEach((d, i) => { d.open = open[i]; });
     refreshIcons();
   };
 
@@ -524,15 +548,36 @@ views.editar = async (id) => {
         setPath(g, path, lines.map((l) => { const i = l.indexOf(':'); return i < 0 ? { [k1]: l, [k2]: '' } : { [k1]: l.slice(0, i).trim(), [k2]: l.slice(i + 1).trim() }; }));
       }
     });
+    main.querySelectorAll('[data-reco-desc]').forEach((el) => {
+      const [kind, i] = el.dataset.recoDesc.split(':');
+      const it = g.recommendations[kind]?.[i];
+      if (it) it.desc = el.value.trim();
+    });
     g.host.whatsapp = String(g.host.whatsapp || '').replace(/\D/g, '');
   };
 
-  const save = () => {
-    readForm();
-    saveGuide(g);
+  // read=false cuando ya se leyó el formulario antes de mover/quitar filas
+  // (si no, las notas se reasignarían por posición a la fila equivocada).
+  const save = (read = true) => {
+    if (read) readForm();
+    if (!saveGuide(g)) { toast('No cabe: en el prototipo las fotos se guardan en el navegador. Quita alguna.', 'triangle-alert'); return false; }
     main.querySelector('#preview').src = previewSrc();
     toast('Guardado ✓ tu tablón está al día');
+    return true;
   };
+  main.addEventListener('change', async (e) => {
+    const up = e.target.closest('[data-photo-upload]');
+    const hp = e.target.closest('[data-host-photo]');
+    if (!up && !hp) return;
+    readForm();
+    const files = [...e.target.files].slice(0, 8);
+    toast('Preparando fotos…', 'image');
+    if (up) {
+      for (const f of files) g.property.photos = [...(g.property.photos || []), await compressImage(f, 1280)];
+    } else if (files[0]) g.host.photo = await compressImage(files[0], 360);
+    save(false);
+    render();
+  });
 
   render();
   main.addEventListener('submit', (e) => { if (e.target.id === 'editor-form') { e.preventDefault(); save(); } });
@@ -542,6 +587,25 @@ views.editar = async (id) => {
     const add = e.target.closest('[data-reco-add]');
     if (e.target.closest('#reset')) { deleteLocalGuide(g.id); g = structuredClone(await loadGuide(g.id)); render(); toast('Demo restaurada'); return; }
     if (e.target.closest('#delete')) { if (confirm('¿Borrar esta guía?')) { deleteLocalGuide(g.id); location.hash = '#/'; } return; }
+    const ph = e.target.closest('[data-photo-rm], [data-photo-cover], [data-host-photo-rm], [data-reco-move], [data-reco-pick]');
+    if (ph) {
+      e.preventDefault();
+      readForm();
+      const d = ph.dataset;
+      if (d.photoRm != null) g.property.photos.splice(Number(d.photoRm), 1);
+      if (d.photoCover != null) g.property.photos.unshift(...g.property.photos.splice(Number(d.photoCover), 1));
+      if (d.hostPhotoRm != null) g.host.photo = '';
+      if (d.recoMove) {
+        const [kind, i, dir] = d.recoMove.split(':');
+        const arr = g.recommendations[kind];
+        const j = Number(i) + Number(dir);
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      if (d.recoPick) { const [kind, i] = d.recoPick.split(':'); const it = g.recommendations[kind][i]; it.hostPick = !it.hostPick; }
+      save(false);
+      render();
+      return;
+    }
     if (!rm && !auto && !add) return;
     e.preventDefault();
     readForm();
@@ -569,12 +633,12 @@ views.editar = async (id) => {
         const have = new Set((g.recommendations[kind] || []).map((p) => p.name));
         const fresh = places.filter((p) => !have.has(p.name)).slice(0, 4);
         g.recommendations[kind] = [...(g.recommendations[kind] || []), ...fresh.map((p) => ({
-          id: p.id, name: p.name, category: CATEGORIES[cat].label.es, desc: p.cuisine || '', lat: p.lat, lng: p.lng, photo: '', rating: p.rating, reviews: p.reviews,
+          id: p.id, name: p.name, category: CATEGORIES[cat].label.es, desc: '', lat: p.lat, lng: p.lng, photo: '', rating: p.rating, reviews: p.reviews,
         }))];
         toast(`${fresh.length} sitios añadidos`, 'sparkles');
       } catch { toast('No se pudo buscar ahora', 'x'); }
     }
-    save();
+    save(false);
     render();
   });
 };
@@ -741,3 +805,21 @@ async function route() {
 
 addEventListener('hashchange', route);
 route();
+
+/** Reduce una imagen a `max` px y la devuelve como JPEG en data URL. */
+function compressImage(file, max) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * k);
+      c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(img.src);
+      resolve(c.toDataURL('image/jpeg', 0.78));
+    };
+    img.onerror = reject;
+    img.src = URL.createObjectURL(file);
+  });
+}

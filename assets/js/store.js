@@ -42,11 +42,13 @@ export async function loadGuide(id) {
   return res.json();
 }
 
+/** Devuelve false si no cabe (p. ej. demasiadas fotos para localStorage). */
 export function saveGuide(guide) {
-  writeJSON(KEY_GUIDE(guide.id), { ...guide, updatedAt: new Date().toISOString() });
+  if (!writeJSON(KEY_GUIDE(guide.id), { ...guide, updatedAt: new Date().toISOString() })) return false;
   const ids = new Set(readJSON(KEY_GUIDES, []));
   ids.add(guide.id);
   writeJSON(KEY_GUIDES, [...ids]);
+  return true;
 }
 
 export function deleteLocalGuide(id) {
