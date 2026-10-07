@@ -99,9 +99,23 @@ export function track(guideId, event, detail) {
   if (event === 'section') stats.sections[detail] = (stats.sections[detail] || 0) + 1;
   if (event === 'save') stats.saves += 1;
   if (event === 'contact') stats.contacts += 1;
+  if (event === 'ask') {
+    stats.questions = [{ q: detail.q, answered: detail.answered, at: Date.now() }, ...(stats.questions || [])].slice(0, 50);
+  }
   writeJSON(KEY_STATS(guideId), stats);
 }
 
 export function getStats(guideId) {
   return readJSON(KEY_STATS(guideId), { opens: 0, sections: {}, saves: 0, contacts: 0, lastOpen: null, days: {} });
+}
+
+/** Datos de ejemplo para enseñar el panel en una demo. */
+export function seedDemoStats(guideId) {
+  const sections = { wifi: 41, checkin: 33, nearby: 27, eat: 24, move: 19, house: 15, do: 14, trip: 9, contact: 6, emergency: 2 };
+  const now = Date.now();
+  const questions = [
+    ['¿Hay secador de pelo?', true], ['¿Dónde aparco el coche?', true], ['¿Puedo hacer el check-in a las 12?', true],
+    ['¿Hay ventilador en el dormitorio?', false], ['¿Contraseña del WiFi?', true], ['¿Se puede subir con bicicleta?', false],
+  ].map(([q, answered], i) => ({ q, answered, at: now - i * 36e5 * 7 }));
+  writeJSON(KEY_STATS(guideId), { opens: 328, sections, saves: 57, contacts: 18, lastOpen: new Date().toISOString(), days: {}, questions });
 }

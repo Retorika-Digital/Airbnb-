@@ -134,13 +134,13 @@ a { color: var(--azul); }
 /* Toast ----------------------------------------------------------------- */
 .toast {
   position: fixed; left: 50%; bottom: 24px; z-index: 1000;
-  transform: translate(-50%, 140%);
+  transform: translate(-50%, calc(100% + 40px)); visibility: hidden;
   background: var(--ink); color: #fff; padding: .75em 1.1em; border-radius: 12px;
   font-weight: 700; font-size: .9rem; box-shadow: var(--shadow-card);
   display: flex; align-items: center; gap: .5em;
-  transition: transform .35s var(--ease-spring);
+  transition: transform .35s var(--ease-spring), visibility .35s;
 }
-.toast.is-visible { transform: translate(-50%, 0); }
+.toast.is-visible { transform: translate(-50%, 0); visibility: visible; }
 .toast svg { width: 18px; height: 18px; color: var(--verde); }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,7 +1,7 @@
 // Panel del propietario: conectar anuncio de Airbnb → autocompletar →
 // recomendaciones automáticas → editar → enviar al huésped (enlace + QR).
 import { esc, icon, refreshIcons, toast, copyText, qrSvg, photo } from './util.js';
-import { loadGuide, saveGuide, listLocalGuideIds, deleteLocalGuide, getStats, slugify } from './store.js';
+import { loadGuide, saveGuide, listLocalGuideIds, deleteLocalGuide, getStats, slugify, seedDemoStats } from './store.js';
 import { findNearby, geocode } from './places.js';
 import { CATEGORIES } from './places-config.js';
 import { createMap } from './map.js';
@@ -707,10 +707,20 @@ views.analiticas = async () => {
           <div class="bars">${entries.length ? entries.map(([k, v]) => `
             <div class="bar"><span>${esc(labelOf(k))}</span><span class="bar__track"><span class="bar__fill" style="display:block;width:${(v / max) * 100}%"></span></span><span>${v}</span></div>`).join('')
             : '<p class="small muted">Aún sin datos: abre la guía y navega por las secciones para verlas aquí.</p>'}</div>
+          ${(s.questions || []).length ? `
+          <h3 style="margin:20px 0 8px;font-size:1rem;font-weight:900">${icon('message-circle-question')} Lo que preguntan tus huéspedes</h3>
+          <p class="small muted" style="margin:0 0 10px">Las que la guía no supo responder son ideas para completarla (y recibir menos mensajes).</p>
+          <div class="reco-edit">${s.questions.slice(0, 12).map((q) => `
+            <div class="reco-edit__item" style="${q.answered ? '' : 'background:#fff8e6;border-color:#ffd98a'}">
+              <span><b>"${esc(q.q)}"</b><small>${new Date(q.at).toLocaleString('es-ES')}</small></span>
+              ${q.answered ? '<span class="badge">Respondida</span>' : `<a class="btn btn--ghost btn--sm" href="#/editar/${g.id}">${icon('plus')}Añadir a la guía</a>`}
+            </div>`).join('')}</div>` : ''}
         </section>`;
       }).join('')}
-      <div class="hint-box">${icon('info')}En este prototipo las métricas se guardan en el navegador. En producción se envían a la base de datos (ver docs/CONCEPTO.md).</div>
+      <div class="hint-box">${icon('info')}<div>En este prototipo las métricas se guardan en el navegador. En producción se envían a la base de datos (ver docs/CONCEPTO.md).
+        <br><button class="btn btn--ghost btn--sm" id="seed" style="margin-top:8px">${icon('sparkles')}Cargar datos de ejemplo para una demo</button></div></div>
     </div>`;
+  main.querySelector('#seed').addEventListener('click', () => { seedDemoStats(DEMO_ID); route(); });
 };
 
 // Router ---------------------------------------------------------------------------

@@ -5,7 +5,7 @@ const DICT = {
   es: {
     welcomeHi: '¡Hola, {name}!',
     welcomeAll: '¡Bienvenidos a {city}!',
-    welcomeSub: 'Te damos la bienvenida a {city}. Tu aventura empieza aquí',
+    welcomeSub: 'Tu aventura en {city} empieza aquí',
     stayNights: '{n} noches en tu tablón',
     overviewHint: 'Toca una nota para ir allí',
     youAreHere: 'Estás aquí',
@@ -101,11 +101,26 @@ const DICT = {
     allDays: 'Todo',
     share: 'Compartir mi viaje',
     weather: 'Hoy en {city}',
+    askPlaceholder: 'Pregunta lo que quieras…',
+    askIntro: 'Busco la respuesta en tu guía al instante. Si no la encuentro, se la paso a {name}.',
+    askSuggest: ['¿Contraseña del WiFi?', '¿A qué hora es el check-out?', '¿Dónde tiro la basura?', '¿Puedo dejar las maletas?'],
+    askNoAnswer: 'No lo encuentro en la guía… ¡pero {name} seguro que lo sabe!',
+    askWrite: 'Preguntar a {name} por WhatsApp',
+    askOpen: 'Ver sección',
+    askStill: '¿No era esto? Escríbele a {name}',
+    close: 'Cerrar',
+    'cd.before': 'Faltan {n} días ✈️',
+    'cd.tomorrow': '¡Mañana llegas! ✈️',
+    'cd.today': '¡Hoy llegas! Check-in desde las {t}',
+    'cd.during': 'Noche {n} de {total}',
+    'cd.out': 'Hoy es tu check-out · antes de las {t}',
+    'cd.after': '¡Gracias por venir! ♡',
+    firstHint: 'Pellizca o toca aquí para ver todo tu tablón',
   },
   en: {
     welcomeHi: 'Hi, {name}!',
     welcomeAll: 'Welcome to {city}!',
-    welcomeSub: 'Welcome to {city}. Your adventure starts here',
+    welcomeSub: 'Your {city} adventure starts here',
     stayNights: '{n} nights on your board',
     overviewHint: 'Tap a note to jump there',
     youAreHere: 'You are here',
@@ -201,6 +216,21 @@ const DICT = {
     allDays: 'All',
     share: 'Share my trip',
     weather: 'Today in {city}',
+    askPlaceholder: 'Ask anything…',
+    askIntro: 'I search your guide instantly. If I can\'t find it, I pass it to {name}.',
+    askSuggest: ['WiFi password?', 'Check-out time?', 'Where does the trash go?', 'Can I leave my luggage?'],
+    askNoAnswer: 'Not in the guide… but {name} surely knows!',
+    askWrite: 'Ask {name} on WhatsApp',
+    askOpen: 'Open section',
+    askStill: 'Not what you needed? Message {name}',
+    close: 'Close',
+    'cd.before': '{n} days to go ✈️',
+    'cd.tomorrow': 'You arrive tomorrow! ✈️',
+    'cd.today': 'You arrive today! Check-in from {t}',
+    'cd.during': 'Night {n} of {total}',
+    'cd.out': 'Check-out today · before {t}',
+    'cd.after': 'Thanks for staying! ♡',
+    firstHint: 'Pinch or tap here to see your whole board',
   },
 };
 
@@ -222,6 +252,7 @@ export function setLang(next) {
 
 export function t(key, vars = {}) {
   const str = DICT[lang][key] ?? DICT.es[key] ?? key;
+  if (Array.isArray(str)) return str;
   return str.replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? ''));
 }
 

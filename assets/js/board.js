@@ -15,6 +15,20 @@ function fmtDate(iso) {
   return d.toLocaleDateString(getLang() === 'es' ? 'es-ES' : 'en-GB', { day: 'numeric', month: 'short' });
 }
 
+/** Texto de cuenta atrás según la fecha de hoy y la estancia. */
+export function countdown(stay, g, now = new Date()) {
+  const day = (iso) => new Date(`${iso}T00:00:00`);
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const toIn = Math.round((day(stay.in) - today) / 864e5);
+  const toOut = Math.round((day(stay.out) - today) / 864e5);
+  if (toIn > 1) return t('cd.before', { n: toIn });
+  if (toIn === 1) return t('cd.tomorrow');
+  if (toIn === 0) return t('cd.today', { t: g.checkin?.from || '' });
+  if (toOut > 0) return t('cd.during', { n: -toIn + 1, total: stay.nights });
+  if (toOut === 0) return t('cd.out', { t: g.checkin?.checkoutBy || '' });
+  return t('cd.after');
+}
+
 export function renderBoard(g, { guest, stay }) {
   const city = g.property.city || '';
   let i = 0;
@@ -37,6 +51,7 @@ export function renderBoard(g, { guest, stay }) {
         <div class="ticket__label">${esc(g.property.name)}</div>
         <div class="ticket__big">${fmtDate(stay.in)} → ${fmtDate(stay.out)}</div>
         <div class="ticket__row">${icon('moon')} ${t('stayNights', { n: stay.nights })}</div>
+        ${countdown(stay, g) ? `<span class="ticket__count">${countdown(stay, g)}</span>` : ''}
       </div>`
     : `<div class="ticket" style="${scatter(8)}">
         <div class="ticket__label">${t('checkin')} · ${t('checkout')}</div>
@@ -202,6 +217,24 @@ export function mountBoard(root, g, { onOpen, lastSection }) {
     if (ratio < 0.8) { enterOverview(); startDist = 0; }
     else if (ratio > 1.25) { exitOverview(); startDist = 0; }
   }, { passive: true });
+
+  // Pista de primera visita: cómo alejar el tablón.
+  let hinted = true;
+  try { hinted = !!localStorage.getItem('rh:hinted'); } catch { /* ignore */ }
+  if (!hinted) {
+    const hint = document.createElement('div');
+    hint.className = 'first-hint';
+    hint.textContent = t('firstHint');
+    document.body.append(hint);
+    const dismiss = () => {
+      hint.classList.add('is-gone');
+      setTimeout(() => hint.remove(), 300);
+      try { localStorage.setItem('rh:hinted', '1'); } catch { /* ignore */ }
+      removeEventListener('pointerdown', dismiss);
+    };
+    addEventListener('pointerdown', dismiss);
+    setTimeout(dismiss, 9000);
+  }
 
   // Tiempo en la postal
   getWeather(g.property.lat, g.property.lng).then((wx) => {

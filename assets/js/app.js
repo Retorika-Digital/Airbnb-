@@ -11,6 +11,7 @@ import { loadGuide, track } from './store.js';
 import { SECTIONS, sectionById, renderSection, mountSection } from './sections.js';
 import { renderBoard, mountBoard } from './board.js';
 import { whatsappLink } from './mobility.js';
+import { buildIndex, ask } from './faq.js';
 
 const app = document.getElementById('app');
 const topbar = document.querySelector('.topbar');
@@ -41,17 +42,80 @@ function readChecklist() {
   try { return JSON.parse(localStorage.getItem(`rh:checklist:${guideId}`) || '[]'); } catch { return []; }
 }
 
-function askFab(g) {
-  return `<a class="ask-fab" data-track="contact" href="${whatsappLink(g.host.whatsapp, `Hola ${g.host.name}! `)}" target="_blank" rel="noopener">
-    <span class="ask-fab__icon">${icon('message-circle')}</span>
+function askFab() {
+  return `<button class="ask-fab" data-ask type="button">
+    <span class="ask-fab__icon">${icon('message-circle-question')}</span>
     <span><b>${t('askTitle')}</b><small>${t('askSub')}</small></span>
-  </a>`;
+  </button>`;
+}
+
+/** Hoja "¿Tienes dudas?": busca en la guía y, si no hay respuesta, pasa a WhatsApp. */
+function openAsk(prefill = '') {
+  const g = state.guide;
+  const index = buildIndex(g);
+  const host = esc(g.host.name);
+  document.querySelector('.ask-sheet')?.remove();
+  const el = document.createElement('div');
+  el.className = 'ask-sheet';
+  el.innerHTML = `
+    <div class="ask-sheet__backdrop" data-close></div>
+    <div class="ask-sheet__note" role="dialog" aria-modal="true" aria-labelledby="ask-title">
+      <span class="pin pin--azul"></span>
+      <button class="ask-sheet__close icon-btn" data-close aria-label="${t('close')}">${icon('x')}</button>
+      <h2 id="ask-title">${t('askTitle')}</h2>
+      <p class="muted small">${t('askIntro', { name: host })}</p>
+      <form class="ask-form"><input name="q" placeholder="${t('askPlaceholder')}" autocomplete="off" enterkeyhint="search" value="${esc(prefill)}">
+        <button class="btn btn--primary" aria-label="${t('askTitle')}">${icon('search')}</button></form>
+      <div class="chips ask-suggest">${t('askSuggest').map((q) => `<button class="chip" type="button" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>
+      <div class="ask-answers" aria-live="polite"></div>
+    </div>`;
+  document.body.append(el);
+  const input = el.querySelector('input');
+  const out = el.querySelector('.ask-answers');
+  let lastTracked = '';
+
+  const answer = (q, doTrack) => {
+    const hits = ask(index, q);
+    const wa = whatsappLink(g.host.whatsapp, `Hola ${g.host.name}, una pregunta: ${q}`);
+    if (doTrack && q.trim() && q !== lastTracked) { lastTracked = q; track(g.id, 'ask', { q: q.trim(), answered: hits.length > 0 }); }
+    if (!q.trim()) { out.innerHTML = ''; return; }
+    out.innerHTML = hits.length
+      ? hits.map((h, i) => `<article class="answer" style="--i:${i}">
+          <h3>${esc(h.title)}</h3><p>${esc(h.text)}</p>
+          <a href="#/s/${h.section}" data-close>${t('askOpen')} →</a></article>`).join('')
+        + `<a class="ask-still" href="${wa}" target="_blank" rel="noopener" data-track="contact">${t('askStill', { name: host })}</a>`
+      : `<div class="answer answer--none"><p>${t('askNoAnswer', { name: host })}</p>
+          <a class="btn btn--verde btn--block" href="${wa}" target="_blank" rel="noopener" data-track="contact">${icon('message-circle')}${t('askWrite', { name: host })}</a></div>`;
+    refreshIcons();
+  };
+
+  let timer;
+  input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => answer(input.value, false), 200); });
+  el.querySelector('form').addEventListener('submit', (e) => { e.preventDefault(); answer(input.value, true); input.blur(); });
+  el.addEventListener('click', (e) => {
+    const chip = e.target.closest('[data-q]');
+    if (chip) { input.value = chip.dataset.q; answer(chip.dataset.q, true); return; }
+    if (e.target.closest('[data-track="contact"]')) track(g.id, 'contact');
+    if (e.target.closest('[data-close]')) close();
+  });
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', onKey);
+  function close() {
+    if (input.value.trim()) answer(input.value, true);
+    document.removeEventListener('keydown', onKey);
+    el.classList.add('is-closing');
+    setTimeout(() => el.remove(), 250);
+  }
+  requestAnimationFrame(() => el.classList.add('is-open'));
+  if (prefill) answer(prefill, false);
+  refreshIcons();
+  setTimeout(() => input.focus({ preventScroll: true }), 300);
 }
 
 function showBoard() {
   const g = state.guide;
   state.boardCtl?.destroy();
-  app.innerHTML = renderBoard(g, { guest, stay }) + askFab(g);
+  app.innerHTML = renderBoard(g, { guest, stay }) + askFab();
   state.boardCtl = mountBoard(app, g, {
     onOpen: (id) => { location.hash = `#/s/${id}`; },
     lastSection: () => state.lastSection,
@@ -94,7 +158,7 @@ function showSection(id, extra = {}) {
         <div class="sheet__body">${renderSection(id, g, ctx)}</div>
       </article>
     </section>
-    ${id !== 'contact' ? askFab(g) : ''}`;
+    ${id !== 'contact' ? askFab() : ''}`;
   mountSection(id, g, ctx, app);
   setLeftButton('layout-dashboard');
   refreshIcons();
@@ -128,6 +192,7 @@ btnLang.addEventListener('click', () => {
   route();
 });
 
+app.addEventListener('click', (e) => { if (e.target.closest('[data-ask]')) openAsk(); });
 app.addEventListener('overview', (e) => setLeftButton(e.detail ? 'zoom-in' : 'zoom-out'));
 addEventListener('hashchange', () => route());
 // Guarda el scroll del tablón para volver al mismo sitio.
