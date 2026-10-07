@@ -1,0 +1,10 @@
+{
+  "name": "retorika Home",
+  "short_name": "retorika Home",
+  "description": "Tu estancia. Todo en un clic.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#c9945a",
+  "theme_color": "#156fe7",
+  "icons": [{ "src": "assets/img/logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

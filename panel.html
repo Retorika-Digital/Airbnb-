@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panel del propietario · retorika Home</title>
+  <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/guide.css">
+  <link rel="stylesheet" href="assets/css/panel.css">
+</head>
+<body class="panel">
+  <aside class="side">
+    <a class="brand" href="#/">
+      <img src="assets/img/logo.svg" alt="">
+      <span class="brand__name">retorika <b>Home</b><span class="brand__by">by RETORIKA</span></span>
+    </a>
+    <nav>
+      <a class="nav" href="#/" data-nav="resumen"><i data-lucide="layout-dashboard"></i><span>Resumen</span></a>
+      <a class="nav" href="#/nuevo" data-nav="nuevo"><i data-lucide="wand-sparkles"></i><span>Conectar anuncio</span></a>
+      <a class="nav" href="#/editar/granvia" data-nav="editar"><i data-lucide="pencil"></i><span>Editar guía</span></a>
+      <a class="nav" href="#/huesped/granvia" data-nav="huesped"><i data-lucide="send"></i><span>Enviar al huésped</span></a>
+      <a class="nav" href="#/analiticas" data-nav="analiticas"><i data-lucide="chart-column"></i><span>Analíticas</span></a>
+    </nav>
+    <div class="side__foot">Prototipo · los datos se guardan en este navegador.</div>
+  </aside>
+  <main class="main" id="main"></main>
+
+  <script src="assets/vendor/lucide.min.js"></script>
+  <script src="assets/vendor/leaflet/leaflet.js"></script>
+  <script src="assets/vendor/qrcode.js"></script>
+  <script type="module" src="assets/js/panel.js"></script>
+</body>
+</html>

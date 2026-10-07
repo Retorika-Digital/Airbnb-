@@ -1,0 +1,118 @@
+{
+  "id": "granvia",
+  "slug": "granvia",
+  "property": {
+    "name": "Apartamento Gran Vía",
+    "tagline": "Tu hogar temporal en Madrid",
+    "address": "Gran Vía, 24, 28013 Madrid",
+    "city": "Madrid",
+    "lat": 40.42008,
+    "lng": -3.70199,
+    "photos": [
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=900&q=70",
+      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=900&q=70"
+    ],
+    "airbnbUrl": "https://www.airbnb.es/rooms/000000"
+  },
+  "host": {
+    "name": "Belén",
+    "role": "Tu anfitriona",
+    "photo": "",
+    "phone": "+34600000000",
+    "whatsapp": "34600000000",
+    "email": "hola@retorika.es",
+    "responseHours": "8:00 - 22:00",
+    "responseDays": "Todos los días"
+  },
+  "wifi": {
+    "ssid": "ApartamentoGV",
+    "password": "GranVia24!",
+    "security": "WPA",
+    "notes": "El router está en el mueble del salón. Si se cae, desenchúfalo 10 segundos."
+  },
+  "checkin": {
+    "from": "15:00",
+    "to": "23:00",
+    "checkoutBy": "11:00",
+    "building": "Portal con código: 4821#. El ascensor está a la derecha, 3.º planta, puerta B.",
+    "keys": "Caja de seguridad junto a la puerta. Código: 1906. Deja las llaves dentro al irte.",
+    "luggage": "Puedes dejar el equipaje desde las 12:00 avisándonos antes. Tras el check-out, recomendamos Radical Storage en Gran Vía 30.",
+    "checkoutSteps": [
+      "Deja las toallas usadas en la bañera",
+      "Saca la basura (ver sección Basura)",
+      "Apaga el aire acondicionado y las luces",
+      "Deja las llaves en la caja de seguridad"
+    ]
+  },
+  "house": {
+    "howItWorks": [
+      { "title": "Aire acondicionado", "text": "Mando en el cajón de la mesita. Modo ☀️ calor / ❄️ frío. Por favor, apágalo al salir." },
+      { "title": "Agua caliente", "text": "El termo es eléctrico y tarda 20 min en calentar si está apagado." },
+      { "title": "Televisión", "text": "Smart TV con Netflix y YouTube. Usa tu propia cuenta y cierra sesión al irte." }
+    ],
+    "rules": [
+      "No se permite fumar dentro del apartamento",
+      "Silencio a partir de las 22:00 — ¡los vecinos madrugan!",
+      "No se permiten fiestas ni eventos",
+      "Mascotas: consúltanos antes"
+    ],
+    "equipment": [
+      "Cafetera Nespresso (cápsulas de bienvenida)",
+      "Plancha y tabla de planchar",
+      "Secador de pelo",
+      "Lavadora (detergente bajo el fregadero)",
+      "Cuna de viaje bajo petición"
+    ],
+    "trash": "Contenedores en la esquina con Calle de la Montera: amarillo envases, azul papel, verde vidrio, marrón orgánico, gris resto. Bajar la basura a partir de las 20:00.",
+    "manual": "Guía rápida: los interruptores de toda la casa están en el cuadro eléctrico del pasillo. Si salta la luz, sube la palanca general."
+  },
+  "recommendations": {
+    "eat": [
+      { "id": "casa-lucio", "name": "Casa Lucio", "category": "Restaurantes", "desc": "Cocina tradicional. Pide los huevos rotos.", "lat": 40.41205, "lng": -3.70932, "photo": "https://images.unsplash.com/photo-1544025162-d76694265947?w=600&q=70", "hostPick": true },
+      { "id": "la-carmencita", "name": "La Carmencita", "category": "Tapas", "desc": "Tapas y vinos en la taberna más antigua de Chueca.", "lat": 40.42162, "lng": -3.69745, "photo": "https://images.unsplash.com/photo-1515443961218-a51367888e4b?w=600&q=70" },
+      { "id": "inclan-brutal", "name": "Inclán Brutal Bar", "category": "Restaurantes", "desc": "Cócteles y cocina creativa junto a Sol.", "lat": 40.41545, "lng": -3.70204, "photo": "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600&q=70" },
+      { "id": "celicioso", "name": "Celicioso", "category": "Cafeterías", "desc": "Opciones saludables y sin gluten.", "lat": 40.41992, "lng": -3.69958, "photo": "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600&q=70" },
+      { "id": "chocolateria-san-gines", "name": "Chocolatería San Ginés", "category": "Cafeterías", "desc": "Chocolate con churros desde 1894. Abierta casi siempre.", "lat": 40.41685, "lng": -3.70681, "photo": "https://images.unsplash.com/photo-1541783245831-57d6fb0926d3?w=600&q=70" }
+    ],
+    "do": [
+      { "id": "prado", "name": "Museo del Prado", "category": "Cultura", "desc": "Entrada gratis de 18:00 a 20:00 (L-S).", "lat": 40.41378, "lng": -3.69213, "photo": "https://images.unsplash.com/photo-1574182245530-967d9b3831af?w=600&q=70", "hostPick": true },
+      { "id": "retiro", "name": "Parque del Retiro", "category": "Imprescindibles", "desc": "Alquila una barca en el estanque grande.", "lat": 40.41526, "lng": -3.68446, "photo": "https://images.unsplash.com/photo-1558642084-fd07fae5282e?w=600&q=70" },
+      { "id": "debod", "name": "Templo de Debod", "category": "Imprescindibles", "desc": "El mejor atardecer de Madrid.", "lat": 40.42404, "lng": -3.71780, "photo": "https://images.unsplash.com/photo-1543783207-ec64e4d95325?w=600&q=70" },
+      { "id": "rastro", "name": "El Rastro", "category": "Ocio", "desc": "Mercadillo de los domingos por la mañana.", "lat": 40.40870, "lng": -3.70743, "photo": "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=600&q=70" },
+      { "id": "palacio-real", "name": "Palacio Real", "category": "Cultura", "desc": "Cambio de guardia los miércoles y sábados.", "lat": 40.41796, "lng": -3.71433, "photo": "https://images.unsplash.com/photo-1570698473651-b2de99bae12f?w=600&q=70" }
+    ]
+  },
+  "transport": {
+    "nearestStations": [
+      { "name": "Metro Gran Vía", "lines": "L1 · L5", "minutes": 1 },
+      { "name": "Metro Callao", "lines": "L3 · L5", "minutes": 4 },
+      { "name": "Cercanías Sol", "lines": "C3 · C4", "minutes": 6 }
+    ],
+    "airport": [
+      { "title": "Línea Exprés Aeropuerto (bus 24h)", "text": "Desde Cibeles o Atocha. Unos 40 min. Paga con tarjeta en el bus." },
+      { "title": "Metro L8", "text": "Desde Nuevos Ministerios. Suplemento aeropuerto en el billete." },
+      { "title": "Cercanías C1", "text": "Desde Sol hasta la T4. Gratis con billete de larga distancia Renfe." },
+      { "title": "Taxi", "text": "Tarifa fija entre el aeropuerto y el interior de la M-30. Consulta el importe vigente con el taxista." }
+    ],
+    "taxiPhones": [
+      { "name": "Radio Taxi Madrid", "phone": "+34914475180" },
+      { "name": "Tele Taxi", "phone": "+34913712131" },
+      { "name": "Radio-Teléfono Taxi", "phone": "+34915478200" }
+    ],
+    "destinations": [
+      { "name": "Aeropuerto T4", "lat": 40.49181, "lng": -3.59381 },
+      { "name": "Aeropuerto T1/T2", "lat": 40.46778, "lng": -3.56853 },
+      { "name": "Estación de Atocha", "lat": 40.40660, "lng": -3.68960 },
+      { "name": "Estación de Chamartín", "lat": 40.47200, "lng": -3.68250 }
+    ]
+  },
+  "emergencies": [
+    { "name": "Emergencias generales", "phone": "112", "primary": true },
+    { "name": "Policía Nacional", "phone": "091" },
+    { "name": "Policía Municipal", "phone": "092" },
+    { "name": "Ambulancias (SAMUR)", "phone": "112", "tone": "green" },
+    { "name": "Bomberos", "phone": "080", "tone": "orange" }
+  ],
+  "hospital": { "name": "Hospital Clínico San Carlos", "desc": "Urgencias 24h · C/ Prof. Martín Lagos, s/n", "lat": 40.44047, "lng": -3.71925 },
+  "nearby": null
+}

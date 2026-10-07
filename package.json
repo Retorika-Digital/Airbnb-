@@ -1,0 +1,12 @@
+{
+  "name": "retorika-home",
+  "version": "0.1.0",
+  "private": true,
+  "description": "retorika Home — guía digital para huéspedes con estética de tablón de corcho + panel del propietario",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.mjs",
+    "start": "node server.mjs"
+  },
+  "engines": { "node": ">=18" }
+}

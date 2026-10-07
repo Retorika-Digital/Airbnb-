@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>retorika Home · Tu guía</title>
+  <meta name="description" content="Tu estancia. Todo en un clic. La guía de tu alojamiento, como un tablón de corcho.">
+  <meta name="theme-color" content="#c9945a">
+  <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/guide.css">
+</head>
+<body class="guide cork">
+  <header class="topbar">
+    <button class="topbar__btn" id="btn-left" aria-label="Vista general"></button>
+    <a class="brand" href="#/" aria-label="Inicio">
+      <img src="assets/img/logo.svg" alt="">
+      <span class="brand__name">retorika <b>Home</b><span class="brand__by">by RETORIKA</span></span>
+    </a>
+    <button class="topbar__btn topbar__lang" id="btn-lang" aria-label="Idioma / Language">ES</button>
+  </header>
+
+  <main id="app" aria-live="polite">
+    <div class="status status--loading" style="color:#fff">Cargando tu tablón…</div>
+  </main>
+
+  <noscript><p style="padding:20px;background:#fff">Activa JavaScript para ver tu guía.</p></noscript>
+
+  <script src="assets/vendor/lucide.min.js"></script>
+  <script src="assets/vendor/leaflet/leaflet.js"></script>
+  <script src="assets/vendor/qrcode.js"></script>
+  <script type="module" src="assets/js/app.js"></script>
+</body>
+</html>
