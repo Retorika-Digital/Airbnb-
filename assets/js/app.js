@@ -119,6 +119,7 @@ function showBoard() {
   state.boardCtl = mountBoard(app, g, {
     onOpen: (id) => { location.hash = `#/s/${id}`; },
     lastSection: () => state.lastSection,
+    stay,
   });
   setLeftButton('zoom-out');
   requestAnimationFrame(() => scrollTo({ top: state.boardScroll }));

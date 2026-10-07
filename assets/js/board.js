@@ -2,8 +2,9 @@
 // tiempo, el camino punteado que las une, la vista general (zoom out) y la
 // animación de "levantar la nota" al abrir una sección.
 import { t, loc, getLang } from './i18n.js';
-import { esc, icon, photo, scatter, refreshIcons } from './util.js';
-import { SECTIONS, hintFor } from './sections.js';
+import { esc, icon, photo, scatter, refreshIcons, params } from './util.js';
+import { SECTIONS, hintFor, withDistance, openPlace } from './sections.js';
+import { nowTip, isNight } from './now.js';
 import { getWeather, weatherInfo } from './places.js';
 import { getTrip } from './store.js';
 
@@ -61,6 +62,7 @@ export function renderBoard(g, { guest, stay }) {
 
   return `
   <div class="board-viewport" id="board-vp">
+    ${nightMode() ? lights() : ''}
     <div class="board" id="board">
       <svg class="board__thread" aria-hidden="true"><path d=""/></svg>
 
@@ -70,6 +72,8 @@ export function renderBoard(g, { guest, stay }) {
         <p>${t('welcomeSub', { city: esc(city) })} <span style="color:var(--fucsia)">♡</span></p>
         <span class="note__stay">${icon('sparkles')}${esc(loc(g.property.tagline) || g.property.name)}</span>
       </div>
+
+      ${nowNote(g, stay)}
 
       <figure class="polaroid" style="${scatter(1)};--r:3deg">
         <span class="tape"></span>
@@ -99,6 +103,49 @@ export function renderBoard(g, { guest, stay }) {
     </div>
   </div>
   <div class="overview-hint">${icon('hand')} ${t('overviewHint')}</div>`;
+}
+
+/** Hora "virtual" (?time=21 para probar) y la nota de "Ahora mismo". */
+function clock() {
+  const now = new Date();
+  const forced = Number(params.get('time'));
+  if (params.get('time') && forced >= 0 && forced < 24) now.setHours(forced, 0, 0, 0);
+  return now;
+}
+
+function guideWithDistances(g) {
+  const map = (arr) => (arr || []).map((p) => withDistance(g, p));
+  return { ...g, recommendations: { eat: map(g.recommendations?.eat), do: map(g.recommendations?.do) } };
+}
+
+function nowNote(g, stay, rain = false) {
+  const tip = nowTip(guideWithDistances(g), { now: clock(), rain, stay });
+  return `<button class="note note--now" data-now='${esc(JSON.stringify(tip.action))}' style="${scatter(1)};--r:.8deg">
+    <span class="pin pin--verde"></span>
+    <span class="note--now__icon">${icon(tip.icon)}</span>
+    <span class="note--now__body">
+      <span class="note--now__label">${getLang() === 'es' ? 'Ahora mismo' : 'Right now'}</span>
+      <span class="note__title">${esc(tip.title)}</span>
+      <span class="note__hint">${esc(tip.text)}</span>
+    </span>
+  </button>`;
+}
+
+export const nightMode = () => isNight(clock(), params.get('night'));
+
+function lights() {
+  const n = 16;
+  const colors = ['#ffd45c', '#ff7a9c', '#7fd4ff', '#9dffb5'];
+  const bulbs = Array.from({ length: n }, (_, i) => {
+    const x = (i + 0.5) / n * 100;
+    const y = 10 + Math.sin((x / 100) * Math.PI * 3) * 8 + 8;
+    return `<span class="bulb" style="left:${x}%;top:${y}px;--c:${colors[i % 4]};--d:${(i * 0.37) % 2}s"></span>`;
+  }).join('');
+  const path = Array.from({ length: 61 }, (_, i) => {
+    const x = i / 60 * 100;
+    return `${i ? 'L' : 'M'}${x},${10 + Math.sin((x / 100) * Math.PI * 3) * 8 + 4}`;
+  }).join(' ');
+  return `<div class="lights" aria-hidden="true"><svg viewBox="0 0 100 40" preserveAspectRatio="none"><path d="${path}"/></svg>${bulbs}</div>`;
 }
 
 /** Curva suave (Catmull-Rom → Bézier) que pasa por todos los puntos. */
@@ -151,7 +198,7 @@ export async function liftAndOpen(note, navigate) {
   ghost.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: 'forwards' }).onfinish = () => ghost.remove();
 }
 
-export function mountBoard(root, g, { onOpen, lastSection }) {
+export function mountBoard(root, g, { onOpen, lastSection, stay: stayRef = null }) {
   const vp = root.querySelector('#board-vp');
   const board = root.querySelector('#board');
   refreshIcons();
@@ -160,8 +207,17 @@ export function mountBoard(root, g, { onOpen, lastSection }) {
   const ro = new ResizeObserver(() => drawThread(board));
   ro.observe(board);
 
+  document.body.classList.toggle('is-night', nightMode());
+
   // Abrir sección con animación
   board.addEventListener('click', async (e) => {
+    const nowBtn = e.target.closest('[data-now]');
+    if (nowBtn) {
+      const a = JSON.parse(nowBtn.dataset.now);
+      if (a.place) openPlace(g, { ...a.place, kind: a.kind, catLabel: loc(a.place.category) });
+      else if (a.section) liftAndOpen(nowBtn, () => onOpen(a.section));
+      return;
+    }
     const note = e.target.closest('.note[data-section]');
     if (!note) return;
     e.preventDefault();
@@ -241,6 +297,10 @@ export function mountBoard(root, g, { onOpen, lastSection }) {
     const card = root.querySelector('#weather');
     if (!wx || !card) return;
     const [ic, desc] = weatherInfo(wx.current.weather_code);
+    if (/rain|lightning|snow/.test(ic)) {
+      const old = root.querySelector('[data-now]');
+      if (old) { old.outerHTML = nowNote(g, stayRef, true); refreshIcons(); }
+    }
     card.querySelector('.postcard__temp').textContent = `${Math.round(wx.current.temperature_2m)}°`;
     card.querySelector('.postcard__desc').textContent = loc(desc);
     card.querySelector('.postcard__stamp').innerHTML = icon(ic);
@@ -267,6 +327,6 @@ export function mountBoard(root, g, { onOpen, lastSection }) {
   return {
     toggleOverview,
     exitOverview,
-    destroy() { ro.disconnect(); clearInterval(swayTimer); document.body.classList.remove('is-overview'); },
+    destroy() { ro.disconnect(); clearInterval(swayTimer); document.body.classList.remove('is-overview', 'is-night'); },
   };
 }

@@ -31,3 +31,11 @@ Qué se ha ido añadiendo mientras dormías, tanda por tanda.
   - Al reordenar, las notas se quedaban en la fila equivocada. Lo encontró la prueba automática y está corregido.
   - Al guardar, el editor ya no cierra las secciones que tenías abiertas.
   - Las recomendaciones automáticas ya no traen descripciones en inglés tipo "spanish".
+
+## Tanda 5: el tablón sabe qué hora es
+- **Nota "Ahora mismo"** al principio del tablón, con forma de ficha rayada. Cambia según la hora, el tiempo y el día de la estancia:
+  - **Por la mañana**: desayuno cerca. **A mediodía**: dónde comer. **Por la tarde**: un plan, y si llueve uno a cubierto (un museo). **Por la noche**: dónde cenar y a cuántos minutos está. **De madrugada**: taxi a casa sin apps.
+  - **El día de llegada** explica cómo entrar, y **el de salida** recuerda la lista del check-out.
+  - Al tocarla se abre la ficha del sitio o la sección que toca.
+- **Modo noche**: de 21:00 a 7:00 el corcho se queda en penumbra con luz cálida y aparece una **guirnalda de bombillas** que parpadean arriba del tablón.
+- Para probarlo a cualquier hora: `?time=22` (hora simulada) y `?night=1` / `?night=0`.

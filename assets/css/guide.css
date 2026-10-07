@@ -564,3 +564,43 @@ button.ask-fab { border: 0; text-align: left; font: inherit; cursor: pointer; }
 .trip-grid .is-drop-target { outline: 3px dashed #fff; outline-offset: 4px; }
 .muted.small svg { width: 14px; height: 14px; vertical-align: -2px; }
 .trip-grid [data-trip-item] img, .trip-grid [data-trip-item] .ph { -webkit-user-drag: none; pointer-events: none; }
+
+/* Nota "Ahora mismo": ficha rayada tipo índice ----------------------------- */
+.note--now {
+  grid-column: span 2; min-height: 0; flex-direction: row; justify-content: flex-start; gap: 14px;
+  padding: 22px 18px 16px 30px; text-align: left; cursor: pointer;
+  --note: #fffdf7;
+  background:
+    linear-gradient(90deg, transparent 20px, rgba(255, 58, 114, .45) 20px 22px, transparent 22px),
+    repeating-linear-gradient(180deg, transparent 0 25px, rgba(21, 111, 231, .14) 25px 26px),
+    var(--note);
+}
+.note--now::after { display: none; }
+.note--now .pin { left: auto; right: 28px; }
+.note--now__icon { flex: none; width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center; background: var(--note-amarillo); color: var(--azul); }
+.note--now__icon svg { width: 26px; height: 26px; }
+.note--now__body { display: grid; gap: 2px; }
+.note--now__label { font-size: .66rem; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; color: var(--fucsia); }
+.note--now .note__title { font-size: 1.6rem; }
+.note--now .note__hint { font-size: .86rem; color: var(--ink); }
+@media (min-width: 720px) { .note[data-section="trip"] { grid-column: span 4; } }
+
+/* Modo noche: corcho en penumbra con guirnalda de luces -------------------- */
+body.is-night.cork { background-color: #6e4b2a; }
+body.is-night::before {
+  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 20%, rgba(255, 190, 110, .18), rgba(20, 8, 0, .55) 75%);
+}
+body.is-night #app { position: relative; z-index: 1; }
+body.is-night .note, body.is-night .polaroid, body.is-night .ticket, body.is-night .postcard { filter: brightness(.94) saturate(.95); }
+body.is-night .label-tape { background: rgba(255, 240, 210, .85); }
+.lights { position: relative; height: 40px; margin: -10px -14px 0; pointer-events: none; z-index: 5; }
+.lights svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.lights path { fill: none; stroke: #2b1a0c; stroke-width: .35; vector-effect: non-scaling-stroke; stroke-width: 1.5; }
+.bulb {
+  position: absolute; width: 10px; height: 14px; margin-left: -5px; border-radius: 50% 50% 45% 45%;
+  background: var(--c); box-shadow: 0 0 10px 3px var(--c), 0 0 22px 6px color-mix(in srgb, var(--c), transparent 60%);
+  animation: twinkle 2.2s ease-in-out infinite; animation-delay: var(--d);
+}
+.bulb::before { content: ""; position: absolute; top: -4px; left: 2px; width: 6px; height: 5px; border-radius: 2px; background: #3a2a1a; }
+@keyframes twinkle { 50% { opacity: .55; box-shadow: 0 0 4px 1px var(--c); } }

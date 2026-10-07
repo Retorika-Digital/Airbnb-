@@ -100,7 +100,7 @@ function placeCard(g, p, i, { kind, showPhoto = true } = {}) {
   </article>`;
 }
 
-function withDistance(g, p) {
+export function withDistance(g, p) {
   if (p.distance != null || p.lat == null) return p;
   const R = 6371000, toRad = (d) => (d * Math.PI) / 180;
   const a = home(g);
