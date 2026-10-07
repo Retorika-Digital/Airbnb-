@@ -215,7 +215,7 @@ views.nuevo = async () => {
         <section class="card step" id="s2" hidden><span class="step__num">2</span>
           <h2>${icon('map-pin')}Confirma la ubicación exacta</h2>
           <p class="sub">Airbnb muestra una ubicación aproximada por privacidad. Escribe la dirección o arrastra la chincheta a tu portal.</p>
-          <div class="field"><label>Nombre del alojamiento</label><input id="f-name"></div>
+          <div class="field"><label for="f-name">Nombre del alojamiento</label><input id="f-name"></div>
           <form class="input-row" id="geo-form" style="margin-bottom:6px">
             <input id="f-address" placeholder="Calle, número, ciudad" style="padding-left:14px;background-image:none">
             <button class="btn btn--ghost">${icon('search')}Buscar</button>
@@ -234,12 +234,12 @@ views.nuevo = async () => {
           <h2>${icon('key-round')}Lo que Airbnb no sabe</h2>
           <p class="sub">Estos datos son privados y solo los ven tus huéspedes con el enlace.</p>
           <div class="row2">
-            <div class="field"><label>Red WiFi</label><input id="f-ssid"></div>
-            <div class="field"><label>Contraseña WiFi</label><input id="f-pass"></div>
+            <div class="field"><label for="f-ssid">Red WiFi</label><input id="f-ssid"></div>
+            <div class="field"><label for="f-pass">Contraseña WiFi</label><input id="f-pass"></div>
           </div>
-          <div class="field"><label>Acceso al edificio</label><input id="f-building" placeholder="Portal con código 1234#, 3.º B"></div>
-          <div class="field"><label>Llaves</label><input id="f-keys" placeholder="Caja de seguridad junto a la puerta, código…"></div>
-          <div class="field"><label>Tu WhatsApp (con prefijo)</label><input id="f-phone" placeholder="+34 600 000 000" inputmode="tel"></div>
+          <div class="field"><label for="f-building">Acceso al edificio</label><input id="f-building" placeholder="Portal con código 1234#, 3.º B"></div>
+          <div class="field"><label for="f-keys">Llaves</label><input id="f-keys" placeholder="Caja de seguridad junto a la puerta, código…"></div>
+          <div class="field"><label for="f-phone">Tu WhatsApp (con prefijo)</label><input id="f-phone" placeholder="+34 600 000 000" inputmode="tel"></div>
           <button class="btn btn--fucsia btn--block" id="create">${icon('pin')}Crear mi guía</button>
         </section>
       </div>
@@ -529,7 +529,7 @@ views.editar = async (id) => {
             <button class="btn btn--primary">${icon('save')}Guardar cambios</button>
           </div>
         </form>
-        <aside class="preview">
+        <aside class="preview" aria-label="Vista previa en el móvil">
           <div class="phone"><iframe id="preview" title="Vista previa de la guía" src="${previewSrc()}"></iframe></div>
         </aside>
       </div>`;
@@ -656,13 +656,13 @@ views.huesped = async (id) => {
       <section class="card">
         <h2>${icon('user')}Datos de la reserva</h2>
         <p class="sub">El huésped verá "¡Hola, Laura!", sus noches en el ticket del tablón y los días para montar su viaje.</p>
-        <div class="field"><label>Nombre del huésped</label><input id="gname" value="Laura"></div>
+        <div class="field"><label for="gname">Nombre del huésped</label><input id="gname" value="Laura"></div>
         <div class="row2">
-          <div class="field"><label>Llegada</label><input type="date" id="gin" value="${today}"></div>
-          <div class="field"><label>Salida</label><input type="date" id="gout" value="${plus(today, 3)}"></div>
+          <div class="field"><label for="gin">Llegada</label><input type="date" id="gin" value="${today}"></div>
+          <div class="field"><label for="gout">Salida</label><input type="date" id="gout" value="${plus(today, 3)}"></div>
         </div>
-        <div class="field"><label>Teléfono del huésped (opcional, para WhatsApp)</label><input id="gphone" placeholder="+44 7…" inputmode="tel"></div>
-        <div class="field"><label>Mensaje</label><textarea id="gmsg" style="min-height:120px"></textarea></div>
+        <div class="field"><label for="gphone">Teléfono del huésped (opcional, para WhatsApp)</label><input id="gphone" placeholder="+44 7…" inputmode="tel"></div>
+        <div class="field"><label for="gmsg">Mensaje</label><textarea id="gmsg" style="min-height:120px"></textarea></div>
         <div class="actions actions--2">
           <a class="btn btn--verde" id="send-wa" target="_blank" rel="noopener">${icon('message-circle')}Enviar por WhatsApp</a>
           <button class="btn btn--ghost" id="copy-msg">${icon('copy')}Copiar mensaje</button>
@@ -792,7 +792,10 @@ views.analiticas = async () => {
 async function route() {
   const [, view = '', arg] = location.hash.replace(/^#\/?/, '#/').split('/');
   const name = views[view] ? view : 'resumen';
-  document.querySelectorAll('[data-nav]').forEach((a) => a.classList.toggle('is-active', a.dataset.nav === name));
+  document.querySelectorAll('[data-nav]').forEach((a) => {
+    a.classList.toggle('is-active', a.dataset.nav === name);
+    if (a.dataset.nav === name) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+  });
   // Clona <main> para soltar los listeners de la vista anterior.
   const fresh = main.cloneNode(false);
   main.replaceWith(fresh);

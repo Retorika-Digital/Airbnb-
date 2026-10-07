@@ -107,7 +107,7 @@ body.guide.is-embed .topbar { display: none; }
 .note__hint { font-size: .74rem; font-weight: 700; color: var(--ink-soft); line-height: 1.25; }
 .note__badge {
   position: absolute; top: 8px; right: 8px; min-width: 22px; height: 22px; padding: 0 6px;
-  border-radius: 11px; background: var(--fucsia); color: #fff; font-size: .72rem; font-weight: 900;
+  border-radius: 11px; background: var(--fucsia-ink); color: #fff; font-size: .72rem; font-weight: 900;
   display: grid; place-items: center;
 }
 
@@ -119,7 +119,7 @@ body.guide.is-embed .topbar { display: none; }
 .note--celeste { --note: var(--note-celeste); }
 .note--kraft { --note: var(--note-kraft); }
 .note--melocoton { --note: var(--note-melocoton); }
-.note--danger > svg { color: var(--fucsia); }
+.note--danger > svg { color: var(--fucsia-ink); }
 .note[data-section="trip"] { grid-column: span 2; }
 
 /* Variantes especiales del tablón */
@@ -131,7 +131,7 @@ body.guide.is-embed .topbar { display: none; }
 .note--welcome p { margin: .45rem 0 0; font-size: .92rem; color: var(--ink-soft); font-weight: 600; }
 .note--welcome .note__stay {
   margin-top: .7rem; display: inline-flex; gap: .4rem; align-items: center;
-  font-family: var(--font-hand); font-size: 1.3rem; color: var(--fucsia);
+  font-family: var(--font-hand); font-size: 1.3rem; color: var(--fucsia-ink);
 }
 @media (min-width: 720px) { .note--welcome h1 { font-size: 2.8rem; } }
 
@@ -186,7 +186,7 @@ body.guide.is-embed .topbar { display: none; }
 .postcard__stamp {
   position: absolute; top: 10px; right: 10px; width: 40px; height: 46px;
   border: 2px dotted var(--fucsia); border-radius: 3px; display: grid; place-items: center;
-  color: var(--fucsia);
+  color: var(--fucsia-ink);
 }
 .postcard__stamp svg { width: 22px; height: 22px; }
 .postcard > .ticket__label { padding-right: 46px; }
@@ -202,7 +202,7 @@ body.guide.is-embed .topbar { display: none; }
   transform: rotate(-2deg);
   animation: note-in .55s var(--ease-spring) backwards; animation-delay: .9s;
 }
-.label-tape .heart { color: var(--fucsia); }
+.label-tape .heart { color: var(--fucsia-ink); }
 
 /* Modo vista general ("zoom out y mapa del tablón") ----------------------- */
 .overview-hint {
@@ -220,7 +220,7 @@ body.guide.is-embed .topbar { display: none; }
 .board-viewport.is-overview .postcard { animation: none; }
 .you-are-here {
   position: absolute; z-index: 30; pointer-events: none;
-  font-family: var(--font-hand); font-size: 1.5rem; color: var(--fucsia);
+  font-family: var(--font-hand); font-size: 1.5rem; color: var(--fucsia-ink);
   background: var(--paper); padding: 2px 10px; border-radius: 8px; box-shadow: var(--shadow-note);
   transform: rotate(-6deg);
 }
@@ -296,7 +296,7 @@ body.guide.is-embed .topbar { display: none; }
 .row__body { padding: 0 16px 16px 66px; color: var(--ink-soft); font-size: .92rem; }
 .row__body ul, .row__body ol { margin: 0; padding-left: 1.1em; }
 .row__body li + li { margin-top: .35em; }
-.row--tone-fucsia { background: var(--fucsia); border-color: var(--fucsia); color: #fff; }
+.row--tone-fucsia { background: var(--fucsia-ink); border-color: var(--fucsia-ink); color: #fff; }
 .row--tone-fucsia .row__icon { background: rgba(255, 255, 255, .2); color: #fff; }
 .row--tone-fucsia .row__text small, .row--tone-fucsia .row__chev { color: rgba(255, 255, 255, .85); }
 .row--tone-green { background: #eafbf2; border-color: #c4f1da; }
@@ -332,7 +332,7 @@ body.guide.is-embed .topbar { display: none; }
   padding: 6px 12px; font-weight: 800; font-size: .82rem; display: inline-flex; gap: 6px; align-items: center;
 }
 .chip svg { width: 15px; height: 15px; }
-.chip.is-active { background: var(--fucsia); border-color: var(--fucsia); color: #fff; }
+.chip.is-active { background: var(--fucsia-ink); border-color: var(--fucsia-ink); color: #fff; }
 
 /* Tarjetas de lugar */
 .places { display: grid; gap: 12px; }
@@ -352,7 +352,7 @@ body.guide.is-embed .topbar { display: none; }
 .place__tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
 .tag { font-size: .7rem; font-weight: 900; padding: 2px 7px; border-radius: 6px; background: #eef4ff; color: var(--azul-oscuro); }
 .tag--green { background: #dcf9ea; color: #027a40; }
-.tag--pink { background: #ffe4ec; color: #d01e52; }
+.tag--pink { background: #ffe4ec; color: #b8123f; }
 .tag--star { background: #fff3c4; color: #8a6200; }
 .place__side { display: grid; gap: 6px; justify-items: center; }
 .icon-btn {
@@ -361,7 +361,7 @@ body.guide.is-embed .topbar { display: none; }
 }
 .icon-btn svg { width: 19px; height: 19px; }
 .icon-btn:active { transform: scale(.85); }
-.icon-btn.is-on { background: #ffe4ec; color: var(--fucsia); }
+.icon-btn.is-on { background: #ffe4ec; color: var(--fucsia-ink); }
 .icon-btn.is-on svg { fill: currentColor; }
 .icon-btn.pop { animation: heart-pop .5s var(--ease-spring); }
 
@@ -430,7 +430,7 @@ body.guide.is-embed .topbar { display: none; }
 .trip-grid .polaroid { padding: 7px 7px 0; }
 .trip-grid .polaroid figcaption { font-size: 1.1rem; }
 .trip-grid .polaroid .pin { top: -9px; left: calc(50% - 11px); }
-.trip-grid .polaroid .num { position: absolute; z-index: 4; left: -8px; top: -8px; width: 26px; height: 26px; border-radius: 50%; background: var(--fucsia); color: #fff; font-weight: 900; font-size: .8rem; display: grid; place-items: center; box-shadow: 0 2px 4px rgba(0,0,0,.3); }
+.trip-grid .polaroid .num { position: absolute; z-index: 4; left: -8px; top: -8px; width: 26px; height: 26px; border-radius: 50%; background: var(--fucsia-ink); color: #fff; font-weight: 900; font-size: .8rem; display: grid; place-items: center; box-shadow: 0 2px 4px rgba(0,0,0,.3); }
 .trip-grid .polaroid .remove { position: absolute; z-index: 4; right: -8px; top: -8px; width: 26px; height: 26px; border-radius: 50%; border: 0; background: #fff; color: var(--ink-soft); display: grid; place-items: center; box-shadow: 0 2px 4px rgba(0,0,0,.3); }
 .trip-grid .polaroid .remove svg { width: 14px; height: 14px; }
 .trip-grid .note { min-height: 110px; font-family: var(--font-hand); font-size: 1.3rem; animation-delay: 0s; }
@@ -483,7 +483,7 @@ body.guide.is-embed .topbar { display: none; }
 
 /* Tarjeta voladora: cuando guardas un sitio en "Mi viaje" */
 .fly-heart {
-  position: fixed; z-index: 200; pointer-events: none; color: var(--fucsia);
+  position: fixed; z-index: 200; pointer-events: none; color: var(--fucsia-ink);
   width: 28px; height: 28px;
 }
 
@@ -526,7 +526,7 @@ button.ask-fab { border: 0; text-align: left; font: inherit; cursor: pointer; }
 .ask-still { display: block; text-align: center; font-weight: 800; font-size: .86rem; padding: 6px; color: var(--ink-soft); }
 
 /* Cuenta atrás en el ticket */
-.ticket__count { margin-top: 6px; display: inline-block; font-weight: 900; font-size: .8rem; color: #fff; background: var(--fucsia); padding: 3px 9px; border-radius: 999px; }
+.ticket__count { margin-top: 6px; display: inline-block; font-weight: 900; font-size: .8rem; color: #fff; background: var(--fucsia-ink); padding: 3px 9px; border-radius: 999px; }
 
 /* Pista de primera visita */
 .first-hint {
@@ -556,7 +556,7 @@ button.ask-fab { border: 0; text-align: left; font: inherit; cursor: pointer; }
   font-family: var(--font-hand); font-size: 1.45rem; line-height: 1.15;
 }
 .host-says .pin { top: -9px; left: 18px; }
-.host-says cite { display: block; text-align: right; font-style: normal; font-size: 1.2rem; color: var(--fucsia); margin-top: 4px; }
+.host-says cite { display: block; text-align: right; font-style: normal; font-size: 1.2rem; color: var(--fucsia-ink); margin-top: 4px; }
 .tag svg { width: 12px; height: 12px; vertical-align: -1px; }
 .ask-sheet__note:focus { outline: none; }
 .trip-grid [data-trip-item] { touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab; }
@@ -580,7 +580,7 @@ button.ask-fab { border: 0; text-align: left; font: inherit; cursor: pointer; }
 .note--now__icon { flex: none; width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center; background: var(--note-amarillo); color: var(--azul); }
 .note--now__icon svg { width: 26px; height: 26px; }
 .note--now__body { display: grid; gap: 2px; }
-.note--now__label { font-size: .66rem; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; color: var(--fucsia); }
+.note--now__label { font-size: .66rem; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; color: var(--fucsia-ink); }
 .note--now .note__title { font-size: 1.6rem; }
 .note--now .note__hint { font-size: .86rem; color: var(--ink); }
 @media (min-width: 720px) { .note[data-section="trip"] { grid-column: span 4; } }
@@ -604,3 +604,7 @@ body.is-night .label-tape { background: rgba(255, 240, 210, .85); }
 }
 .bulb::before { content: ""; position: absolute; top: -4px; left: 2px; width: 6px; height: 5px; border-radius: 2px; background: #3a2a1a; }
 @keyframes twinkle { 50% { opacity: .55; box-shadow: 0 0 4px 1px var(--c); } }
+button.place__name { all: unset; display: block; font-weight: 900; font-size: .98rem; line-height: 1.2; cursor: pointer; }
+button.place__name:focus-visible { outline: 3px solid var(--azul); outline-offset: 2px; border-radius: 4px; }
+h2.section-title { font-weight: 700; }
+.sheet__title:focus { outline: none; }

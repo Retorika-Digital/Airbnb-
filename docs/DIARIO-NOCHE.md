@@ -39,3 +39,14 @@ Qué se ha ido añadiendo mientras dormías, tanda por tanda.
   - Al tocarla se abre la ficha del sitio o la sección que toca.
 - **Modo noche**: de 21:00 a 7:00 el corcho se queda en penumbra con luz cálida y aparece una **guirnalda de bombillas** que parpadean arriba del tablón.
 - Para probarlo a cualquier hora: `?time=22` (hora simulada) y `?night=1` / `?night=0`.
+
+## Tanda 6: accesibilidad (0 errores en la auditoría automática)
+Pasé **axe-core** (el auditor estándar de accesibilidad) por 13 pantallas de la guía y del panel. Detectó 9 tipos de problema; ahora da **0**.
+- **Contraste**: el fucsia de marca `#ff3a72` con texto blanco no llega al mínimo legal (AA), porque se queda en 3,4:1. Añadí un **fucsia "tinta" `#d81b52`** (5:1) solo para botones y textos pequeños. Chinchetas, corazones y adornos siguen con el fucsia original.
+- **Grises** algo más oscuros en los textos secundarios.
+- **Lectores de pantalla**:
+  - Al abrir una sección, el foco va al título, así que se anuncia sola.
+  - El QR del WiFi tiene descripción.
+  - Los títulos van en orden correcto.
+- **Teclado**: el nombre de cada sitio es un botón real que abre la ficha. Antes había botones dentro de botones.
+- **Panel**: los iconos del menú en móvil tienen nombre, la sección activa se marca (`aria-current`) y todos los campos tienen su etiqueta.

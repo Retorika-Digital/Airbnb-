@@ -281,7 +281,8 @@ export function mountBoard(root, g, { onOpen, lastSection, stay: stayRef = null 
     const hint = document.createElement('div');
     hint.className = 'first-hint';
     hint.textContent = t('firstHint');
-    document.body.append(hint);
+    hint.setAttribute('role', 'status');
+    (document.querySelector('main') || document.body).append(hint);
     const dismiss = () => {
       hint.classList.add('is-gone');
       setTimeout(() => hint.remove(), 300);

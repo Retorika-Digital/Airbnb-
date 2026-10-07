@@ -11,6 +11,7 @@
   --azul-oscuro: #105cb1;
   --azul-noche: #0b3f7c;
   --fucsia: #ff3a72;
+  --fucsia-ink: #d81b52; /* fucsia oscurecido para texto/fondos con texto (contraste AA) */
   --verde: #03d26e;
   --blanco: #ffffff;
 
@@ -32,7 +33,7 @@
   /* Texto */
   --ink: #1d2433;
   --ink-soft: #5b6475;
-  --ink-faint: #8a92a3;
+  --ink-faint: #687183;
   --paper: #fffdf7;
   --line: #e7e2d6;
 
@@ -86,7 +87,7 @@ a { color: var(--azul); }
 .btn svg { width: 1.15em; height: 1.15em; }
 .btn--primary { background: var(--azul); color: #fff; box-shadow: 0 6px 14px -6px rgba(21, 111, 231, .7); }
 .btn--primary:hover { background: var(--azul-oscuro); }
-.btn--fucsia { background: var(--fucsia); color: #fff; box-shadow: 0 6px 14px -6px rgba(255, 58, 114, .7); }
+.btn--fucsia { background: var(--fucsia-ink); color: #fff; box-shadow: 0 6px 14px -6px rgba(255, 58, 114, .7); }
 .btn--verde { background: var(--verde); color: #053d22; box-shadow: 0 6px 14px -6px rgba(3, 210, 110, .7); }
 .btn--ghost { background: #fff; color: var(--azul); border: 2px solid var(--azul); }
 .btn--ghost:hover { background: #f1f6ff; }

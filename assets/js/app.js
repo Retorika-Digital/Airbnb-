@@ -153,7 +153,7 @@ function showSection(id, extra = {}) {
         <span class="pin pin--${meta.pin}"></span>
         <header class="sheet__head">
           <a class="sheet__nav" href="#/" aria-label="${t('back')}">${icon('chevron-left')}</a>
-          <h1 class="sheet__title" id="sheet-title">${icon(meta.icon)}<span>${t(`sec.${id}`)}</span></h1>
+          <h1 class="sheet__title" id="sheet-title" tabindex="-1">${icon(meta.icon)}<span>${t(`sec.${id}`)}</span></h1>
           <a class="sheet__nav" href="#/s/${next.id}" aria-label="${t(`sec.${next.id}`)}">${icon('chevron-right')}</a>
         </header>
         <div class="sheet__body">${renderSection(id, g, ctx)}</div>
@@ -163,7 +163,11 @@ function showSection(id, extra = {}) {
   mountSection(id, g, ctx, app);
   setLeftButton('layout-dashboard');
   refreshIcons();
-  if (!extra || !Object.keys(extra).length) scrollTo({ top: 0 });
+  if (!extra || !Object.keys(extra).length) {
+    scrollTo({ top: 0 });
+    // Lectores de pantalla: anuncia la sección recién abierta.
+    app.querySelector('#sheet-title')?.focus({ preventScroll: true });
+  }
 }
 
 function setLeftButton(name) {

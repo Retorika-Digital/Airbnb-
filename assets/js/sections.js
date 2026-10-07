@@ -85,10 +85,10 @@ function placeCard(g, p, i, { kind, showPhoto = true } = {}) {
     : `<span class="place__icon" style="background:var(--${cat.color === 'amarillo' ? 'azul' : cat.color === 'naranja' ? 'fucsia' : cat.color === 'lila' ? 'azul-oscuro' : cat.color || 'azul'})">${icon(cat.icon || 'map-pin')}</span>`;
   const tripPlace = { id: p.id, name: p.name, lat: p.lat, lng: p.lng, photo: p.photo || '', category: loc(p.category) || loc(cat.label) || '', kind: kind || p.cat };
   const full = { ...p, kind: kind || p.cat, catLabel: loc(p.category) || loc(cat.label) || '' };
-  return `<article class="place" style="--i:${i}" tabindex="0" role="button" aria-label="${esc(p.name)}" data-place='${esc(JSON.stringify(full))}'>
+  return `<article class="place" style="--i:${i}" data-place='${esc(JSON.stringify(full))}'>
     ${visual}
     <div>
-      <div class="place__name">${esc(p.name)}</div>
+      <button type="button" class="place__name" data-open-place>${esc(p.name)}</button>
       <div class="place__meta">${esc(loc(p.category) || '')}${p.category && dist ? ' · ' : ''}${dist}</div>
       ${p.desc ? `<div class="place__desc">${esc(loc(p.desc))}</div>` : ''}
       ${tags ? `<div class="place__tags">${tags}</div>` : ''}
@@ -133,11 +133,8 @@ export function bindCommon(root, g, { onTripChange } = {}) {
     }
     if (e.target.closest('[data-track="contact"]')) track(g.id, 'contact');
     const card = e.target.closest('[data-place]');
-    if (card && !e.target.closest('a, button')) openPlace(g, JSON.parse(card.dataset.place));
-  });
-  root.addEventListener('keydown', (e) => {
-    const card = e.target.closest?.('[data-place]');
-    if (card && e.target === card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openPlace(g, JSON.parse(card.dataset.place)); }
+    // Toda la tarjeta abre la ficha con el ratón/dedo; con teclado, el botón del nombre.
+    if (card && (!e.target.closest('a, button') || e.target.closest('[data-open-place]'))) openPlace(g, JSON.parse(card.dataset.place));
   });
 }
 
@@ -237,7 +234,7 @@ R.wifi = (g) => {
     <div class="wifi__label">${t('password')}</div>
     <div class="wifi__pass">${esc(w.password)}</div>
     <div class="actions"><button class="btn btn--ghost" data-copy="${esc(w.password)}">${icon('copy')}${t('copyPassword')}</button></div>
-    <div class="qr" aria-label="QR WiFi">${qrSvg(wifiString(w), 5)}</div>
+    <div class="qr" role="img" aria-label="QR WiFi">${qrSvg(wifiString(w), 5)}</div>
     <p class="muted small">${t('scanToConnect')}</p>
     ${w.notes ? `<p class="muted small">${esc(loc(w.notes))}</p>` : ''}
   </div>`;
@@ -260,7 +257,7 @@ R.checkin = (g, ctx) => {
       ${row({ icon: 'key-round', title: t('keys'), sub: t('keysSub'), body: `<p>${esc(loc(c.keys))}</p>` })}
       ${row({ icon: 'luggage', title: t('luggage'), sub: t('luggageSub'), body: `<p>${esc(loc(c.luggage))}</p>` })}
     </div>
-    ${steps ? `<h3 class="section-title">${icon('list-checks')}${t('checkoutList')}</h3><div class="stack">${steps}</div>` : ''}
+    ${steps ? `<h2 class="section-title">${icon('list-checks')}${t('checkoutList')}</h2><div class="stack">${steps}</div>` : ''}
     <div class="actions"><a class="btn btn--ghost btn--block" href="${directionsLink({ destination: home(g) })}" target="_blank" rel="noopener">${icon('navigation')}${t('howToGet')}</a></div>`;
 };
 
@@ -309,7 +306,7 @@ R.move = (g, ctx) => {
     : directionsLink({ origin: home(g), destination: sel, mode: 'transit' });
 
   return `
-    <h3 class="section-title">${icon('car-taxi-front')}${t('taxi')}</h3>
+    <h2 class="section-title">${icon('car-taxi-front')}${t('taxi')}</h2>
     <p class="muted small">${t('taxiTo')}</p>
     <div class="dest-grid">${dests.map((d) => `<button class="dest${d.id === sel.id ? ' is-active' : ''}" data-dest="${d.id}">${icon(d.icon)}${esc(d.name)}</button>`).join('')}</div>
     <div class="taxi-card" style="margin-top:14px">
@@ -324,13 +321,13 @@ R.move = (g, ctx) => {
       ${(tr.taxiPhones || []).map((p) => row({ icon: 'phone', title: esc(p.name), sub: esc(p.phone.replace(/^\+34/, '')), href: telLink(p.phone) })).join('')}
     </div>
 
-    <h3 class="section-title">${icon('train-front')}${t('stations')}</h3>
+    <h2 class="section-title">${icon('train-front')}${t('stations')}</h2>
     <div class="rows">
       ${(tr.nearestStations || []).map((s) => row({ icon: 'train-front', title: esc(s.name), sub: `${esc(s.lines)} · ${s.minutes} ${t('min')}`, href: directionsLink({ origin: home(g), destination: `${s.name}, ${g.property.city}`, mode: 'walking' }) })).join('')}
       ${row({ icon: 'bike', title: t('bikes'), sub: t('bikesSub'), href: 'https://www.bicimad.com/' })}
     </div>
 
-    <h3 class="section-title">${icon('plane')}${t('airport')}</h3>
+    <h2 class="section-title">${icon('plane')}${t('airport')}</h2>
     <div class="rows">
       ${(tr.airport || []).map((a, i) => row({ icon: ['bus', 'train-front', 'train-track', 'car-taxi-front'][i] || 'plane', title: esc(loc(a.title)), body: `<p>${esc(loc(a.text))}</p>` })).join('')}
     </div>`;
@@ -341,11 +338,11 @@ R.emergency = (g) => `
     ${(g.emergencies || []).map((e) => row({ icon: e.primary ? 'siren' : e.tone === 'green' ? 'ambulance' : e.tone === 'orange' ? 'flame' : 'shield', title: `${esc(e.phone)} · ${esc(loc(e.name))}`, href: telLink(e.phone), tone: e.primary ? 'fucsia' : e.tone || '' })).join('')}
   </div>
   <p class="muted small" style="margin:12px 4px">${t('emergencyNote')}</p>
-  <h3 class="section-title">${icon('hospital')}${t('nearestHospital')}</h3>
+  <h2 class="section-title">${icon('hospital')}${t('nearestHospital')}</h2>
   <div class="rows">
     ${g.hospital ? row({ icon: 'hospital', title: esc(g.hospital.name), sub: esc(loc(g.hospital.desc)), href: directionsLink({ origin: home(g), destination: g.hospital, mode: 'driving' }) }) : ''}
   </div>
-  <h3 class="section-title">${icon('pill')}${t('pharmacy24')}</h3>
+  <h2 class="section-title">${icon('pill')}${t('pharmacy24')}</h2>
   <div class="places" id="pharmacy-list"><div class="status status--loading">${t('loadingPlaces')}</div></div>`;
 
 R.contact = (g) => {
