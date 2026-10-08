@@ -67,3 +67,17 @@ Pasé **axe-core** (el auditor estándar de accesibilidad) por 13 pantallas de l
 - **"¿Tienes dudas?" entiende preguntas en los 5 idiomas** ("mot de passe wifi", "Wo ist die Apotheke?", "spazzatura"…).
 - **Los textos de la guía también pueden ir en varios idiomas** (`{ es, en, fr… }`). La demo trae la frase de bienvenida en los 5, y el editor del panel edita el español sin borrar las traducciones.
 - Siguiente paso natural, ya apuntado en CONCEPTO: **traducción automática con IA** al guardar la guía.
+
+## Tanda 9: batería de tests automáticos (52 pruebas, todas en verde)
+- **`npm test`**: 22 pruebas unitarias, sin navegador:
+  - Cálculo de distancias y ranking de "mejor valorados".
+  - Lectura del anuncio de Airbnb: formatos de hora AM/PM, avisos cuando falta un dato y **bloqueo de dominios que no son de Airbnb** (seguridad).
+  - API de lugares con OpenStreetMap y con Google, comprobando que **la clave nunca se filtra**.
+  - "¿Tienes dudas?" en varios idiomas, "Ahora mismo" a distintas horas y con lluvia, cuenta atrás, modo noche y enlaces de Uber, Maps, WhatsApp y teléfono.
+- **`npm run test:e2e`**: 30 pruebas en un navegador real que recorren la web como lo haría una persona:
+  - Huésped: tablón, levantar notas, zoom out, WiFi, check-out, Cerca de mí, guardar con ♥, Mi viaje (arrastrar y ordenar), taxi, dudas, emergencias, idiomas y modo noche.
+  - Propietario: importar con error y con datos, crear la guía, editar viendo el móvil, reordenar notas, enviar al huésped, analíticas y PDF de 4 páginas.
+  - **Accesibilidad sin violaciones** en 8 pantallas, y **ningún error de JavaScript**.
+- La red externa se simula, así que las pruebas son estables y no dependen de internet.
+- **CI en GitHub Actions** (`.github/workflows/test.yml`): las pruebas se ejecutan solas en cada push y guardan capturas de pantalla.
+- Los tests me sirvieron para afinar dos cosas. Una: la nota "Ahora mismo" ya mostraba "¡Hoy llegas!" porque las fechas de prueba caían en el día de hoy; era el comportamiento correcto y lo que hubo que cambiar fue el test. Otra: el auditor de contraste daba falsos avisos si medía a mitad de una animación.

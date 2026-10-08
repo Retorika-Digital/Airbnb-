@@ -273,7 +273,7 @@ export const getLang = () => lang;
 export function setLang(next) {
   lang = CODES.includes(next) ? next : 'es';
   try { localStorage.setItem('rh:lang', lang); } catch { /* ignore */ }
-  document.documentElement.lang = lang;
+  if (typeof document !== 'undefined') document.documentElement.lang = lang;
 }
 
 export function t(key, vars = {}) {

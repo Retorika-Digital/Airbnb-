@@ -4,7 +4,7 @@
 import { t, loc, locale } from './i18n.js';
 import { esc, icon, photo, scatter, refreshIcons, params } from './util.js';
 import { SECTIONS, hintFor, withDistance, openPlace } from './sections.js';
-import { nowTip, isNight } from './now.js';
+import { nowTip, isNight, countdown } from './now.js';
 import { getWeather, weatherInfo } from './places.js';
 import { getTrip } from './store.js';
 
@@ -14,20 +14,6 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 function fmtDate(iso) {
   const d = new Date(`${iso}T12:00:00`);
   return d.toLocaleDateString(locale(), { day: 'numeric', month: 'short' });
-}
-
-/** Texto de cuenta atrás según la fecha de hoy y la estancia. */
-export function countdown(stay, g, now = new Date()) {
-  const day = (iso) => new Date(`${iso}T00:00:00`);
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const toIn = Math.round((day(stay.in) - today) / 864e5);
-  const toOut = Math.round((day(stay.out) - today) / 864e5);
-  if (toIn > 1) return t('cd.before', { n: toIn });
-  if (toIn === 1) return t('cd.tomorrow');
-  if (toIn === 0) return t('cd.today', { t: g.checkin?.from || '' });
-  if (toOut > 0) return t('cd.during', { n: -toIn + 1, total: stay.nights });
-  if (toOut === 0) return t('cd.out', { t: g.checkin?.checkoutBy || '' });
-  return t('cd.after');
 }
 
 export function renderBoard(g, { guest, stay }) {

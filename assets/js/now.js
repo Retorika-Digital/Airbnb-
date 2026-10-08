@@ -1,6 +1,6 @@
 // "Ahora mismo": una nota del tablón que cambia según la hora, el tiempo y
 // el día de la estancia. Función pura → fácil de testear.
-import { getLang } from './i18n.js';
+import { getLang, t } from './i18n.js';
 
 const T = {
   es: {
@@ -94,3 +94,18 @@ export function isNight(now = new Date(), force = null) {
   const h = now.getHours();
   return h >= 21 || h < 7;
 }
+
+/** Texto de cuenta atrás según la fecha de hoy y la estancia. */
+export function countdown(stay, g, now = new Date()) {
+  const day = (iso) => new Date(`${iso}T00:00:00`);
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const toIn = Math.round((day(stay.in) - today) / 864e5);
+  const toOut = Math.round((day(stay.out) - today) / 864e5);
+  if (toIn > 1) return t('cd.before', { n: toIn });
+  if (toIn === 1) return t('cd.tomorrow');
+  if (toIn === 0) return t('cd.today', { t: g.checkin?.from || '' });
+  if (toOut > 0) return t('cd.during', { n: -toIn + 1, total: stay.nights });
+  if (toOut === 0) return t('cd.out', { t: g.checkin?.checkoutBy || '' });
+  return t('cd.after');
+}
+
