@@ -5,7 +5,7 @@
 //   &g=Laura            nombre del huésped (saludo personalizado)
 //   &in=2026-10-08&out=2026-10-11   fechas de la estancia (ticket, días de "Mi viaje")
 //   &embed=1            sin barra superior (vista previa del panel)
-import { t, loc, getLang, setLang } from './i18n.js';
+import { t, loc, getLang, setLang, LANGS } from './i18n.js';
 import { esc, icon, refreshIcons, params } from './util.js';
 import { loadGuide, track } from './store.js';
 import { SECTIONS, sectionById, renderSection, mountSection } from './sections.js';
@@ -191,10 +191,26 @@ btnLeft.addEventListener('click', () => {
   else state.boardCtl?.toggleOverview();
 });
 
-btnLang.addEventListener('click', () => {
-  setLang(getLang() === 'es' ? 'en' : 'es');
-  btnLang.textContent = getLang().toUpperCase();
-  route();
+btnLang.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const open = document.querySelector('.lang-menu');
+  if (open) { open.remove(); return; }
+  const menu = document.createElement('div');
+  menu.className = 'lang-menu';
+  menu.setAttribute('role', 'menu');
+  menu.innerHTML = LANGS.map((l) => `<button role="menuitemradio" aria-checked="${l.code === getLang()}" data-lang="${l.code}">
+    <span>${l.flag}</span>${l.label}</button>`).join('');
+  topbar.append(menu);
+  menu.querySelector('[aria-checked="true"]')?.focus();
+  menu.addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-lang]');
+    if (!b) return;
+    setLang(b.dataset.lang);
+    btnLang.textContent = getLang().toUpperCase();
+    menu.remove();
+    route();
+  });
+  setTimeout(() => addEventListener('click', () => menu.remove(), { once: true }));
 });
 
 app.addEventListener('click', (e) => { if (e.target.closest('[data-ask]')) openAsk(); });

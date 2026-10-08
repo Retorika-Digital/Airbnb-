@@ -281,7 +281,7 @@ function recoTabs(items, autoLabel) {
 function recoSection(kind) {
   return (g) => {
     const items = (g.recommendations?.[kind] || []).map((p) => withDistance(g, p));
-    const autoLabel = kind === 'eat' ? (getLang() === 'es' ? 'Mejor valorados cerca' : 'Top rated nearby') : (getLang() === 'es' ? 'Más cerca' : 'Nearby');
+    const autoLabel = kind === 'eat' ? t('topRated') : t('nearest');
     return `${recoTabs(items, autoLabel)}
       <div class="places" id="reco-list">${items.map((p, i) => placeCard(g, p, i, { kind })).join('')}</div>
       <p class="source" id="reco-source"></p>
@@ -439,7 +439,7 @@ function mountCheckin(g, root, ctx) {
   root.querySelectorAll('[data-step]').forEach((cb) => cb.addEventListener('change', () => {
     const steps = [...root.querySelectorAll('[data-step]:checked')].map((c) => Number(c.dataset.step));
     try { localStorage.setItem(`rh:checklist:${g.id}`, JSON.stringify(steps)); } catch { /* ignore */ }
-    if (steps.length === g.checkin.checkoutSteps.length) toast(getLang() === 'es' ? '¡Todo listo! Buen viaje ♡' : 'All done! Safe travels ♡', 'sparkles');
+    if (steps.length === g.checkin.checkoutSteps.length) toast(t('allDone'), 'sparkles');
   }));
   root.querySelector('[data-ics]')?.addEventListener('click', (e) => {
     e.preventDefault();

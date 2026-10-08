@@ -59,3 +59,11 @@ Pasé **axe-core** (el auditor estándar de accesibilidad) por 13 pantallas de l
   4. **Moverte** (metro, taxis, aeropuerto, la tarjeta "para el taxista") y **emergencias** con tu contacto.
 - Se abre desde el panel con los botones **"Guía en PDF"** (editor) y **"Guía completa imprimible"** (Enviar al huésped).
 - Lo he probado generando el PDF de verdad: salía una hoja en blanco por unos milímetros de más, así que compacté el formato de impresión y ahora son 4 páginas justas.
+
+## Tanda 8: 5 idiomas
+- La guía está ahora en **español, inglés, francés, italiano y alemán**. El botón de idioma abre un menú con banderas.
+- **El idioma se elige solo según el móvil del huésped**: un alemán la ve directamente en alemán. Si falta alguna traducción, sale en inglés.
+- Están traducidos también la nota "Ahora mismo", la cuenta atrás, las fechas y el tiempo.
+- **"¿Tienes dudas?" entiende preguntas en los 5 idiomas** ("mot de passe wifi", "Wo ist die Apotheke?", "spazzatura"…).
+- **Los textos de la guía también pueden ir en varios idiomas** (`{ es, en, fr… }`). La demo trae la frase de bienvenida en los 5, y el editor del panel edita el español sin borrar las traducciones.
+- Siguiente paso natural, ya apuntado en CONCEPTO: **traducción automática con IA** al guardar la guía.

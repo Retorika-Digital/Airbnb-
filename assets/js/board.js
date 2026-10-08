@@ -1,7 +1,7 @@
 // El tablón de corcho: notas, polaroid, ticket de la estancia, postal del
 // tiempo, el camino punteado que las une, la vista general (zoom out) y la
 // animación de "levantar la nota" al abrir una sección.
-import { t, loc, getLang } from './i18n.js';
+import { t, loc, locale } from './i18n.js';
 import { esc, icon, photo, scatter, refreshIcons, params } from './util.js';
 import { SECTIONS, hintFor, withDistance, openPlace } from './sections.js';
 import { nowTip, isNight } from './now.js';
@@ -13,7 +13,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function fmtDate(iso) {
   const d = new Date(`${iso}T12:00:00`);
-  return d.toLocaleDateString(getLang() === 'es' ? 'es-ES' : 'en-GB', { day: 'numeric', month: 'short' });
+  return d.toLocaleDateString(locale(), { day: 'numeric', month: 'short' });
 }
 
 /** Texto de cuenta atrás según la fecha de hoy y la estancia. */
@@ -124,7 +124,7 @@ function nowNote(g, stay, rain = false) {
     <span class="pin pin--verde"></span>
     <span class="note--now__icon">${icon(tip.icon)}</span>
     <span class="note--now__body">
-      <span class="note--now__label">${getLang() === 'es' ? 'Ahora mismo' : 'Right now'}</span>
+      <span class="note--now__label">${t('rightNow')}</span>
       <span class="note__title">${esc(tip.title)}</span>
       <span class="note__hint">${esc(tip.text)}</span>
     </span>
@@ -306,7 +306,7 @@ export function mountBoard(root, g, { onOpen, lastSection, stay: stayRef = null 
     card.querySelector('.postcard__desc').textContent = loc(desc);
     card.querySelector('.postcard__stamp').innerHTML = icon(ic);
     const days = wx.daily.time.slice(1, 4).map((d, k) => {
-      const name = new Date(`${d}T12:00:00`).toLocaleDateString(getLang() === 'es' ? 'es-ES' : 'en-GB', { weekday: 'short' });
+      const name = new Date(`${d}T12:00:00`).toLocaleDateString(locale(), { weekday: 'short' });
       return `<span>${name} ${Math.round(wx.daily.temperature_2m_max[k + 1])}°</span>`;
     }).join('');
     card.insertAdjacentHTML('beforeend', `<div class="postcard__days">${days}</div>`);

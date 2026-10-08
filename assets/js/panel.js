@@ -450,7 +450,9 @@ const EDITOR_GROUPS = [
 ];
 
 function fieldHtml(f, g) {
-  const v = getPath(g, f.path);
+  let v = getPath(g, f.path);
+  // Textos multidioma {es, en, …}: en el editor se edita el español.
+  if (v && typeof v === 'object' && !Array.isArray(v)) v = v.es ?? '';
   const id = `f-${f.path.replace(/\./g, '-')}`;
   const empty = v == null || v === '' || (Array.isArray(v) && !v.length);
   let input;
@@ -542,7 +544,11 @@ views.editar = async (id) => {
     main.querySelectorAll('[data-path]').forEach((el) => {
       const { path, type } = el.dataset;
       const lines = el.value.split('\n').map((s) => s.trim()).filter(Boolean);
-      if (type === 'text') setPath(g, path, el.value.trim());
+      if (type === 'text') {
+        const cur = getPath(g, path);
+        if (cur && typeof cur === 'object' && !Array.isArray(cur)) cur.es = el.value.trim();
+        else setPath(g, path, el.value.trim());
+      }
       if (type === 'lines') setPath(g, path, lines);
       if (type === 'pairs') {
         const [k1, k2] = el.dataset.keys.split(',');

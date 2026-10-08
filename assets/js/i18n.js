@@ -1,6 +1,10 @@
 // Textos de interfaz ES / EN. El contenido de la guía puede ser un string
 // o un objeto { es, en } — loc() elige el idioma activo.
 
+import { EXTRA, LANGS } from './i18n-extra.js';
+
+export { LANGS };
+
 const DICT = {
   es: {
     welcomeHi: '¡Hola, {name}!',
@@ -120,6 +124,10 @@ const DICT = {
     'cd.out': 'Hoy es tu check-out · antes de las {t}',
     'cd.after': '¡Gracias por venir! ♡',
     firstHint: 'Pellizca o toca aquí para ver todo tu tablón',
+    rightNow: 'Ahora mismo',
+    topRated: 'Mejor valorados cerca',
+    nearest: 'Más cerca',
+    allDone: '¡Todo listo! Buen viaje ♡',
   },
   en: {
     welcomeHi: 'Hi, {name}!',
@@ -239,33 +247,43 @@ const DICT = {
     'cd.out': 'Check-out today · before {t}',
     'cd.after': 'Thanks for staying! ♡',
     firstHint: 'Pinch or tap here to see your whole board',
+    rightNow: 'Right now',
+    topRated: 'Top rated nearby',
+    nearest: 'Nearby',
+    allDone: 'All done! Safe travels ♡',
   },
 };
+
+Object.assign(DICT, EXTRA);
+const CODES = LANGS.map((l) => l.code);
+const LOCALES = { es: 'es-ES', en: 'en-GB', fr: 'fr-FR', it: 'it-IT', de: 'de-DE' };
+export const locale = () => LOCALES[lang] || 'es-ES';
 
 let lang = (() => {
   try {
     const saved = localStorage.getItem('rh:lang');
     if (saved) return saved;
   } catch { /* sin almacenamiento */ }
-  return (navigator.language || 'es').toLowerCase().startsWith('es') ? 'es' : 'en';
+  const nav = (navigator.language || 'es').slice(0, 2).toLowerCase();
+  return CODES.includes(nav) ? nav : 'en';
 })();
 
 export const getLang = () => lang;
 
 export function setLang(next) {
-  lang = DICT[next] ? next : 'es';
+  lang = CODES.includes(next) ? next : 'es';
   try { localStorage.setItem('rh:lang', lang); } catch { /* ignore */ }
   document.documentElement.lang = lang;
 }
 
 export function t(key, vars = {}) {
-  const str = DICT[lang][key] ?? DICT.es[key] ?? key;
+  const str = DICT[lang][key] ?? (lang !== 'es' ? DICT.en[key] : undefined) ?? DICT.es[key] ?? key;
   if (Array.isArray(str)) return str;
   return str.replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? ''));
 }
 
 export function loc(value) {
   if (value == null) return '';
-  if (typeof value === 'object' && !Array.isArray(value)) return value[lang] ?? value.es ?? '';
+  if (typeof value === 'object' && !Array.isArray(value)) return value[lang] ?? (lang !== 'es' ? value.en : undefined) ?? value.es ?? '';
   return value;
 }

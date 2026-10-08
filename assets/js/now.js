@@ -25,6 +25,27 @@ const T = {
   },
 };
 
+Object.assign(T, {
+  fr: {
+    breakfast: ['Bonjour ☕', 'Petit-déjeuner tout près : {p}'], lunch: ['Une petite faim ?', 'Je vous conseille {p}'],
+    afternoon: ['Pour cet après-midi', '{p} : {d}'], rainy: ['Il pleut ☔', 'Plan à l’abri : {p}'],
+    dinner: ['L’heure du dîner 🍷', '{p} est à {m} min'], late: ['Retour tardif ?', 'Un taxi pour rentrer, sans app →'],
+    checkout: ['Départ aujourd’hui', 'Avant {t}. Revoyez la liste →'], arrival: ['Vous arrivez aujourd’hui !', 'Arrivée dès {t}. Comment entrer →'],
+  },
+  it: {
+    breakfast: ['Buongiorno ☕', 'Colazione qui vicino: {p}'], lunch: ['Fame?', 'Ti consiglio {p}'],
+    afternoon: ['Per questo pomeriggio', '{p}: {d}'], rainy: ['Oggi piove ☔', 'Piano al coperto: {p}'],
+    dinner: ['Ora di cena 🍷', '{p} è a {m} min'], late: ['Rientri tardi?', 'Un taxi per casa, senza app →'],
+    checkout: ['Oggi il check-out', 'Entro le {t}. Ripassa la lista →'], arrival: ['Arrivi oggi!', 'Check-in dalle {t}. Come entrare →'],
+  },
+  de: {
+    breakfast: ['Guten Morgen ☕', 'Frühstück in der Nähe: {p}'], lunch: ['Hunger?', 'Mein Tipp: {p}'],
+    afternoon: ['Für heute Nachmittag', '{p}: {d}'], rainy: ['Heute regnet es ☔', 'Plan für drinnen: {p}'],
+    dinner: ['Zeit fürs Abendessen 🍷', '{p} ist {m} Min. entfernt'], late: ['Spät unterwegs?', 'Taxi nach Hause, ohne App →'],
+    checkout: ['Heute Check-out', 'Bis {t}. Check die Liste →'], arrival: ['Heute kommst du an!', 'Check-in ab {t}. So kommst du rein →'],
+  },
+});
+
 const fill = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? '');
 const isoDay = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
@@ -32,7 +53,7 @@ const isoDay = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,
  * @returns {{ key, icon, title, text, action: {section?, place?, dest?} }}
  */
 export function nowTip(g, { now = new Date(), rain = false, stay = null, lang = getLang() } = {}) {
-  const tx = T[lang] || T.es;
+  const tx = T[lang] || T.en;
   const h = now.getHours();
   const eat = g.recommendations?.eat || [];
   const todo = g.recommendations?.do || [];
