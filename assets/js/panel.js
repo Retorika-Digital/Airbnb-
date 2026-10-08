@@ -506,6 +506,7 @@ views.editar = async (id) => {
         <div><h1>${esc(g.property.name)}</h1><p>Edita tu guía · los cambios se ven en el móvil de la derecha al guardar.</p></div>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <a class="btn btn--ghost" href="${guideUrl(g.id)}" target="_blank" rel="noopener">${icon('external-link')}Abrir guía</a>
+          <a class="btn btn--ghost" href="print.html?guide=${encodeURIComponent(g.id)}" target="_blank" rel="noopener">${icon('printer')}Guía en PDF</a>
           <a class="btn btn--primary" href="#/huesped/${g.id}">${icon('send')}Enviar al huésped</a>
         </div>
       </div>
@@ -678,6 +679,7 @@ views.huesped = async (id) => {
           <button class="btn btn--primary" id="print">${icon('printer')}Imprimir cartel</button>
           <button class="btn btn--ghost" id="dl-qr">${icon('download')}Descargar QR</button>
         </div>
+        <a class="btn btn--ghost btn--block" style="margin-top:10px" href="print.html?guide=${encodeURIComponent(g.id)}" target="_blank" rel="noopener">${icon('book-open')}Guía completa imprimible (PDF, A4)</a>
         <div class="link-copy" style="margin-top:14px"><span style="flex:1" id="glink"></span><button id="copy-link" aria-label="Copiar">${icon('copy')}</button></div>
       </section>
     </div>`;

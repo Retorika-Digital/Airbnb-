@@ -50,3 +50,12 @@ Pasé **axe-core** (el auditor estándar de accesibilidad) por 13 pantallas de l
   - Los títulos van en orden correcto.
 - **Teclado**: el nombre de cada sitio es un botón real que abre la ficha. Antes había botones dentro de botones.
 - **Panel**: los iconos del menú en móvil tienen nombre, la sección activa se marca (`aria-current`) y todos los campos tienen su etiqueta.
+
+## Tanda 7: guía imprimible / PDF
+- **`print.html?guide=…`** es un cuaderno A4 de 4 páginas, listo para imprimir o guardar como PDF:
+  1. **Portada** con la polaroid del piso, el nombre, la dirección y un QR a la guía del móvil.
+  2. **WiFi** (con QR para conectarse), llegada y salida, la lista "antes de irte" para tachar, y la casa (normas, equipamiento, basura).
+  3. **Dónde comer y qué hacer**: cada sitio lleva **su propio QR** para ver cómo llegar andando, y tu nota manuscrita.
+  4. **Moverte** (metro, taxis, aeropuerto, la tarjeta "para el taxista") y **emergencias** con tu contacto.
+- Se abre desde el panel con los botones **"Guía en PDF"** (editor) y **"Guía completa imprimible"** (Enviar al huésped).
+- Lo he probado generando el PDF de verdad: salía una hoja en blanco por unos milímetros de más, así que compacté el formato de impresión y ahora son 4 páginas justas.

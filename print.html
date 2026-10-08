@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Guía imprimible · retorika Home</title>
+  <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/print.css">
+</head>
+<body class="booklet">
+  <div class="toolbar">
+    <a href="panel.html" class="btn btn--ghost btn--sm">← Panel</a>
+    <span>Vista de impresión · A4</span>
+    <button class="btn btn--primary btn--sm" onclick="print()">Imprimir / guardar PDF</button>
+  </div>
+  <main id="book"><p style="padding:40px">Preparando tu guía…</p></main>
+  <script src="assets/vendor/qrcode.js"></script>
+  <script type="module" src="assets/js/print.js"></script>
+</body>
+</html>

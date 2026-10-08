@@ -8,7 +8,7 @@ const SHELL = [
   'assets/js/app.js', 'assets/js/board.js', 'assets/js/sections.js', 'assets/js/i18n.js', 'assets/js/store.js',
   'assets/js/util.js', 'assets/js/places.js', 'assets/js/places-config.js', 'assets/js/mobility.js', 'assets/js/map.js',
   'assets/vendor/lucide.min.js', 'assets/vendor/leaflet/leaflet.js', 'assets/vendor/leaflet/leaflet.css', 'assets/vendor/qrcode.js',
-  'assets/img/logo.svg',
+  'assets/img/logo.svg', 'assets/js/faq.js', 'assets/js/now.js',
 ];
 
 self.addEventListener('install', (e) => {
