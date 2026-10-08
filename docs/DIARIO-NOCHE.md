@@ -87,3 +87,18 @@ Pasé **axe-core** (el auditor estándar de accesibilidad) por 13 pantallas de l
 - **Iconos 14 veces más ligeros**: en lugar de cargar la librería completa (355 KB), un script (`tools/build-icons.mjs`) genera un archivo solo con los iconos que se usan (25 KB). La guía carga antes con datos móviles.
 - **Linter** (ESLint) pasado sobre todo el código: limpio, salvo un falso aviso de configuración.
 - Tests: **22 unitarios + 31 en navegador, todos en verde**.
+
+## Tanda 11: pruebas "a lo bruto" (casos raros)
+Probé la web en situaciones que no son las normales:
+
+| Caso | Resultado |
+|---|---|
+| Guía que no existe | ✅ Mensaje "Ups… guía no encontrada" |
+| Guía casi vacía (sin WiFi, sin recomendaciones…) | ✅ Todo carga sin errores |
+| **Textos maliciosos** (`<script>`, `onerror=alert`) en todos los campos | ✅ No se ejecuta nada en la guía, el PDF ni el panel |
+| **Sin conexión** en "Cerca de mí" | 🐞 Decía "no hay sitios" → ahora avisa **"No hay conexión"** con botón **Reintentar** |
+| **Datos guardados corruptos** en el navegador | 🐞 La guía y las analíticas se rompían → ahora se recuperan solas |
+| Pantalla de 320 px y nombres muy largos | ✅ Sin desbordes horizontales |
+| Parámetros absurdos en la URL (fechas al revés, hora 99, HTML en el nombre) | ✅ Se ignoran o se muestran como texto |
+
+- Nuevos tests para todo esto: **27 unitarios + 33 en navegador, todos en verde**.

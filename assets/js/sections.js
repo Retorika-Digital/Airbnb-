@@ -469,7 +469,8 @@ async function mountNearby(g, root) {
     listEl.innerHTML = `<div class="status status--loading">${t('loadingPlaces')}</div>`;
     const cats = cat === 'all' ? ['supermarket', 'pharmacy', 'cafe', 'transit'] : [cat];
     try {
-      const results = await Promise.all(cats.map((c) => findNearby(c, g.property.lat, g.property.lng, { limit: cat === 'all' ? 2 : 8 }).catch(() => ({ places: [] }))));
+      const results = await Promise.all(cats.map((c) => findNearby(c, g.property.lat, g.property.lng, { limit: cat === 'all' ? 2 : 8 }).catch(() => ({ places: [], failed: true }))));
+      if (results.every((r) => r.failed)) throw new Error('offline');
       const places = results.flatMap((r) => r.places).sort((a, b) => a.distance - b.distance);
       layer?.clearLayers();
       if (!places.length) { listEl.innerHTML = `<div class="status">${t('noPlaces')}</div>`; return; }
@@ -483,7 +484,9 @@ async function mountNearby(g, root) {
       srcEl.textContent = google ? 'Datos: Google Places' : 'Datos © OpenStreetMap';
       refreshIcons();
     } catch {
-      listEl.innerHTML = `<div class="status">${t('placesError')}</div>`;
+      listEl.innerHTML = `<div class="status">${t('placesError')}<br><button class="btn btn--ghost btn--sm" data-retry style="margin-top:10px">${icon('refresh-cw')}${t('retry')}</button></div>`;
+      refreshIcons();
+      listEl.querySelector('[data-retry]').addEventListener('click', () => load(cat));
     }
   };
 

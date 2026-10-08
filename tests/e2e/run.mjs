@@ -206,6 +206,41 @@ await check('modo noche con guirnalda', async () => {
   expect(await p.evaluate(() => document.body.classList.contains('is-night')), 'clase is-night');
   await shot(p, 'noche');
 });
+await check('seguridad: textos maliciosos en la guía no ejecutan código (XSS)', async () => {
+  const evil = `<img src=x onerror=alert(1)>'"><script>alert(2)</script>`;
+  const x = await newPage(browser);
+  let dialogs = 0;
+  x.on('dialog', (dlg) => { dialogs++; dlg.dismiss(); });
+  await x.goto(`${BASE}/`);
+  await x.evaluate((ev) => localStorage.setItem('rh:guide:xss', JSON.stringify({
+    id: 'xss', property: { name: ev, address: ev, city: ev, lat: 40.42, lng: -3.7, photos: [ev] },
+    host: { name: ev, whatsapp: '1', phone: ev, email: ev }, wifi: { ssid: ev, password: ev },
+    checkin: { building: ev, checkoutSteps: [ev] }, house: { rules: [ev], howItWorks: [{ title: ev, text: ev }] },
+    recommendations: { eat: [{ id: 'e', name: ev, desc: ev, category: ev, lat: 40.42, lng: -3.7 }], do: [] },
+    transport: { taxiPhones: [{ name: ev, phone: '1' }] }, emergencies: [{ name: ev, phone: '112' }],
+  })), evil);
+  for (const h of ['', '#/s/house', '#/s/wifi', '#/s/checkin', '#/s/eat', '#/s/move', '#/s/emergency', '#/s/contact']) {
+    await x.goto(`${BASE}/?guide=xss${h}`);
+    await x.waitForTimeout(250);
+  }
+  await x.goto(`${BASE}/?guide=xss#/s/eat`);
+  await x.click('#reco-list .place__name');
+  await x.waitForTimeout(300);
+  for (const u of ['/print.html?guide=xss', '/panel.html#/editar/xss', '/panel.html#/huesped/xss', '/panel.html']) {
+    await x.goto(BASE + u);
+    await x.waitForTimeout(400);
+  }
+  eq(dialogs, 0, 'alertas ejecutadas');
+  eq(x.errors.length, 0, `errores: ${x.errors.join(' | ')}`);
+  await x.context().close();
+});
+await check('sin conexión: Cerca de mí avisa y permite reintentar', async () => {
+  const o = await newPage(browser);
+  await o.route(/overpass/, (r) => r.abort());
+  await o.goto(`${BASE}/?guide=granvia#/s/nearby`);
+  await o.waitForSelector('#nearby-list [data-retry]', { timeout: 20000 });
+  await o.context().close();
+});
 await check('sin errores de JavaScript en la guía', async () => eq(p.errors.length, 0, `errores: ${p.errors.join(' | ')}`));
 
 console.log('\nPanel del propietario');

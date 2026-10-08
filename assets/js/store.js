@@ -11,7 +11,12 @@ const KEY_STATS = (id) => `rh:stats:${id}`;
 function readJSON(key, fallback) {
   try {
     const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
+    if (!raw) return fallback;
+    const v = JSON.parse(raw);
+    // Datos corruptos o de otra forma (p. ej. "null") → valor por defecto.
+    if (fallback === null) return v && typeof v === 'object' && !Array.isArray(v) ? v : null;
+    if (v == null || typeof v !== typeof fallback || Array.isArray(v) !== Array.isArray(fallback)) return fallback;
+    return typeof fallback === 'object' && !Array.isArray(fallback) ? { ...fallback, ...v } : v;
   } catch {
     return fallback;
   }
