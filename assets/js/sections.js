@@ -1,6 +1,6 @@
 // Secciones de la guía. Cada una define cómo se ve su nota en el tablón
 // (color, chincheta, pista) y cómo se despliega al "levantarla".
-import { t, loc, getLang } from './i18n.js';
+import { t, loc } from './i18n.js';
 import { esc, icon, photo, toast, copyText, qrSvg, refreshIcons, openSheet } from './util.js';
 import { findNearby } from './places.js';
 import { CATEGORIES } from './places-config.js';

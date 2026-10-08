@@ -81,3 +81,9 @@ Pasé **axe-core** (el auditor estándar de accesibilidad) por 13 pantallas de l
 - La red externa se simula, así que las pruebas son estables y no dependen de internet.
 - **CI en GitHub Actions** (`.github/workflows/test.yml`): las pruebas se ejecutan solas en cada push y guardan capturas de pantalla.
 - Los tests me sirvieron para afinar dos cosas. Una: la nota "Ahora mismo" ya mostraba "¡Hoy llegas!" porque las fechas de prueba caían en el día de hoy; era el comportamiento correcto y lo que hubo que cambiar fue el test. Otra: el auditor de contraste daba falsos avisos si medía a mitad de una animación.
+
+## Tanda 10: revisión final y un fallo importante encontrado por los tests
+- **🐞 Fallo real corregido.** Al pasar de una sección a otra sin recargar, los clics se iban "duplicando". Después de visitar varias secciones, tocar ♥ guardaba y quitaba el sitio a la vez, así que parecía que no funcionaba. Ahora cada sección limpia lo suyo al cambiar. Añadí una **prueba de regresión** y comprobé que falla con el código antiguo y pasa con el nuevo.
+- **Iconos 14 veces más ligeros**: en lugar de cargar la librería completa (355 KB), un script (`tools/build-icons.mjs`) genera un archivo solo con los iconos que se usan (25 KB). La guía carga antes con datos móviles.
+- **Linter** (ESLint) pasado sobre todo el código: limpio, salvo un falso aviso de configuración.
+- Tests: **22 unitarios + 31 en navegador, todos en verde**.

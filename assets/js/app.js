@@ -160,7 +160,8 @@ function showSection(id, extra = {}) {
       </article>
     </section>
     ${id !== 'contact' ? askFab() : ''}`;
-  mountSection(id, g, ctx, app);
+  // Cada render crea un .detail nuevo: los listeners no se acumulan entre secciones.
+  mountSection(id, g, ctx, app.querySelector('.detail'));
   setLeftButton('layout-dashboard');
   refreshIcons();
   if (!extra || !Object.keys(extra).length) {

@@ -132,6 +132,18 @@ await check('Comer: guardar en Mi viaje (♥) y sugerencias automáticas', async
   await p.click('[data-filter="__auto"]');
   await p.waitForFunction(() => document.querySelector('#reco-list')?.textContent.includes('Casa Labra'));
 });
+await check('regresión: navegar entre secciones no duplica los clics (♥ cambia una vez)', async () => {
+  for (const sec of ['house', 'wifi', 'do', 'eat']) {
+    await p.evaluate((h) => { location.hash = h; }, `#/s/${sec}`);
+    await p.waitForSelector(`.sheet__title`);
+  }
+  await p.waitForSelector('#reco-list [data-heart]');
+  const btn = (await p.$$('#reco-list [data-heart]'))[3];
+  const before = await btn.evaluate((b) => b.classList.contains('is-on'));
+  await btn.click();
+  eq(await btn.evaluate((b) => b.classList.contains('is-on')), !before, 'el corazón cambia de estado');
+  await btn.click();
+});
 await check('Mi viaje: polaroids, hilo rojo, nota propia, arrastrar y ordenar', async () => {
   await p.goto(`${BASE}/?guide=granvia&in=2026-10-08&out=2026-10-11#/s/trip`);
   await p.waitForSelector('[data-trip-item]');

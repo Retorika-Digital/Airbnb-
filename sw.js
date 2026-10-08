@@ -1,13 +1,13 @@
 // Service worker: la guía sigue funcionando sin datos (turistas en roaming).
 // - App y guías: "network first" con copia en caché.
 // - Mapas, fotos y fuentes: "stale-while-revalidate".
-const VERSION = 'rh-v1';
+const VERSION = 'rh-v2';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest',
   'assets/css/base.css', 'assets/css/guide.css',
   'assets/js/app.js', 'assets/js/board.js', 'assets/js/sections.js', 'assets/js/i18n.js', 'assets/js/store.js',
   'assets/js/util.js', 'assets/js/places.js', 'assets/js/places-config.js', 'assets/js/mobility.js', 'assets/js/map.js',
-  'assets/vendor/lucide.min.js', 'assets/vendor/leaflet/leaflet.js', 'assets/vendor/leaflet/leaflet.css', 'assets/vendor/qrcode.js',
+  'assets/vendor/icons.js', 'assets/vendor/leaflet/leaflet.js', 'assets/vendor/leaflet/leaflet.css', 'assets/vendor/qrcode.js',
   'assets/img/logo.svg', 'assets/js/faq.js', 'assets/js/now.js',
 ];
 
