@@ -143,9 +143,22 @@ sw.js                      modo sin conexión
 
 ## 6. Hoja de ruta propuesta
 
+> **Ya hecho en el prototipo:**
+> - "¿Tienes dudas?" con buscador dentro de la guía (sin IA, funciona sin conexión).
+> - Interfaz en 5 idiomas.
+> - Nota "Ahora mismo" contextual y modo noche.
+> - Ficha de sitio con la nota del anfitrión.
+> - Reordenar Mi viaje arrastrando.
+> - Subida de fotos.
+> - Guía en PDF.
+> - Analíticas con las preguntas de los huéspedes.
+> - Accesibilidad AA.
+> - 60 tests automáticos y CI.
+>
+> Detalle en [DIARIO-NOCHE.md](DIARIO-NOCHE.md).
+
 **Fase 1 · MVP real (lo que falta para tener clientes)**
 - Base de datos y cuentas: Supabase (Postgres + Auth + Storage). Las tablas serían `guides`, `bookings`, `events`, `trips` y `recommendations`.
-- Subir fotos propias, ahora mismo se usan URLs.
 - Analíticas en el servidor, que sustituyan a las del navegador.
 - Dominio y enlaces cortos (`home.retorika.es/granvia`).
 - Pasar la guía y el panel por una auditoría de accesibilidad.

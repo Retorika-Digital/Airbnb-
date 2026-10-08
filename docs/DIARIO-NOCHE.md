@@ -2,6 +2,18 @@
 
 Qué se ha ido añadiendo mientras dormías, tanda por tanda.
 
+> **Resumen rápido**
+> - **Nuevo para el huésped:**
+>   - Buscador "¿Tienes dudas?" y nota "Ahora mismo" según la hora y el tiempo.
+>   - Modo noche con guirnalda y ficha de cada sitio con la nota del anfitrión.
+>   - "Mi viaje" se reordena arrastrando y la ruta se puede optimizar.
+>   - 5 idiomas, cuenta atrás de la estancia y guía en PDF.
+> - **Nuevo para el propietario:** fotos propias, notas por recomendación y ver qué preguntan sus huéspedes.
+> - **Calidad:**
+>   - Accesibilidad sin errores e iconos 14 veces más ligeros.
+>   - **60 tests automáticos** con CI.
+>   - **3 fallos encontrados y corregidos gracias a las pruebas**: los clics se duplicaban al navegar, los datos corruptos rompían la guía y faltaba el aviso de sin conexión.
+
 ## Tanda 1: "¿Tienes dudas?" de verdad
 - **Buscador de respuestas dentro de la guía.** El botón "¿Tienes dudas?" ya no abre WhatsApp directamente: abre un pósit grande con un buscador.
   - Encuentra la respuesta en la propia guía al instante y sin conexión (WiFi, check-out, basura, maletas, normas, taxis…). Entiende español e inglés.
