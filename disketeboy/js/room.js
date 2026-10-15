@@ -313,7 +313,12 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
     view.tDolly = THREE.MathUtils.clamp(view.tDolly, ...LIM.dolly);
   };
   const dirFor = (yaw, pitch) => new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
-  function updateCamera(k = 0.16) {
+  let lastFrame = 0;
+  /** Suaviza la cámara según el tiempo real (igual de rápida a 20 que a 120 fps). */
+  function updateCamera(now = 0, instant = false) {
+    const dt = lastFrame ? Math.min(0.1, (now - lastFrame) / 1000) : 1 / 60;
+    lastFrame = now;
+    const k = instant || REDUCED ? 1 : 1 - Math.exp(-dt * 11);
     view.yaw += (view.tYaw - view.yaw) * k;
     view.pitch += (view.tPitch - view.pitch) * k;
     view.dolly += (view.tDolly - view.dolly) * k;
@@ -382,18 +387,25 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
   rug.position.set(PILE.x, 0.004, PILE.z + 0.25);
   scene.add(rug);
 
-  // Lámpara de techo
+  // Lámpara de techo: pantalla roja con un difusor que brilla por debajo
   const pendant = new THREE.Group();
   pendant.add(boxMesh(0.01, 0.42, 0.01, mat({ color: '#2b2622' }), 0, -0.21, 0, { cast: false }));
-  const pendantShade = solid(new THREE.ConeGeometry(0.17, 0.16, 24, 1, true), mat({ color: '#c8553d', roughness: 0.5, side: THREE.DoubleSide }), { cast: false });
-  pendantShade.position.y = -0.48;
+  const pendantShade = solid(new THREE.ConeGeometry(0.15, 0.15, 24, 1, true), mat({ color: '#c8553d', roughness: 0.5 }), { cast: false });
+  pendantShade.position.y = -0.495;
   pendant.add(pendantShade);
-  const pendantBulb = new THREE.Mesh(new THREE.SphereGeometry(0.04, 12, 8), new THREE.MeshBasicMaterial({ color: '#ffe2b0', toneMapped: false }));
-  pendantBulb.position.y = -0.55;
-  pendant.add(pendantBulb);
+  const diffuserMat = new THREE.MeshBasicMaterial({ color: '#ffe2b0', toneMapped: false });
+  const diffuser = new THREE.Mesh(new THREE.CircleGeometry(0.146, 24), diffuserMat);
+  diffuser.rotation.x = Math.PI / 2;
+  diffuser.position.y = -0.568;
+  pendant.add(diffuser);
   pendant.position.set(fill.position.x, ROOM.height, fill.position.z);
   scene.add(pendant);
-  fill.position.y = ROOM.height - 0.62;
+  fill.position.y = ROOM.height - 0.66;
+
+  // Luz que acompaña a la cámara: ilumina la caja que tienes en la mano.
+  const handLight = new THREE.PointLight('#fff3e2', 0, 3, 2);
+  handLight.position.set(0.25, 0.3, 0.15);
+  camera.add(handLight);
 
   // Ventana con cielo según la hora
   const win = { x: DESK.x, y: 1.62, w: 1.0, h: 0.86 };
@@ -813,7 +825,7 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
     raf = 0;
     stepTweens(now);
     const moving = cameraMoving();
-    updateCamera(REDUCED ? 1 : 0.16);
+    updateCamera(now);
     if (inspected && !tweens.has(inspected.id)) holdInFront();
     const pulsing = stepPulse(now);
     const dimming = stepDim();
@@ -822,6 +834,7 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
       needsRender = false;
     }
     if (tweens.size || cameraMoving() || pulsing || dimming) kick();
+    else lastFrame = 0;
   }
 
   // ---------------------------------------------------------------- sincronizar con la colección
@@ -994,9 +1007,11 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
   function stepDim() {
     const m = dim.material;
     const diff = dimTarget - m.opacity;
+    handLight.intensity = (m.opacity / 0.55) * 2.6;
     if (Math.abs(diff) < 0.005) {
       m.opacity = dimTarget;
       dim.visible = dimTarget > 0;
+      handLight.intensity = (dimTarget / 0.55) * 2.6;
       return false;
     }
     dim.visible = true;
@@ -1296,7 +1311,7 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
   }
   window.addEventListener('resize', resize);
   resize();
-  updateCamera(1);
+  updateCamera(0, true);
 
   return {
     sync,
@@ -1332,6 +1347,10 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
     },
     get count() {
       return entries.size;
+    },
+    /** true mientras haya cajas en movimiento (lo usan las pruebas para esperar). */
+    get busy() {
+      return tweens.size > 0 || cameraMoving();
     },
     debug: { scene, camera, renderer, entries, view },
     dispose() {

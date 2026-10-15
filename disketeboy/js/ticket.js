@@ -27,9 +27,9 @@ export function ticketLines(games, now = new Date()) {
   const st = stats(games);
   const rule = '-'.repeat(WIDTH);
   const lines = [
-    { text: center('DISKETEBOY'), big: true },
-    { text: center('TIENDA DE TU COLECCIÓN') },
-    { text: center('C/ del Cartucho, 64 · 8 bits') },
+    { text: center('DISKETEBOY'), big: true, align: 'center' },
+    { text: center('TIENDA DE TU COLECCIÓN'), align: 'center' },
+    { text: center('C/ del Cartucho, 64 · 8 bits'), align: 'center' },
     { text: rule },
     { text: row(`${pad2(now.getDate())}/${pad2(now.getMonth() + 1)}/${now.getFullYear()} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`, `Nº ${String(hash(games.map((g) => g.id).join()) % 1e6).padStart(6, '0')}`) },
     { text: rule },
@@ -46,7 +46,7 @@ export function ticketLines(games, now = new Date()) {
   if (plats.length) {
     lines.push({ text: 'POR PLATAFORMA', bold: true });
     for (const [pid, n] of plats.slice(0, 6)) lines.push({ text: row(`${n} x ${platform(pid).name}`, n === 1 ? 'caja' : 'cajas') });
-    if (plats.length > 6) lines.push({ text: row(`${plats.length - 6} plataformas más`, '…') });
+    if (plats.length > 6) lines.push({ text: row(`${plats.length - 6} plataforma${plats.length - 6 === 1 ? '' : 's'} más`, '…') });
     lines.push({ text: rule });
   }
   lines.push({ text: row('JUEGOS', num(st.total)) });
@@ -58,14 +58,14 @@ export function ticketLines(games, now = new Date()) {
   lines.push({ text: row('PENDIENTE DE PAGO:', `${st.by.pendiente} JUEGOS`), big: true });
   if (st.by.pendiente) {
     const f = pileForecast(st.by.pendiente, 1, now);
-    lines.push({ text: row('A 1 juego al mes, fin en', `${MONTHS[f.month]} ${f.year}`) });
+    lines.push({ text: row('A 1 al mes, acabas en', `${MONTHS[f.month]} ${f.year}`) });
   } else {
-    lines.push({ text: center('¡PILA DE LA VERGÜENZA A CERO!') });
+    lines.push({ text: center('¡PILA DE LA VERGÜENZA A CERO!'), align: 'center' });
   }
   lines.push({ text: rule });
-  lines.push({ text: center('GRACIAS POR JUGAR') });
-  lines.push({ text: center('No se admiten devoluciones') });
-  lines.push({ text: center('de horas jugadas') });
+  lines.push({ text: center('GRACIAS POR JUGAR'), align: 'center' });
+  lines.push({ text: center('No se admiten devoluciones'), align: 'center' });
+  lines.push({ text: center('de horas jugadas'), align: 'center' });
   return lines;
 }
 
@@ -103,13 +103,23 @@ export function renderTicket(games, now = new Date()) {
   }
   ctx.fillStyle = '#26231f';
   ctx.textBaseline = 'top';
+  // La fuente de repuesto puede ser más ancha que VT323: se ajusta al papel.
+  const avail = W - 34;
+  const fit = (size, text) => {
+    ctx.font = `${size}px ${MONO}`;
+    const w = ctx.measureText(text).width;
+    if (w > avail) ctx.font = `${Math.floor((size * avail) / w)}px ${MONO}`;
+  };
+  ctx.font = `21px ${MONO}`;
+  const base = Math.min(21, Math.floor((21 * avail) / ctx.measureText('M'.repeat(WIDTH)).width));
   let y = top;
   for (const l of lines) {
-    ctx.font = `${l.big ? 28 : 21}px ${MONO}`;
-    if (l.bold) {
-      ctx.fillText(l.text, 17, y);
-      ctx.fillText(l.text, 17.6, y);
-    } else ctx.fillText(l.text, 17, y);
+    const text = l.align === 'center' ? l.text.trim() : l.text;
+    const x = l.align === 'center' ? W / 2 : 17;
+    ctx.textAlign = l.align === 'center' ? 'center' : 'left';
+    fit(l.big ? Math.round(base * 1.33) : base, text);
+    ctx.fillText(text, x, y);
+    if (l.bold) ctx.fillText(text, x + 0.6, y);
     y += l.big ? lh + 8 : lh;
   }
   // Código de barras
@@ -121,8 +131,8 @@ export function renderTicket(games, now = new Date()) {
     ctx.fillRect(x, y, w, 46);
     x += w + 1 + Math.floor(br() * 3);
   }
-  ctx.font = `18px ${MONO}`;
   ctx.textAlign = 'center';
+  fit(18, 'disketeboy · tu colección en tu habitación');
   ctx.fillText('disketeboy · tu colección en tu habitación', W / 2, y + 54);
   ctx.restore();
   return c;

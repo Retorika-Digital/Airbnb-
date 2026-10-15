@@ -119,6 +119,8 @@ tidyBtn.setAttribute('aria-pressed', String(store.getSettings().tidy));
 // ------------------------------------------------------------------ ticket y compartir
 async function printTicket() {
   const { renderTicket } = await import('./ticket.js');
+  // Que la fuente de terminal esté cargada antes de imprimir (máximo 1,5 s de espera).
+  await Promise.race([document.fonts?.load('21px VT323').catch(() => {}), new Promise((r) => setTimeout(r, 1500))]);
   const canvasTicket = renderTicket(store.getGames());
   const img = document.getElementById('ticket-img');
   img.src = canvasTicket.toDataURL('image/png');

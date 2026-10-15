@@ -50,3 +50,35 @@ Lo que se ha ido haciendo mientras dormías, tanda por tanda.
   - Las baldas libres tienen libros, una planta, un dado de 20 caras, un trofeo, una consolita o un robotito, que se retiran cuando hace falta sitio.
   - Al llenarse una estantería **se desbloquea otra** (hasta 5).
 - **Solo se redibuja cuando algo se mueve**, así que con la habitación quieta no gasta batería.
+
+## Tanda 3: las cajas cobran vida
+
+- **Cada juego que añades cae del techo** a su sitio, rebota un poco y suena un «plof». Si importas muchos a la vez es una **lluvia de cajas**: cada una cae con un pequeño retraso y el sonido se modera para no saturar.
+- **Coger una caja**: tócala, o recorre las cajas con ← → y pulsa Enter.
+  - Vuela hacia ti, el fondo se oscurece y una luz te la ilumina.
+  - Puedes **girarla con el dedo** o darle la vuelta con «Girar caja»: **en la contraportada está tu reseña**, con la nota en un círculo grande, tus horas, la fecha y un código de barras.
+  - Mientras la tienes en la mano, ← → pasan a la caja siguiente, como si hojearas la estantería.
+  - «Editar» sube la consola y te lleva a la ficha del juego.
+- **Botón «Ordenar habitación»**: todas las cajas vuelan a la estantería, y al volver a pulsarlo regresan a su caos natural. Cuando cambias el estado de un juego, la caja viaja sola: si lo terminas, pasa del escritorio a la estantería.
+- **Pasar el ratón** por una caja la ilumina y muestra su título.
+- La consola bajada se aparta a una esquina en pantallas anchas para no tapar la pila.
+- **Arreglos**:
+  - La cámara se suavizaba según los fotogramas por segundo y en ordenadores lentos tardaba muchísimo en volver. Ahora va por tiempo real.
+  - La consola bajada tapaba los botones de la caja que tenías en la mano.
+
+## Tanda 4: Steam, DisketePrinter y compartir
+
+- **Importar de Steam**:
+  - Pegas tu perfil (URL, nombre o SteamID) y lee tu biblioteca pública con la API oficial.
+  - Los juegos **que nunca has abierto van directos a la pila de la vergüenza**, los de las últimas 2 semanas al escritorio y el resto a la estantería, con sus horas.
+  - Si un juego ya estaba, no se duplica.
+  - Sin clave de Steam en el servidor, lo explica y ofrece la demo.
+- **Portadas reales de Steam** con un plan B: si el navegador no puede leerlas, se piden a nuestra función `api/cover`. Esa función solo acepta ids numéricos y solo habla con Steam: no es un proxy abierto.
+- **El lomo toma el color de la portada.** Para no bajar cientos de portadas, se usa la imagen pequeña de Steam (5 KB). Ese color sirve también para **ordenar la estantería por color**, el arcoíris de cajas.
+- **DisketePrinter**: un **ticket de papel térmico** de 384 px de ancho, como las impresoras de 58 mm, que sale «imprimiéndose» con su sonido. Lleva:
+  - Lo que más has jugado y cuántas cajas tienes por plataforma.
+  - Totales y nota media.
+  - **«PENDIENTE DE PAGO: 7 JUEGOS»**, y cuándo acabarías la pila a un juego al mes.
+  - Se descarga o se comparte desde el móvil.
+- **«Compartir»** hace una foto de tu habitación con un pie («26 juegos · 968 h jugadas · 7 en la pila de la vergüenza»), lista para Reddit o WhatsApp.
+- **Arreglo**: si la fuente de terminal no había cargado, el texto del ticket se salía del papel. Ahora espera a la fuente y, si aun así no está, ajusta el tamaño al ancho.
