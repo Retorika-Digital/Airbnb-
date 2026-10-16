@@ -62,6 +62,7 @@ Borradores para el lanzamiento (ver [LANZAMIENTO.md](LANZAMIENTO.md)). Cambia `T
 > - Unplayed ones sit on top, still shrink-wrapped.
 > - Lent games get a post-it, and the app reminds you: *"Pedro has had it for 143 days"*.
 > - **"What should we play tonight?"**: you set the players and the time you have, and a roulette picks one of the games that fit. Then the box flies out of the Kallax.
+> - **Import your BGG collection** in one go: games with no logged plays land on top, still shrink-wrapped.
 >
 > It's free and has no sign-up: TU-ENLACE
 >
@@ -93,4 +94,5 @@ Borradores para el lanzamiento (ver [LANZAMIENTO.md](LANZAMIENTO.md)). Cambia `T
 > Thanks for all the comments! A few answers:
 > - **Is it free?** Yes, with no ads and no account. If you want to support it there's a coffee button in Credits, but everything works without paying.
 > - **Where is my data?** In your browser. Use Settings → Save a backup now and then.
-> - **Can I import from BoardGameGeek / Moxfield?** Not yet: it's next on the list.
+> - **Can I import from BoardGameGeek?** Yes: Board games → Import from BoardGameGeek.
+> - **And from Moxfield / ManaBox?** Not yet, but you can paste a decklist and it counts the cards.

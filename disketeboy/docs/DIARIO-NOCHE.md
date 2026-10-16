@@ -4,10 +4,10 @@ Lo que se ha ido haciendo mientras dormías, tanda por tanda.
 
 > **Resumen rápido para el café ☕**
 > - **Qué hay**: una consola propia (la DisketeBoy) con **3 disquetes**: videojuegos, juegos de mesa y cartas. Detrás, una **habitación 3D** donde cada juego acaba en su sitio: la pila de la vergüenza, la estantería, el escritorio, la caja de abandonados, la Kallax o las cajitas de mazo.
-> - **Extras**: importar de Steam, el ticket de la DisketePrinter, el enlace «Visita mi habitación», la ruleta de «¿Qué jugamos esta noche?», 3 temas de habitación y un gato.
+> - **Extras**: importar de Steam y de BoardGameGeek, el ticket de la DisketePrinter, el enlace «Visita mi habitación», la ruleta de «¿Qué jugamos esta noche?», 3 temas de habitación y un gato.
 > - **Cómo verlo**: `node disketeboy/server.mjs` y abre http://localhost:5180/?demo=1. Las capturas están en el [README](../README.md), y el **vídeo para Reddit** en [`docs/video/`](video/).
 > - **Idiomas**: español e inglés. Sale en el idioma del navegador y se cambia en Ajustes.
-> - **Calidad**: 62 pruebas unitarias y 22 en navegador, todas verdes, y axe-core sin errores de accesibilidad.
+> - **Calidad**: 68 pruebas unitarias y 23 en navegador, todas verdes, y axe-core sin errores de accesibilidad.
 > - **Lo que te toca a ti**: está en [LANZAMIENTO.md](LANZAMIENTO.md), en el apartado «Antes de publicar nada»: dominio, comprobar el nombre, clave de Steam y crear la página de Ko-fi. El botón de donar ya está hecho: solo hay que pegar el enlace en `js/config.js`.
 
 ## Tanda 1: la consola DisketeBoy
@@ -273,3 +273,24 @@ Los subreddits grandes del plan de lanzamiento son en inglés, así que tocaba.
 - **Cómo está grabado**: el navegador de este entorno dibuja el 3D muy despacio, así que grabar la pantalla habría salido a tirones. En vez de eso, el reloj de la página es de mentira y solo avanza 1/30 de segundo entre foto y foto, incluidas las animaciones CSS de la consola. Salen 756 fotos perfectas que ffmpeg convierte en vídeo.
 - La herramienta se queda en `tools/video.mjs`: si cambias la web, `node disketeboy/tools/video.mjs` (o `… es`) lo vuelve a grabar en unos 3 minutos.
 - Los juegos de Steam del vídeo son de mentira (nombres conocidos, sin portadas), igual que en las pruebas. Las portadas que se ven están dibujadas con código.
+
+## Tanda 14: importar de BoardGameGeek
+
+Para r/boardgames es el gancho: casi todo el mundo tiene allí su colección apuntada.
+
+- **Disquete azul → «Importar de BoardGameGeek»**: escribes tu usuario (o pegas la URL de tu colección) y se importa lo que tienes marcado como «Own», sin expansiones.
+- **Cómo se colocan**:
+  - Los jugadores y la duración vienen de BGG.
+  - El **tamaño de la caja** se calcula por la duración: las partidas cortas van en caja pequeña y las de dos horas, en caja enorme.
+  - Con un 9 o más de nota, el juego va a **favoritos**.
+  - **Sin partidas → encima de la Kallax, aún con su plástico.** Pero solo si apuntas partidas en BGG: si no apuntas ninguna, no se da nada por «sin estrenar».
+- **No duplica**: cada juego guarda su id de BGG. Además, un juego de mesa con el mismo título ya no entra dos veces aunque tenga otro tamaño de caja.
+- **El servidor** (`api/bgg.mjs`, también como función de Netlify):
+  - BGG tarda en preparar una colección la primera vez y responde «202, vuelve luego»; se reintenta solo 3 veces.
+  - Si BGG pide clave (`BGG_TOKEN`), si el usuario no existe o si está saturado, la consola lo explica en tu idioma.
+- **Ojo**: desde este entorno no se puede llegar a boardgamegeek.com, así que está probado con respuestas simuladas, no con la web real. Está apuntado en la lista de lanzamiento para probarlo con tu usuario.
+- **Pruebas**: 68 unitarias (antes 62) y 23 en navegador (antes 22):
+  - Leer el XML de BGG, con entidades, notas «N/A» y errores.
+  - Los reintentos del 202 y la clave.
+  - Cómo se colocan los juegos y que no se dupliquen.
+  - El recorrido completo, simulado, con axe-core en la pantalla nueva.

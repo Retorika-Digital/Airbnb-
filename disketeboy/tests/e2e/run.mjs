@@ -429,6 +429,41 @@ try {
     await page.close();
   });
 
+  await check('BoardGameGeek (simulado): importa la colección a la Kallax y no duplica', async () => {
+    const page = await newPage(browser);
+    const collection = {
+      user: 'Aldie',
+      games: [
+        { id: 13, name: 'CATAN', minPlayers: 3, maxPlayers: 4, minutes: 120, plays: 12, rating: 7.5 },
+        { id: 822, name: 'Carcassonne', minPlayers: 2, maxPlayers: 5, minutes: 45, plays: 30, rating: 9.1 },
+        { id: 174430, name: 'Gloomhaven', minPlayers: 1, maxPlayers: 4, minutes: 120, plays: 0, rating: null },
+      ],
+    };
+    await page.route(/\/api\/bgg/, (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify(collection) }));
+    await page.goto(BASE);
+    await booted(page);
+    await page.click('#d-mesa');
+    await page.click('#b-bgg');
+    await page.fill('#g-usuario', 'https://boardgamegeek.com/collection/user/Aldie');
+    await page.click('#g-buscar');
+    await page.waitForSelector('#g-importar');
+    expect((await page.textContent('.steam-status')).includes('1 sin partidas'), 'avisa de los que van encima con plástico');
+    await page.click('#g-importar');
+    await page.waitForSelector('text=¡A la Kallax! 3 juegos nuevos');
+    const boards = await page.evaluate(() => window.disketeboy.store.getBoards().map((g) => `${g.title}:${g.status}:${g.bggId}`).sort());
+    eq(boards.join(), 'CATAN:jugado:13,Carcassonne:favorito:822,Gloomhaven:pendiente:174430', 'juegos importados');
+    await idle(page);
+    eq(await page.evaluate(() => window.disketeboy.room.count), 3, 'cajas en la habitación');
+    await page.evaluate(() => window.disketeboy.raise());
+    await page.click('#b-bgg');
+    await page.fill('#g-usuario', 'Aldie');
+    await page.click('#g-buscar');
+    await page.click('#g-importar');
+    await page.waitForSelector('text=0 juegos nuevos, 3 ya los tenías');
+    eq(page.errors.join('\n'), '', 'errores en consola');
+    await page.close();
+  });
+
   await check('cartas: disquete verde, mazo con récord y lista, y carpeta en la Kallax', async () => {
     const page = await newPage(browser);
     await page.goto(BASE);
@@ -596,7 +631,7 @@ try {
     const deckId = await page.evaluate(() => window.disketeboy.store.getCards().find((g) => g.kind === 'mazo').id);
     const binderId = await page.evaluate(() => window.disketeboy.store.getCards().find((g) => g.kind === 'carpeta').id);
     for (const [screen, params] of [
-      ['mesa', {}], ['mesaLista', { filter: 'todos' }], ['ficha', { id: boardId }], ['mesaNuevo', {}], ['queJugamos', {}], ['prestamos', {}], ['mesaStats', {}],
+      ['mesa', {}], ['mesaLista', { filter: 'todos' }], ['ficha', { id: boardId }], ['mesaNuevo', {}], ['bgg', {}], ['queJugamos', {}], ['prestamos', {}], ['mesaStats', {}],
       ['cartas', {}], ['cartasLista', { kind: 'mazo' }], ['ficha', { id: deckId }], ['listaMazo', { id: deckId }], ['ficha', { id: binderId }], ['mazoNuevo', {}], ['carpetaNueva', {}], ['cartasStats', {}],
     ]) {
       await page.evaluate(([s, p]) => window.disketeboy.device.go(s, p), [screen, params]);

@@ -46,7 +46,7 @@ Gestionas la colección desde la DisketeBoy, una consola de diseño propio con u
 
 Coges una caja, la giras y **en la contraportada está tu reseña**, con tu nota y tus horas.
 
-**Disquete de juegos de mesa**: tus juegos de mesa en una Kallax, con el número de jugadores en el lomo. Los sin estrenar van encima con su plástico, y los prestados llevan un pósit: «Lo tiene Pedro desde hace 143 días». Con **«¿Qué jugamos esta noche?»** dices cuántos sois y cuánto tiempo tenéis, una ruleta elige y la caja sale volando de la Kallax.
+**Disquete de juegos de mesa**: tus juegos de mesa en una Kallax, con el número de jugadores en el lomo. Los sin estrenar van encima con su plástico, y los prestados llevan un pósit: «Lo tiene Pedro desde hace 143 días». Con **«¿Qué jugamos esta noche?»** dices cuántos sois y cuánto tiempo tenéis, una ruleta elige y la caja sale volando de la Kallax. Tu colección de **BoardGameGeek** se importa de una vez: lo que no tiene partidas va encima, aún con su plástico.
 
 **Disquete de cartas**, para cualquier juego de cartas: los **mazos** son cajitas delante de la tele, con su récord («23V · 11D (68%)») y la lista, que cuenta las cartas sola. Las **carpetas** van a los cubos de abajo de la Kallax, con el número de cartas y el valor estimado.
 
@@ -64,6 +64,8 @@ Coges una caja, la giras y **en la contraportada está tu reseña**, con tu nota
 node disketeboy/server.mjs                      # http://localhost:5180
 # con importación real de Steam (clave gratis en https://steamcommunity.com/dev/apikey):
 STEAM_API_KEY=xxxx node disketeboy/server.mjs
+# si BoardGameGeek pide clave para su API (registro de aplicaciones):
+BGG_TOKEN=xxxx node disketeboy/server.mjs
 ```
 
 | | URL |
@@ -109,13 +111,14 @@ En Netlify se sirve en `/disketeboy/`, con sus funciones en `netlify/functions/d
 | `tools/video.mjs` | Graba el vídeo promocional fotograma a fotograma |
 | `api/steam.mjs` | Lee tu biblioteca pública de Steam |
 | `api/cover.mjs` | Plan B para las portadas de Steam (solo admite ids numéricos) |
+| `api/bgg.mjs` | Lee tu colección de BoardGameGeek (lo que tienes, sin expansiones) |
 
 ## Pruebas
 
 ```bash
 npm ci                                        # en la raíz: Playwright y axe-core
-node --test disketeboy/tests/unit/*.test.mjs  # 62 pruebas unitarias
-node disketeboy/tests/e2e/run.mjs             # 22 pruebas en Chromium (E2E_SHOTS=1 guarda capturas)
+node --test disketeboy/tests/unit/*.test.mjs  # 68 pruebas unitarias
+node disketeboy/tests/e2e/run.mjs             # 23 pruebas en Chromium (E2E_SHOTS=1 guarda capturas)
 ```
 
 En GitHub se ejecutan solas con `.github/workflows/disketeboy.yml` cada vez que cambia algo en `disketeboy/`.

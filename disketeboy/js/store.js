@@ -116,6 +116,8 @@ export function cleanGame(raw) {
     game.lentTo = cleanText(raw.lentTo, 40).replace(/\s+/g, ' ');
     game.lentAt = game.lentTo ? validDate(raw.lentAt) || now : null;
     game.lastPlayed = validDate(raw.lastPlayed);
+    const bggId = Number(raw.bggId);
+    game.bggId = Number.isInteger(bggId) && bggId > 0 && bggId < 1e8 ? bggId : null;
   }
   return game;
 }
@@ -240,11 +242,10 @@ export function removeGame(id) {
  */
 export function importGames(list) {
   const s = get();
-  const keys = new Set();
-  for (const g of s.games) {
-    if (g.steamAppId) keys.add(`steam:${g.steamAppId}`);
-    keys.add(`t:${g.platform}:${titleKey(g.title)}`);
-  }
+  // Un juego ya está si coincide su id de Steam o de BGG, o su título (en juegos de mesa,
+  // aunque la caja sea de otro tamaño; en el resto, en la misma plataforma)
+  const keysOf = (g) => [g.steamAppId && `steam:${g.steamAppId}`, g.bggId && `bgg:${g.bggId}`, `t:${g.kind === 'mesa' ? 'mesa' : g.platform}:${titleKey(g.title)}`].filter(Boolean);
+  const keys = new Set(s.games.flatMap(keysOf));
   const ids = [];
   let skipped = 0;
   const base = Date.now();
@@ -259,14 +260,12 @@ export function importGames(list) {
       skipped++;
       continue;
     }
-    const k1 = g.steamAppId ? `steam:${g.steamAppId}` : null;
-    const k2 = `t:${g.platform}:${titleKey(g.title)}`;
-    if ((k1 && keys.has(k1)) || keys.has(k2)) {
+    const mine = keysOf(g);
+    if (mine.some((k) => keys.has(k))) {
       skipped++;
       continue;
     }
-    if (k1) keys.add(k1);
-    keys.add(k2);
+    for (const k of mine) keys.add(k);
     s.games.push(g);
     ids.push(g.id);
   }

@@ -46,3 +46,37 @@ export function boardStats(boards) {
 
 /** Elige uno al azar (con un generador inyectable para poder probarlo). */
 export const pickOne = (list, random = Math.random) => (list.length ? list[Math.floor(random() * list.length)] : null);
+
+/** Tamaño de caja aproximado según lo que dura la partida (BGG no da medidas). */
+export function boxForMinutes(minutes) {
+  if (minutes && minutes <= 20) return 'mesa-s';
+  if (minutes && minutes <= 45) return 'mesa-m';
+  if (minutes && minutes >= 120) return 'mesa-xl';
+  return 'mesa-l';
+}
+
+/**
+ * Tu colección de BoardGameGeek → juegos de la Kallax.
+ * Si apuntas partidas en BGG, los que no tienen ninguna van encima, sin estrenar.
+ * Si no apuntas ninguna, no damos nada por «sin estrenar». Con un 9 o más, favorito.
+ */
+export function mapBggGames(list) {
+  const games = (Array.isArray(list) ? list : []).filter((g) => g && Number.isInteger(g.id) && g.name);
+  const logsPlays = games.some((g) => g.plays > 0);
+  return games.map((g) => {
+    const unplayed = logsPlays && !g.plays;
+    const score = Number.isFinite(g.rating) && g.rating > 0 ? Math.round(g.rating) : null;
+    return {
+      kind: 'mesa',
+      title: g.name,
+      bggId: g.id,
+      minPlayers: g.minPlayers || 1,
+      maxPlayers: g.maxPlayers || g.minPlayers || 4,
+      minutes: g.minutes || 45,
+      plays: g.plays || 0,
+      score,
+      platform: boxForMinutes(g.minutes),
+      status: unplayed ? 'pendiente' : score !== null && score >= 9 ? 'favorito' : 'jugado',
+    };
+  });
+}

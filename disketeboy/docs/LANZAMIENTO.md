@@ -8,6 +8,7 @@ Cómo sacarlo a Reddit para que la gente lo use, lo comparta y done. Está orden
 - [ ] **Dominio y despliegue.** Un dominio corto (`disketeboy.app` o similar). Netlify ya sirve la carpeta en `/disketeboy/`, pero para el lanzamiento queda mejor en la raíz de su propio dominio y en su propio repositorio.
 - [ ] **Comprobar el nombre.** Que «DisketeBoy» esté libre como dominio y como marca (EUIPO y OEPM). La terminación *Boy* recuerda a Nintendo: el diseño ya es propio, pero si el nombre diera problemas, es mejor cambiarlo **antes** de lanzar que después.
 - [ ] **Clave de Steam** en las variables de entorno de Netlify (`STEAM_API_KEY`, gratis en steamcommunity.com/dev/apikey). Sin ella, la importación ofrece la demo.
+- [ ] **BoardGameGeek**: la importación ya está hecha, pero no la he podido probar contra la web real, porque desde aquí no hay acceso. Pruébala con tu usuario. Si BGG pide clave (en 2025 empezó a pedir que se registren las aplicaciones), pídela en su web y ponla en `BGG_TOKEN`, en Netlify.
 - [ ] **Probar en móviles de verdad**: un iPhone (Safari) y un Android de gama media (Chrome). La mitad de Reddit entra desde el móvil.
 - [ ] **Página de donaciones** (Ko-fi, Buy Me a Coffee o Patreon). El botón ya está hecho: pega el enlace en `js/config.js` (`DONATE_URL`) y aparece en Créditos y bajo el ticket. Mientras esté vacío, no sale nada.
 - [x] **Vista previa del enlace**: `og.jpg` (1200×630, la estantería arcoíris con el gato y el logo, sin texto en ningún idioma) y sus etiquetas en `index.html`. Así, cada enlace compartido se ve bonito en Reddit, WhatsApp y Discord. **Al publicar**, cambia `og:image` por la dirección completa (`https://tu-dominio/og.jpg`): algunas webs no entienden la dirección corta.
@@ -91,7 +92,7 @@ En Reddit gana el vídeo corto y sin voz. Guion (el grabado lo sigue casi tal cu
 ## 6. Lo siguiente (hoja de ruta)
 
 1. **Cuentas opcionales y sincronizar** entre móvil y ordenador (Supabase), y enlaces de visita cortos.
-2. **Importar de BoardGameGeek** (juegos de mesa) **y de ManaBox o Moxfield** (cartas).
+2. **Importar de ManaBox o Moxfield** (cartas). La de BoardGameGeek ya está hecha.
 3. **El resumen del año de tu habitación** en diciembre.
 4. **Escanear el código de barras** con la cámara para añadir juegos físicos.
 5. **Mascota y temas** como ventajas para mecenas.

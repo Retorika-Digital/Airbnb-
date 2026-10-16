@@ -1,6 +1,7 @@
 // Servidor de desarrollo de DisketeBoy, sin dependencias (Node 18+):
 //   node disketeboy/server.mjs                         → http://localhost:5180
 //   STEAM_API_KEY=xxxx node disketeboy/server.mjs      → con importación real de Steam
+//   BGG_TOKEN=xxxx node disketeboy/server.mjs          → si BoardGameGeek pide clave para su API
 // Las mismas funciones /api/* se despliegan en Netlify (ver netlify/functions/disketeboy-*.mjs).
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
@@ -8,10 +9,11 @@ import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import steam from './api/steam.mjs';
 import cover from './api/cover.mjs';
+import bgg from './api/bgg.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const PORT = Number(process.env.PORT) || 5180;
-const ROUTES = { '/api/steam': steam, '/api/cover': cover };
+const ROUTES = { '/api/steam': steam, '/api/cover': cover, '/api/bgg': bgg };
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',

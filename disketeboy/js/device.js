@@ -8,7 +8,7 @@ import { mapSteamGames } from './steam.js';
 import { demoCollection } from './demo.js';
 import { TCGS, TCG_IDS, tcg, DECK_STATUSES, DECK_STATUS_LABEL, BINDER_STATUSES, BINDER_STATUS_LABEL, deckCount, recordText, euros, cardsStats } from './cards.js';
 import { sfx, setSound } from './audio.js';
-import { whatToPlay, playersText, minutesText, lentText, boardStats, pickOne, TIME_OPTIONS } from './boards.js';
+import { whatToPlay, playersText, minutesText, lentText, boardStats, pickOne, TIME_OPTIONS, mapBggGames } from './boards.js';
 import { clamp } from './util.js';
 import { donateUrl } from './config.js';
 import { t, tp, mark, num, LANGS, LANG_NAME, getLang } from './i18n.js';
@@ -29,6 +29,15 @@ const STEAM_ERROR = {
   no_encontrado: mark('No encuentro ningún perfil llamado «{name}».'),
   privado: mark('Tu perfil o tu lista de juegos es privada. En Steam: Perfil → Editar perfil → Privacidad → «Detalles del juego: público».'),
   red: mark('Steam no responde ahora mismo. Inténtalo en un rato.'),
+  sin_conexion: mark('No hay conexión con el servidor. ¿Estás sin internet?'),
+};
+const BGG_ERROR = {
+  usuario: mark('Eso no parece un usuario de BoardGameGeek.'),
+  bgg_clave: mark('BoardGameGeek pide una clave para usar su API y este servidor aún no la tiene.'),
+  bgg_ocupado: mark('BoardGameGeek está saturado. Inténtalo en un minuto.'),
+  bgg_no_encontrado: mark('No encuentro a «{name}» en BoardGameGeek.'),
+  bgg_en_cola: mark('BoardGameGeek está preparando tu colección. Vuelve a intentarlo en unos segundos.'),
+  bgg_red: mark('BoardGameGeek no responde ahora mismo. Inténtalo en un rato.'),
   sin_conexion: mark('No hay conexión con el servidor. ¿Estás sin internet?'),
 };
 const MONTHS = [mark('enero'), mark('febrero'), mark('marzo'), mark('abril'), mark('mayo'), mark('junio'), mark('julio'), mark('agosto'), mark('septiembre'), mark('octubre'), mark('noviembre'), mark('diciembre')];
@@ -159,7 +168,7 @@ export function createDevice(root, actions) {
 
   /** Repinta la pantalla actual si muestra datos que han cambiado (sin robar el foco a un campo). */
   function refresh() {
-    if (['boot', 'nuevo', 'mesaNuevo', 'mazoNuevo', 'carpetaNueva', 'listaMazo', 'resena', 'steam', 'confirmar', 'ruleta'].includes(current.name)) return;
+    if (['boot', 'nuevo', 'mesaNuevo', 'mazoNuevo', 'carpetaNueva', 'listaMazo', 'resena', 'steam', 'bgg', 'confirmar', 'ruleta'].includes(current.name)) return;
     const active = document.activeElement;
     if (active && screen.contains(active) && active.matches('input, textarea, select')) return;
     const keepFocus = screen.contains(active) ? Math.max(0, focusIndex()) : null;
@@ -530,6 +539,7 @@ export function createDevice(root, actions) {
           !boards.length && !visit ? item(t('Kallax vacía: ¿cargo la demo?'), loadDemo, { cls: 'hint', id: 'demo-hint-mesa' }) : null,
           item(visit ? t('Su Kallax') : t('Mi Kallax'), () => go('mesaLista', { filter: 'todos' }), { meta: String(bs.total), id: 'b-coleccion' }),
           visit ? null : item(t('Añadir juego de mesa'), () => go('mesaNuevo'), { id: 'b-nuevo' }),
+          visit ? null : item(t('Importar de BoardGameGeek'), () => go('bgg'), { id: 'b-bgg' }),
           item(t('¿Qué jugamos esta noche?'), () => go('queJugamos'), { id: 'b-quejugamos' }),
           item(t('Sin estrenar'), () => go('mesaLista', { filter: 'pendiente' }), { meta: String(bs.unplayed), id: 'b-sinestrenar' }),
           item(t('Préstamos'), () => go('prestamos'), { meta: String(bs.lent.length), id: 'b-prestamos' }),
@@ -643,6 +653,56 @@ export function createDevice(root, actions) {
         h('button', { type: 'submit', class: 'item primary', id: 'bn-anadir', 'data-nav': '' }, h('span', { class: 'item-label', text: t('Añadir a mi Kallax') })),
       );
       return view(t('Añadir juego de mesa'), form);
+    },
+
+    bgg() {
+      const input = h('input', { id: 'g-usuario', 'data-nav': '', placeholder: t('Tu usuario de BGG'), 'aria-label': t('Tu usuario de BoardGameGeek'), autocomplete: 'off' });
+      const status = h('div', { class: 'steam-status', role: 'status' });
+      const form = h(
+        'form',
+        { class: 'form', onsubmit: (e) => (e.preventDefault(), lookup()) },
+        input,
+        h('button', { type: 'submit', class: 'item primary', 'data-nav': '', id: 'g-buscar' }, h('span', { class: 'item-label', text: t('Buscar mi colección') })),
+      );
+      async function lookup() {
+        const value = input.value.trim();
+        if (!value) return (sfx.error(), input.focus());
+        status.replaceChildren(p(t('Conectando con BoardGameGeek… (la primera vez puede tardar unos segundos)')));
+        const res = await actions.bggLookup(value);
+        if (res.error) {
+          sfx.error();
+          status.replaceChildren(p(BGG_ERROR[res.error] ? t(BGG_ERROR[res.error], { name: value.replace(/\/+$/, '').split('/').pop() }) : res.message || t('No he podido leer tu colección.')));
+          focusAt(navs().length - 1);
+          return;
+        }
+        const mapped = mapBggGames(res.games);
+        if (!mapped.length) {
+          status.replaceChildren(p(t('Tu colección de BoardGameGeek está vacía, o no tienes nada marcado como «Own».')));
+          return;
+        }
+        const unplayed = mapped.filter((g) => g.status === 'pendiente').length;
+        status.replaceChildren(
+          p(unplayed ? t('He encontrado {n} juegos. {unplayed} sin partidas: irán encima de la Kallax, aún con su plástico.', { n: mapped.length, unplayed }) : t('He encontrado {n} juegos.', { n: mapped.length })),
+          h(
+            'div',
+            { class: 'list' },
+            item(t('Importar {n} juegos', { n: mapped.length }), () => {
+              const { added, skipped } = store.importGames(mapped);
+              toast(skipped ? t('¡A la Kallax! {added} juegos nuevos, {skipped} ya los tenías.', { added, skipped }) : t('¡A la Kallax! {added} juegos nuevos.', { added }));
+              home();
+              if (added) actions.showZone('kallax');
+            }, { cls: 'primary', id: 'g-importar' }),
+          ),
+        );
+        sfx.select();
+        focusAt(navs().length - 1);
+      }
+      return view(
+        t('Importar de BoardGameGeek'),
+        p(t('Escribe tu usuario de BoardGameGeek (o pega la URL de tu colección). Se importa lo que tienes marcado como «Own», sin expansiones.')),
+        form,
+        status,
+      );
     },
 
     queJugamos() {
@@ -959,6 +1019,7 @@ export function createDevice(root, actions) {
         t('Privacidad'),
         p(t('Tu colección se guarda solo en este navegador. No hay cuentas, ni cookies, ni anuncios.')),
         p(t('Steam: solo se lee la biblioteca que tu perfil ya enseña en público. Pasa por nuestro servidor para hablar con Steam y no se guarda.')),
+        p(t('BoardGameGeek: igual, solo se lee la colección que ya es pública.')),
         p(t('Las portadas se cargan desde Steam.')),
         p(t('El enlace de visita lleva tu colección dentro del propio enlace, detrás de la #, y nunca pasa por ningún servidor.')),
         p(t('Guarda de vez en cuando una copia de seguridad: si borras los datos del navegador, la colección se va con ellos.')),

@@ -79,6 +79,16 @@ const actions = {
       return { error: 'sin_conexion' };
     }
   },
+  async bggLookup(user) {
+    try {
+      const res = await fetch(`api/bgg?user=${encodeURIComponent(user)}`, { signal: AbortSignal.timeout(20000) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return { error: data.error || 'bgg_red', message: data.message };
+      return data;
+    } catch {
+      return { error: 'sin_conexion' };
+    }
+  },
   printTicket,
   shareVisit,
   leaveVisit,
