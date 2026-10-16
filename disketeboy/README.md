@@ -15,6 +15,8 @@ Coges una caja, la giras y **en la contraportada está tu reseña**, con tu nota
 
 **Disquete de juegos de mesa**: tus juegos de mesa en una Kallax, con el número de jugadores en el lomo. Los sin estrenar van encima con su plástico, y los prestados llevan un pósit: «Lo tiene Pedro desde hace 143 días». Con **«¿Qué jugamos esta noche?»** dices cuántos sois y cuánto tiempo tenéis, una ruleta elige y la caja sale volando de la Kallax.
 
+**Disquete de cartas**, para cualquier juego de cartas: los **mazos** son cajitas delante de la tele, con su récord («23V · 11D (68%)») y la lista, que cuenta las cartas sola. Las **carpetas** van a los cubos de abajo de la Kallax, con el número de cartas y el valor estimado.
+
 **«Compartir mi habitación»** crea un enlace con tu colección comprimida dentro, sin cuentas ni servidor. Quien lo abre ve tu habitación de visita, sin tocar la suya.
 
 > Prototipo en desarrollo. Está en esta carpeta para no mezclarlo con retorika Home; cuando guste, se pasa a su propio repositorio.
@@ -59,6 +61,7 @@ En Netlify se sirve en `/disketeboy/`, con sus funciones en `netlify/functions/d
 | `js/store.js` | La colección guardada y validada |
 | `js/ticket.js` | DisketePrinter: el ticket y la foto para compartir |
 | `js/boards.js` | Juegos de mesa: «¿Qué jugamos esta noche?», préstamos (funciones puras) |
+| `js/cards.js` | Cartas: juegos de cartas, contar la lista de un mazo, récord y estadísticas (funciones puras) |
 | `js/share.js` | «Visita mi habitación»: la colección comprimida en el enlace |
 | `api/steam.mjs` | Lee tu biblioteca pública de Steam |
 | `api/cover.mjs` | Plan B para las portadas de Steam (solo admite ids numéricos) |
@@ -67,8 +70,8 @@ En Netlify se sirve en `/disketeboy/`, con sus funciones en `netlify/functions/d
 
 ```bash
 npm ci                                        # en la raíz: Playwright y axe-core
-node --test disketeboy/tests/unit/*.test.mjs  # 44 pruebas unitarias
-node disketeboy/tests/e2e/run.mjs             # 17 pruebas en Chromium (E2E_SHOTS=1 guarda capturas)
+node --test disketeboy/tests/unit/*.test.mjs  # 51 pruebas unitarias
+node disketeboy/tests/e2e/run.mjs             # 18 pruebas en Chromium (E2E_SHOTS=1 guarda capturas)
 ```
 
 En GitHub se ejecutan solas con `.github/workflows/disketeboy.yml` cada vez que cambia algo en `disketeboy/`.

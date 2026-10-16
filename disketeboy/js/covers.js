@@ -5,6 +5,7 @@ import { colorFor, inkFor, rng, hexToHsl, hslToHex } from './util.js';
 import { statusLabel, isBoard } from './store.js';
 import { steamCover } from './steam.js';
 import { playersText, minutesText, lentText } from './boards.js';
+import { tcg, recordText, deckCount, euros } from './cards.js';
 
 const SANS = '"Trebuchet MS", "Segoe UI", system-ui, sans-serif';
 const HEAVY = '"Arial Black", "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
@@ -297,9 +298,128 @@ function drawBoardCover(g) {
   return c;
 }
 
+/** Cajita de mazo: color del juego de cartas, etiqueta con el nombre, formato y récord. */
+function drawDeckCover(g) {
+  const box = boxFor(g.platform);
+  const W = 256;
+  const H = Math.round((W * box.h) / box.w);
+  const c = canvas(W, H);
+  const ctx = c.getContext('2d');
+  const t = tcg(g.tcg);
+  const base = g.color || t.color;
+  const { h, s, l } = hexToHsl(base);
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, hslToHex(h, s, Math.min(70, l + 14)));
+  bg.addColorStop(1, hslToHex(h, s, Math.max(8, l - 14)));
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+  ctx.save();
+  ctx.rotate(-0.6);
+  for (let i = -6; i < 14; i++) {
+    ctx.fillStyle = i % 2 ? '#ffffff0d' : '#0000000d';
+    ctx.fillRect(i * 28 - 120, -40, 14, H * 2);
+  }
+  ctx.restore();
+  // Solapa de la cajita
+  ctx.fillStyle = '#00000040';
+  ctx.fillRect(0, H * 0.16, W, 4);
+  ctx.fillStyle = '#231e1a';
+  ctx.fillRect(0, 0, W, H * 0.11);
+  ctx.fillStyle = '#fbf3e4';
+  ctx.font = `800 ${Math.round(H * 0.06)}px ${SANS}`;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(t.short, W * 0.08, H * 0.056);
+  // Etiqueta escrita
+  const lx = W * 0.1;
+  const ly = H * 0.26;
+  const lw = W * 0.8;
+  const lh = H * 0.6;
+  ctx.fillStyle = '#fbf6ea';
+  ctx.beginPath();
+  ctx.roundRect(lx, ly, lw, lh, 10);
+  ctx.fill();
+  ctx.fillStyle = '#231e1a';
+  ctx.textAlign = 'center';
+  const size = fitWords(ctx, g.title, lw * 0.9, Math.round(W * (g.title.length > 18 ? 0.1 : 0.13)), (x) => `900 ${x}px ${HEAVY}`);
+  const lines = wrap(ctx, g.title, lw * 0.9, 3);
+  let y = ly + lh * 0.2;
+  for (const line of lines) {
+    ctx.fillText(line, W / 2, y);
+    y += size * 1.1;
+  }
+  ctx.font = `italic ${Math.round(W * 0.075)}px ${SERIF}`;
+  ctx.fillStyle = '#5b5146';
+  if (g.format) ctx.fillText(g.format, W / 2, y + 6, lw * 0.9);
+  ctx.font = `800 ${Math.round(W * 0.07)}px ${SANS}`;
+  ctx.fillStyle = '#b3261e';
+  ctx.fillText(recordText(g), W / 2, ly + lh - H * 0.06, lw * 0.92);
+  if (g.status === 'desmontado') {
+    ctx.save();
+    ctx.translate(W / 2, ly + lh / 2);
+    ctx.rotate(-0.35);
+    ctx.strokeStyle = '#b3261ecc';
+    ctx.lineWidth = 5;
+    ctx.strokeRect(-W * 0.36, -H * 0.06, W * 0.72, H * 0.12);
+    ctx.fillStyle = '#b3261ecc';
+    ctx.font = `900 ${Math.round(W * 0.085)}px ${SANS}`;
+    ctx.fillText('DESMONTADO', 0, 2, W * 0.66);
+    ctx.restore();
+  }
+  return c;
+}
+
+/** Carpeta de cartas: tapa acolchada con placa, número de cartas y valor. */
+function drawBinderCover(g) {
+  const box = boxFor(g.platform);
+  const W = 256;
+  const H = Math.round((W * box.h) / box.w);
+  const c = canvas(W, H);
+  const ctx = c.getContext('2d');
+  const t = tcg(g.tcg);
+  const { h, s, l } = hexToHsl(g.color || t.color);
+  ctx.fillStyle = hslToHex(h, Math.max(20, s - 10), Math.max(10, l - 10));
+  ctx.fillRect(0, 0, W, H);
+  const r = rng(`carpeta:${g.id}`);
+  for (let i = 0; i < 1800; i++) {
+    ctx.fillStyle = r() < 0.5 ? '#ffffff0b' : '#0000000f';
+    ctx.fillRect(r() * W, r() * H, 2, 2);
+  }
+  ctx.strokeStyle = '#ffffff2a';
+  ctx.setLineDash([5, 4]);
+  ctx.lineWidth = 2;
+  ctx.strokeRect(10, 10, W - 20, H - 20);
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#151515';
+  ctx.fillRect(W * 0.84, 0, W * 0.05, H);
+  const px = W * 0.12;
+  const py = H * 0.32;
+  const pw = W * 0.64;
+  const ph = H * 0.36;
+  ctx.fillStyle = '#e9e0cc';
+  ctx.beginPath();
+  ctx.roundRect(px, py, pw, ph, 6);
+  ctx.fill();
+  ctx.fillStyle = '#231e1a';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const size = fitWords(ctx, g.title, pw * 0.9, Math.round(W * 0.085), (x) => `900 ${x}px ${HEAVY}`);
+  const lines = wrap(ctx, g.title, pw * 0.9, 2);
+  let y = py + ph * 0.3;
+  for (const line of lines) {
+    ctx.fillText(line, px + pw / 2, y);
+    y += size * 1.1;
+  }
+  ctx.font = `700 ${Math.round(W * 0.05)}px ${SANS}`;
+  ctx.fillStyle = '#5b5146';
+  ctx.fillText(`${t.short} · ${g.cards.toLocaleString('es-ES')} cartas`, px + pw / 2, py + ph * 0.82, pw * 0.92);
+  return c;
+}
+
 /** Portada: dibujo generado o la imagen real, con la franja de la plataforma. */
 export function drawCover(g, image = null) {
   if (isBoard(g)) return drawBoardCover(g);
+  if (g.kind === 'mazo') return drawDeckCover(g);
+  if (g.kind === 'carpeta') return drawBinderCover(g);
   const box = boxFor(g.platform);
   const pl = platform(g.platform);
   const W = 256;
@@ -365,7 +485,8 @@ export function drawSpine(g, { strip = '#1c1b20', small = false } = {}) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   const board = isBoard(g);
-  ctx.fillText(board ? (g.minPlayers === g.maxPlayers ? String(g.minPlayers) : `${g.minPlayers}-${g.maxPlayers}`) : pl.short.slice(0, 4), W / 2, band / 2 + 1, W * 0.9);
+  const bandText = board ? (g.minPlayers === g.maxPlayers ? String(g.minPlayers) : `${g.minPlayers}-${g.maxPlayers}`) : g.tcg ? tcg(g.tcg).short : pl.short.slice(0, 4);
+  ctx.fillText(bandText, W / 2, band / 2 + 1, W * 0.9);
   // Título en vertical, de arriba abajo
   const ink = inkFor(color);
   const starred = g.status === 'terminado' || g.status === 'favorito';
@@ -436,7 +557,14 @@ export function drawBack(g) {
   ctx.font = `600 ${Math.round(W * 0.038)}px ${SANS}`;
   ctx.fillStyle = '#6b5f50';
   const board = isBoard(g);
-  ctx.fillText(board ? `${playersText(g)} · ${minutesText(g.minutes)} · ${statusLabel(g)}` : `${platform(g.platform).name} · ${statusLabel(g)}`, pad, y + 4, W - pad * 2 - (g.score !== null ? W * 0.24 : 0));
+  const sub = board
+    ? `${playersText(g)} · ${minutesText(g.minutes)} · ${statusLabel(g)}`
+    : g.kind === 'mazo'
+      ? `${tcg(g.tcg).name} · ${g.format || 'sin formato'} · ${statusLabel(g)}`
+      : g.kind === 'carpeta'
+        ? `${tcg(g.tcg).name} · ${statusLabel(g)}`
+        : `${platform(g.platform).name} · ${statusLabel(g)}`;
+  ctx.fillText(sub, pad, y + 4, W - pad * 2 - (g.score !== null ? W * 0.24 : 0));
   y += W * 0.07;
   // Nota en un círculo gordo
   if (g.score !== null) {
@@ -483,6 +611,8 @@ export function drawBack(g) {
   ctx.fillStyle = '#231e1a';
   ctx.font = `800 ${Math.round(W * 0.042)}px ${SANS}`;
   if (board) ctx.fillText(g.plays ? `${g.plays} partida${g.plays === 1 ? '' : 's'}` : '¡Aún sin estrenar!', pad, fy);
+  else if (g.kind === 'mazo') ctx.fillText(`${recordText(g)} · ${deckCount(g.list)} cartas`, pad, fy, W * 0.6);
+  else if (g.kind === 'carpeta') ctx.fillText(`${g.cards.toLocaleString('es-ES')} cartas · ${euros(g.value)}`, pad, fy, W * 0.6);
   else ctx.fillText(g.hours ? `${g.hours} h jugadas` : 'Sin horas apuntadas', pad, fy);
   ctx.font = `500 ${Math.round(W * 0.032)}px ${SANS}`;
   ctx.fillStyle = board && g.lentTo ? '#b3261e' : '#6b5f50';

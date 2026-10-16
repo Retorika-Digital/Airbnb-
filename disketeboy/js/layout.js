@@ -203,29 +203,49 @@ function bin(games, out) {
  * Juegos de mesa: de pie en los cubos de la Kallax (fila de arriba primero) y,
  * encima, en montones, los que siguen con el plástico y los que ya no caben.
  */
-function kallax(games, out, tidy) {
+function kallax(games, binders, out, tidy) {
   const K = KALLAX;
   const byTitle = (a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' });
   const inCubes = games.filter((g) => tidy || g.status !== 'pendiente').sort(byTitle);
   const onTop = games.filter((g) => !tidy && g.status === 'pendiente').sort((a, b) => a.addedAt.localeCompare(b.addedAt) || a.id.localeCompare(b.id));
   const spot = { x: K.x, z: K.z, yaw: K.yaw };
   const cells = [];
-  for (let r = K.rows - 1; r >= 0; r--) for (let c = 0; c < K.cols; c++) cells.push({ c, r, used: 0 });
+  for (let r = K.rows - 1; r >= 0; r--) for (let c = 0; c < K.cols; c++) cells.push({ c, r, used: 0, owner: null });
+  const put = (g, cell) => {
+    const box = boxFor(g.platform);
+    const { c, r } = cell;
+    const lx = -K.width / 2 + K.wall + c * (K.cell + K.wall) + cell.used + box.d / 2;
+    const lz = K.depth / 2 - 0.015 - box.w / 2;
+    const { x, z } = toWorld(spot, lx, lz);
+    out.set(g.id, { zone: 'kallax', x, y: K.wall + r * (K.cell + K.wall) + box.h / 2, z, rx: 0, ry: K.yaw + Math.PI / 2, rz: 0 });
+    cell.used += box.d + 0.004;
+  };
+  // Las carpetas de cartas, en los cubos de abajo empezando por la derecha
+  let back = cells.length - 1;
+  const extraBinders = [];
+  for (const b of [...binders].sort(byTitle)) {
+    const d = boxFor(b.platform).d;
+    while (back >= 0 && (cells[back].owner === 'mesa' || cells[back].used + d > K.cell)) back--;
+    if (back < 0) {
+      extraBinders.push(b);
+      continue;
+    }
+    cells[back].owner = 'carpeta';
+    put(b, cells[back]);
+  }
+  // Los juegos de mesa, desde arriba a la izquierda
   let cell = 0;
   for (const g of inCubes) {
     const box = boxFor(g.platform);
-    while (cell < cells.length && cells[cell].used + box.d > K.cell) cell++;
+    while (cell < cells.length && (cells[cell].owner === 'carpeta' || cells[cell].used + box.d > K.cell)) cell++;
     if (cell >= cells.length) {
       onTop.push(g);
       continue;
     }
-    const { c, r } = cells[cell];
-    const lx = -K.width / 2 + K.wall + c * (K.cell + K.wall) + cells[cell].used + box.d / 2;
-    const lz = K.depth / 2 - 0.015 - box.w / 2;
-    const { x, z } = toWorld(spot, lx, lz);
-    out.set(g.id, { zone: 'kallax', x, y: K.wall + r * (K.cell + K.wall) + box.h / 2, z, rx: 0, ry: K.yaw + Math.PI / 2, rz: 0 });
-    cells[cell].used += box.d + 0.004;
+    cells[cell].owner = 'mesa';
+    put(g, cells[cell]);
   }
+  onTop.push(...extraBinders);
   // Montones encima de la Kallax (y, si no caben, en el suelo a su lado)
   const stacks = [-0.48, 0, 0.48].map((lx) => ({ lx, lz: 0, y: K.height }));
   for (let i = 0; i < 6; i++) stacks.push({ lx: K.width / 2 + 0.25 + (i % 2) * 0.36, lz: 0.05 + Math.floor(i / 2) * 0.36, y: 0 });
@@ -243,9 +263,22 @@ function kallax(games, out, tidy) {
  * Calcula la habitación entera.
  * @returns {{ placements: Map<string, object>, bookcases: number, counts: object }}
  */
+/** Los mazos, en su cajita y de pie delante de la tele, con la etiqueta hacia ti. */
+function decks(list, out) {
+  const perRow = 7;
+  const x0 = DESK.x - 0.27;
+  const z = DESK.z + DESK.depth / 2 - 0.07;
+  [...list].sort((a, b) => a.addedAt.localeCompare(b.addedAt) || a.id.localeCompare(b.id)).forEach((g, i) => {
+    const box = boxFor(g.platform);
+    const tier = Math.floor(i / perRow);
+    const r = rng(g.id);
+    out.set(g.id, { zone: 'mazos', x: x0 + (i % perRow) * (box.w + 0.012), y: DESK.top + tier * box.h + box.h / 2, z: z - (tier % 2) * 0.004, rx: 0, ry: (r() - 0.5) * 0.12, rz: 0 });
+  });
+}
+
 export function computeLayout(all, { tidy = false, sort = 'plataforma' } = {}) {
   const placements = new Map();
-  const games = all.filter((g) => g.kind !== 'mesa');
+  const games = all.filter((g) => g.kind !== 'mesa' && g.kind !== 'mazo' && g.kind !== 'carpeta');
   const boards = all.filter((g) => g.kind === 'mesa');
   const zones = { estanteria: [], pila: [], escritorio: [], caja: [] };
   for (const g of games) zones[tidy ? 'estanteria' : ZONE_OF_STATUS[g.status] || 'pila'].push(g);
@@ -254,7 +287,8 @@ export function computeLayout(all, { tidy = false, sort = 'plataforma' } = {}) {
   pile([...zones.pila.sort(byAdded), ...overflow], placements);
   desk(zones.escritorio.sort(byAdded), placements);
   bin(zones.caja.sort(byAdded), placements);
-  kallax(boards, placements, tidy);
+  kallax(boards, all.filter((g) => g.kind === 'carpeta'), placements, tidy);
+  decks(all.filter((g) => g.kind === 'mazo'), placements);
   const inZone = (z) => [...placements.values()].filter((p) => p.zone === z).length;
   return {
     placements,
@@ -267,6 +301,7 @@ export function computeLayout(all, { tidy = false, sort = 'plataforma' } = {}) {
       caja: zones.caja.length,
       kallax: inZone('kallax'),
       encima: inZone('encima'),
+      mazos: inZone('mazos'),
     },
   };
 }

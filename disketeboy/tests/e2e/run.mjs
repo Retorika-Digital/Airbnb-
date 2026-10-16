@@ -169,11 +169,11 @@ try {
     await page.close();
   });
 
-  await check('demo: 41 cajas, coger una con el teclado, girarla y soltarla', async () => {
+  await check('demo: 49 cajas, coger una con el teclado, girarla y soltarla', async () => {
     const page = await newPage(browser);
     await page.goto(`${BASE}/?demo=1&hora=22`);
     await booted(page);
-    eq(await page.evaluate(() => window.disketeboy.room.count), 41, 'cajas en la habitación (26 videojuegos + 15 de mesa)');
+    eq(await page.evaluate(() => window.disketeboy.room.count), 49, 'cajas en la habitación (26 videojuegos + 15 de mesa + 8 de cartas)');
     await page.click('#m-habitacion');
     await idle(page);
     expect(await page.isVisible('#r-ordenar'), 'botones de la habitación visibles');
@@ -203,7 +203,8 @@ try {
     await page.click('#r-ordenar');
     await idle(page);
     const zones = await page.evaluate(() => [...window.disketeboy.room.debug.entries.values()].map((e) => [e.game.kind, e.zone]));
-    expect(zones.every(([kind, z]) => z === (kind === 'mesa' ? 'kallax' : 'estanteria')), 'videojuegos a la estantería y juegos de mesa a la Kallax');
+    const expected = { video: 'estanteria', mesa: 'kallax', carpeta: 'kallax', mazo: 'mazos' };
+    expect(zones.every(([kind, z]) => z === expected[kind]), 'cada cosa a su mueble');
     eq(await page.getAttribute('#r-ordenar', 'aria-pressed'), 'true', 'botón marcado');
     await shot(page, '04-ordenada');
     await page.click('#r-ordenar');
@@ -297,9 +298,9 @@ try {
       if (store.getGames().length) return -1;
       return store.importBackup(backup);
     });
-    eq(n, 41, 'juegos restaurados');
+    eq(n, 49, 'juegos restaurados');
     await idle(page);
-    eq(await page.evaluate(() => window.disketeboy.room.count), 41, 'cajas tras restaurar');
+    eq(await page.evaluate(() => window.disketeboy.room.count), 49, 'cajas tras restaurar');
     await page.close();
   });
 
@@ -322,6 +323,7 @@ try {
     eq(await visitor.textContent('#visit-name'), 'Laura', 'nombre de quien comparte');
     eq(await visitor.evaluate(() => window.disketeboy.store.getVideoGames().length), 26, 'se ven sus videojuegos');
     eq(await visitor.evaluate(() => window.disketeboy.store.getBoards().length), 15, 'y sus juegos de mesa');
+    eq(await visitor.evaluate(() => window.disketeboy.store.getCards().length), 8, 'y sus mazos y carpetas');
     expect(await visitor.isHidden('#m-nuevo'), 'de visita no se puede añadir');
     await visitor.click('#m-coleccion');
     await visitor.click('#screen .item.game >> nth=0');
@@ -377,6 +379,53 @@ try {
     eq(await page.textContent('#inspect-title'), 'Carcassonne', 'la caja sale de la Kallax');
     expect((await page.textContent('#inspect-meta')).includes('2–5 jugadores'), 'con sus jugadores');
     await shot(page, '09-mesa');
+    eq(page.errors.join('\n'), '', 'errores en consola');
+    await page.close();
+  });
+
+  await check('cartas: disquete verde, mazo con récord y lista, y carpeta en la Kallax', async () => {
+    const page = await newPage(browser);
+    await page.goto(BASE);
+    await booted(page);
+    await page.click('#d-cartas');
+    await page.waitForSelector('#c-mazos');
+    eq(await page.getAttribute('#dkb', 'data-disk'), 'cartas', 'disquete de cartas');
+    await page.click('#c-nuevo-mazo');
+    await page.fill('#cn-titulo', 'Rojo Burn');
+    await page.selectOption('#cn-juego', 'mtg');
+    await page.fill('#cn-formato', 'Modern');
+    await page.click('#cn-anadir');
+    await page.waitForSelector('text=¡Plof!');
+    const id = await page.evaluate(() => window.disketeboy.store.getCards()[0].id);
+    eq(await page.evaluate((gid) => window.disketeboy.room.debug.entries.get(gid).zone, id), 'mazos', 'el mazo va delante de la tele');
+    await page.evaluate((gid) => window.disketeboy.device.go('ficha', { id: gid }), id);
+    await page.click('#cf-gane');
+    await page.click('#cf-gane');
+    await page.click('#cf-perdi');
+    await page.waitForFunction((gid) => window.disketeboy.store.getGame(gid).losses === 1, id);
+    expect((await page.textContent('#screen')).includes('2V · 1D (67%)'), 'récord en la ficha');
+    await page.click('#cf-lista');
+    await page.fill('#lm-texto', '4 Lightning Bolt\n4x Rift Bolt\n20 Mountain');
+    expect((await page.textContent('#screen')).includes('28 cartas'), 'cuenta las cartas mientras escribes');
+    await page.click('#lm-guardar');
+    await page.waitForSelector('#cf-lista');
+    expect((await page.textContent('#cf-lista')).includes('28 cartas'), 'lista guardada');
+    await page.evaluate(() => window.disketeboy.device.home());
+    await page.click('#c-nueva-carpeta');
+    await page.fill('#pn-titulo', 'Mis brillis');
+    await page.fill('#pn-cartas', '165');
+    await page.fill('#pn-valor', '120.5');
+    await page.click('#pn-anadir');
+    await page.waitForSelector('text=¡Plof!');
+    const binder = await page.evaluate(() => window.disketeboy.store.getCards().find((g) => g.kind === 'carpeta'));
+    eq([binder.cards, binder.value].join(), '165,120.5', 'cartas y valor');
+    await idle(page);
+    eq(await page.evaluate((gid) => window.disketeboy.room.debug.entries.get(gid).zone, binder.id), 'kallax', 'la carpeta va a la Kallax');
+    await page.evaluate((gid) => window.disketeboy.device.go('ficha', { id: gid }), id);
+    await page.click('#cf-ver');
+    await idle(page);
+    expect((await page.textContent('#inspect-meta')).includes('2V · 1D'), 'la caja cogida enseña el récord');
+    await shot(page, '10-cartas');
     eq(page.errors.join('\n'), '', 'errores en consola');
     await page.close();
   });
@@ -444,7 +493,12 @@ try {
     await page.waitForTimeout(150);
     await axe(page, 'ficha');
     const boardId = await page.evaluate(() => window.disketeboy.store.getBoards()[0].id);
-    for (const [screen, params] of [['mesa', {}], ['mesaLista', { filter: 'todos' }], ['ficha', { id: boardId }], ['mesaNuevo', {}], ['queJugamos', {}], ['prestamos', {}], ['mesaStats', {}]]) {
+    const deckId = await page.evaluate(() => window.disketeboy.store.getCards().find((g) => g.kind === 'mazo').id);
+    const binderId = await page.evaluate(() => window.disketeboy.store.getCards().find((g) => g.kind === 'carpeta').id);
+    for (const [screen, params] of [
+      ['mesa', {}], ['mesaLista', { filter: 'todos' }], ['ficha', { id: boardId }], ['mesaNuevo', {}], ['queJugamos', {}], ['prestamos', {}], ['mesaStats', {}],
+      ['cartas', {}], ['cartasLista', { kind: 'mazo' }], ['ficha', { id: deckId }], ['listaMazo', { id: deckId }], ['ficha', { id: binderId }], ['mazoNuevo', {}], ['carpetaNueva', {}], ['cartasStats', {}],
+    ]) {
       await page.evaluate(([s, p]) => window.disketeboy.device.go(s, p), [screen, params]);
       await page.waitForTimeout(150);
       await axe(page, `mesa: ${screen}`);

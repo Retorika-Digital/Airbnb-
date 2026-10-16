@@ -3,10 +3,11 @@
 // consola sigue funcionando igual.
 import * as store from './store.js';
 import { createDevice } from './device.js';
-import { DEMO_GAMES, DEMO_BOARDS } from './demo.js';
+import { DEMO_GAMES, DEMO_BOARDS, DEMO_CARDS } from './demo.js';
 import { platform } from './platforms.js';
 import { statusLabel, isBoard } from './store.js';
 import { playersText, minutesText, lentText } from './boards.js';
+import { tcg, recordText, euros, deckCount } from './cards.js';
 
 const params = new URLSearchParams(location.search);
 const body = document.body;
@@ -125,7 +126,11 @@ function onInspect(game) {
     return;
   }
   document.getElementById('inspect-title').textContent = game.title;
-  const bits = isBoard(game)
+  const bits = game.kind === 'mazo'
+    ? [tcg(game.tcg).name, game.format, statusLabel(game), recordText(game), `${deckCount(game.list)} cartas`]
+    : game.kind === 'carpeta'
+      ? [tcg(game.tcg).name, `${game.cards} cartas`, euros(game.value), statusLabel(game)]
+      : isBoard(game)
     ? [playersText(game), minutesText(game.minutes), statusLabel(game), game.score === null ? 'sin nota' : `${game.score}/10`, `${game.plays} partida${game.plays === 1 ? '' : 's'}`, game.lentTo ? lentText(game) : null]
     : [platform(game.platform).name, statusLabel(game), game.score === null ? 'sin nota' : `${game.score}/10`, game.hours ? `${game.hours} h` : null];
   document.getElementById('inspect-meta').textContent = bits.filter(Boolean).join(' · ');
@@ -263,6 +268,6 @@ document.addEventListener('keydown', (e) => {
 window.disketeboy = { store, get room() { return room; }, device, lower, raise, shareVisit };
 canvas.tabIndex = 0;
 await maybeVisit();
-if (!store.visiting() && params.get('demo') === '1' && !store.getGames().length) store.importGames([...DEMO_GAMES, ...DEMO_BOARDS]);
+if (!store.visiting() && params.get('demo') === '1' && !store.getGames().length) store.importGames([...DEMO_GAMES, ...DEMO_BOARDS, ...DEMO_CARDS]);
 device.boot();
 startRoom();

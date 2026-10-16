@@ -25,13 +25,18 @@ async function pipe(bytes, stream) {
 
 /**
  * Empaqueta la colección: [título, plataforma, estado, nota, horas, steam, reseña, color]
- * y, si es un juego de mesa, además [«m», jugadores mín., máx., minutos, partidas, prestado a].
+ * y además, según lo que sea:
+ *   juego de mesa → [«m», jugadores mín., máx., minutos, partidas, prestado a]
+ *   mazo          → [«k», juego de cartas, formato, victorias, derrotas] (la lista no viaja)
+ *   carpeta       → [«c», juego de cartas, cartas, valor]
  */
 export async function encodeRoom(games, { name = '' } = {}) {
   const rows = (withReviews) =>
     games.map((g) => {
       const row = [g.title, g.platform, ALL_STATUSES.indexOf(g.status), g.score ?? -1, g.hours, g.steamAppId || 0, withReviews ? (g.review || '').slice(0, REVIEW_MAX) : '', g.color || ''];
       if (g.kind === 'mesa') row.push('m', g.minPlayers, g.maxPlayers, g.minutes, g.plays, g.lentTo || '');
+      if (g.kind === 'mazo') row.push('k', g.tcg, g.format || '', g.wins, g.losses);
+      if (g.kind === 'carpeta') row.push('c', g.tcg, g.cards, g.value);
       return row;
     });
   let json = JSON.stringify({ v: 1, n: String(name).slice(0, 30), g: rows(true) });
@@ -65,6 +70,8 @@ export async function decodeRoom(text) {
             color: r[7] || null,
             addedAt: new Date(Date.UTC(2020, 0, 1, 0, 0, i)).toISOString(),
             ...(r[8] === 'm' ? { kind: 'mesa', minPlayers: r[9], maxPlayers: r[10], minutes: r[11], plays: r[12], lentTo: r[13] } : {}),
+            ...(r[8] === 'k' ? { kind: 'mazo', tcg: r[9], format: r[10], wins: r[11], losses: r[12] } : {}),
+            ...(r[8] === 'c' ? { kind: 'carpeta', tcg: r[9], cards: r[10], value: r[11] } : {}),
           })
         : null,
     )

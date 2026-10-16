@@ -47,3 +47,15 @@ export const DEMO_BOARDS = [
   { kind: 'mesa', title: 'Dune: Imperium', minPlayers: 1, maxPlayers: 4, minutes: 120, platform: 'mesa-l', status: 'pendiente' },
   { kind: 'mesa', title: 'Brass: Birmingham', minPlayers: 2, maxPlayers: 4, minutes: 120, platform: 'mesa-l', status: 'pendiente' },
 ];
+
+// Mazos y carpetas de cartas de ejemplo.
+export const DEMO_CARDS = [
+  { kind: 'mazo', title: 'Atraxa Superamigos', tcg: 'mtg', format: 'Commander', status: 'montado', score: 9, wins: 23, losses: 11, list: "1 Atraxa, Praetors' Voice\n1 Sol Ring\n1 Doubling Season\n1 Deepglow Skate\n35 Forest\n// … y 61 más", review: 'Cuando bajo a Atraxa, la mesa entera me mira mal. Con razón.' },
+  { kind: 'mazo', title: 'Rojo Burn', tcg: 'mtg', format: 'Modern', status: 'montado', score: 7, wins: 14, losses: 16, list: '4 Lightning Bolt\n4 Lava Spike\n4 Rift Bolt\n4 Monastery Swiftspear\n4 Goblin Guide\n20 Mountain' },
+  { kind: 'mazo', title: 'Charizard ex', tcg: 'pokemon', format: 'Estándar', status: 'montado', score: 8, wins: 8, losses: 3 },
+  { kind: 'mazo', title: 'Ojos Azules', tcg: 'yugioh', format: 'Goat', status: 'desmontado', score: 6, wins: 5, losses: 7, review: 'Lo desmonté para hacer otro y me arrepiento cada día.' },
+  { kind: 'mazo', title: 'Luffy Rojo', tcg: 'onepiece', format: 'Estándar', status: 'construccion', wins: 6, losses: 4 },
+  { kind: 'carpeta', title: 'Pokémon 151', tcg: 'pokemon', cards: 165, value: 120, status: 'progreso', review: 'Me faltan 12. El Charizard de arte alternativo cuesta lo que un riñón.' },
+  { kind: 'carpeta', title: 'Mis brillis de Magic', tcg: 'mtg', cards: 420, value: 850.5, status: 'progreso' },
+  { kind: 'carpeta', title: 'Yu-Gi-Oh! de 2004', tcg: 'yugioh', cards: 300, value: 60, status: 'completa', review: 'Encontrada en casa de mis padres. Huele a recreo.' },
+];

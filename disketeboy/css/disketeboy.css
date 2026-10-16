@@ -567,3 +567,7 @@ body.device-down .toast.is-on { transform: translate(-50%, 0); }
 .form .row2 { display: flex; gap: calc(var(--u) * 2); }
 .form .row2 label { flex: 1; min-width: 0; }
 .screen .lent { font-style: italic; }
+
+/* Disquete verde de cartas */
+.dkb[data-disk='cartas'] { --disk: var(--verde); }
+.dkb[data-disk='cartas'] .floppy-label::before { content: 'CARTAS'; }

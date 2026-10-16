@@ -23,6 +23,7 @@ const ZONE_CENTER = {
   escritorio: new THREE.Vector3(DESK.x, DESK.top + 0.1, DESK.z),
   caja: new THREE.Vector3(BIN.x, 0.2, BIN.z),
   kallax: new THREE.Vector3(KALLAX.x - 0.1, 0.45, KALLAX.z),
+  mazos: new THREE.Vector3(DESK.x, DESK.top + 0.08, DESK.z + 0.24),
   encima: new THREE.Vector3(KALLAX.x - 0.1, 0.85, KALLAX.z),
 };
 const PLASTIC = {
@@ -632,7 +633,7 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
   crt.add(screenMesh);
   crt.position.set(DESK.x, DESK.top, DESK.z - 0.08);
   scene.add(crt);
-  const consoleMesh = boxMesh(0.26, 0.055, 0.19, mat({ color: '#5e5a63', roughness: 0.5 }), DESK.x - 0.02, DESK.top + 0.0275, DESK.z + 0.17);
+  const consoleMesh = boxMesh(0.26, 0.055, 0.19, mat({ color: '#5e5a63', roughness: 0.5 }), DESK.x - 0.45, DESK.top + 0.0275, DESK.z - 0.13);
   scene.add(consoleMesh);
   const lampGroup = new THREE.Group();
   const metal = mat({ color: '#2f4f8f', roughness: 0.35, metalness: 0.4 });

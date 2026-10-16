@@ -5,7 +5,8 @@ import * as store from './store.js';
 import { STATUSES, STATUS_LABEL, PALETTES, SORTS, BOARD_STATUSES, BOARD_STATUS_LABEL, isBoard, statusLabel } from './store.js';
 import { PLATFORMS, BOARD_SIZES, platform } from './platforms.js';
 import { mapSteamGames } from './steam.js';
-import { DEMO_GAMES, DEMO_BOARDS } from './demo.js';
+import { DEMO_GAMES, DEMO_BOARDS, DEMO_CARDS } from './demo.js';
+import { TCGS, TCG_IDS, tcg, DECK_STATUSES, DECK_STATUS_LABEL, BINDER_STATUSES, BINDER_STATUS_LABEL, deckCount, recordText, euros, cardsStats } from './cards.js';
 import { sfx, setSound } from './audio.js';
 import { whatToPlay, playersText, minutesText, lentText, boardStats, pickOne, TIME_OPTIONS } from './boards.js';
 import { clamp } from './util.js';
@@ -147,7 +148,7 @@ export function createDevice(root, actions) {
 
   /** Repinta la pantalla actual si muestra datos que han cambiado (sin robar el foco a un campo). */
   function refresh() {
-    if (['boot', 'nuevo', 'mesaNuevo', 'resena', 'steam', 'confirmar', 'ruleta'].includes(current.name)) return;
+    if (['boot', 'nuevo', 'mesaNuevo', 'mazoNuevo', 'carpetaNueva', 'listaMazo', 'resena', 'steam', 'confirmar', 'ruleta'].includes(current.name)) return;
     const active = document.activeElement;
     if (active && screen.contains(active) && active.matches('input, textarea, select')) return;
     const keepFocus = screen.contains(active) ? Math.max(0, focusIndex()) : null;
@@ -221,13 +222,14 @@ export function createDevice(root, actions) {
           { class: 'list' },
           item('Videojuegos', () => insertDisk('videojuegos'), { meta: `${n} juego${n === 1 ? '' : 's'}`, cls: 'disk disk-rojo', id: 'd-video' }),
           item('Juegos de mesa', () => insertDisk('mesa'), { meta: `${b} juego${b === 1 ? '' : 's'}`, cls: 'disk disk-azul', id: 'd-mesa' }),
-          item('Cartas', null, { meta: 'Próximamente', disabled: true, cls: 'disk disk-verde' }),
+          item('Cartas', () => insertDisk('cartas'), { meta: `${store.getCards().length} mazos y carpetas`, cls: 'disk disk-verde', id: 'd-cartas' }),
         ),
       );
     },
 
     menu() {
       if (root.dataset.disk === 'mesa') return SCREENS.mesa();
+      if (root.dataset.disk === 'cartas') return SCREENS.cartas();
       const games = store.getVideoGames();
       const st = store.stats(games);
       const visit = store.visiting();
@@ -295,6 +297,8 @@ export function createDevice(root, actions) {
       const g = store.getGame(id);
       if (!g) return view('Juego borrado', p('Este juego ya no está en tu colección.'), h('div', { class: 'list' }, item('Volver', back)));
       if (isBoard(g)) return SCREENS.mesaFicha({ id });
+      if (g.kind === 'mazo') return SCREENS.mazoFicha({ id });
+      if (g.kind === 'carpeta') return SCREENS.carpetaFicha({ id });
       if (store.visiting()) {
         return view(
           g.title,
@@ -384,7 +388,17 @@ export function createDevice(root, actions) {
 
     nuevoOk({ id }) {
       const g = store.getGame(id);
-      const where = !g ? 'tu habitación' : isBoard(g) ? (g.status === 'pendiente' ? 'encima de tu Kallax, aún con su plástico' : 'tu Kallax') : ZONE_TEXT[g.status];
+      const where = !g
+        ? 'tu habitación'
+        : isBoard(g)
+          ? g.status === 'pendiente'
+            ? 'encima de tu Kallax, aún con su plástico'
+            : 'tu Kallax'
+          : g.kind === 'mazo'
+            ? 'tu mesa, delante de la tele'
+            : g.kind === 'carpeta'
+              ? 'los cubos de abajo de tu Kallax'
+              : ZONE_TEXT[g.status];
       return view(
         '¡Plof!',
         p(g ? `«${g.title}» acaba de caer en ${where}.` : 'Añadido.', 'big'),
@@ -392,7 +406,7 @@ export function createDevice(root, actions) {
           'div',
           { class: 'list' },
           item('Añadir otro', () => {
-            current = { name: g && isBoard(g) ? 'mesaNuevo' : 'nuevo', params: {} };
+            current = { name: !g ? 'nuevo' : isBoard(g) ? 'mesaNuevo' : g.kind === 'mazo' ? 'mazoNuevo' : g.kind === 'carpeta' ? 'carpetaNueva' : 'nuevo', params: {} };
             render(0);
           }, { id: 'ok-otro' }),
           g ? item('Verlo en la habitación', () => actions.showInRoom(id), { id: 'ok-ver' }) : null,
@@ -683,6 +697,205 @@ export function createDevice(root, actions) {
       );
     },
 
+    // ------------------------------------------------ disquete de cartas
+    cartas() {
+      const items = store.getCards();
+      const cs = cardsStats(items);
+      const visit = store.visiting();
+      return view(
+        visit ? 'Sus cartas' : 'Cartas',
+        h(
+          'div',
+          { class: 'list' },
+          !items.length && !visit ? item('Sin cartas: ¿cargo la demo?', loadDemo, { cls: 'hint', id: 'demo-hint-cartas' }) : null,
+          item(visit ? 'Sus mazos' : 'Mis mazos', () => go('cartasLista', { kind: 'mazo' }), { meta: String(cs.decks), id: 'c-mazos' }),
+          visit ? null : item('Nuevo mazo', () => go('mazoNuevo'), { id: 'c-nuevo-mazo' }),
+          item(visit ? 'Sus carpetas' : 'Mis carpetas', () => go('cartasLista', { kind: 'carpeta' }), { meta: String(cs.binders), id: 'c-carpetas' }),
+          visit ? null : item('Nueva carpeta', () => go('carpetaNueva'), { id: 'c-nueva-carpeta' }),
+          item('Ver los mazos en 3D', () => actions.showZone('mazos'), { id: 'c-ver' }),
+          item('Estadísticas', () => go('cartasStats'), { id: 'c-stats' }),
+          item(visit ? 'Cambiar de disquete' : 'Expulsar disquete', ejectDisk, { id: 'm-expulsar' }),
+          visit ? item('Crear mi propia habitación', () => actions.leaveVisit(), { cls: 'primary', id: 'm-salir' }) : null,
+        ),
+      );
+    },
+
+    cartasLista({ kind = 'mazo' }) {
+      const list = store.getCards().filter((g) => g.kind === kind).sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
+      const meta = (g) => (kind === 'mazo' ? [tcg(g.tcg).short, g.format, recordText(g)] : [tcg(g.tcg).short, `${g.cards} cartas`, euros(g.value)]).filter(Boolean).join(' · ');
+      return view(
+        kind === 'mazo' ? 'Mazos' : 'Carpetas',
+        h(
+          'div',
+          { class: 'list' },
+          list.length
+            ? list.map((g) => item(g.title, () => go('ficha', { id: g.id }), { meta: meta(g), cls: 'game' }))
+            : store.visiting()
+              ? p('Nada por aquí.')
+              : item(kind === 'mazo' ? 'Aún no hay mazos. Crear uno' : 'Aún no hay carpetas. Crear una', () => go(kind === 'mazo' ? 'mazoNuevo' : 'carpetaNueva')),
+        ),
+      );
+    },
+
+    mazoFicha({ id }) {
+      const g = store.getGame(id);
+      if (!g) return view('Mazo borrado', p('Este mazo ya no está en tu colección.'), h('div', { class: 'list' }, item('Volver', back)));
+      const sub = p([tcg(g.tcg).name, g.format].filter(Boolean).join(' · '), 'sub');
+      if (store.visiting()) {
+        return view(
+          g.title,
+          sub,
+          h('dl', { class: 'stats' }, statRow('Estado', statusLabel(g)), statRow('Récord', recordText(g)), statRow('Cartas', String(deckCount(g.list)))),
+          p(g.review ? `“${g.review}”` : 'Sin notas.', 'note quote'),
+          h('div', { class: 'list' }, item('Ver en la habitación', () => actions.showInRoom(id), { id: 'f-ver' }), item('Volver', back)),
+        );
+      }
+      const upd = (patch) => {
+        store.updateGame(id, patch);
+        sfx.save();
+      };
+      const format = h('input', { id: 'cf-formato', maxlength: '40', 'data-nav': '', placeholder: 'Commander, Estándar…', autocomplete: 'off', value: g.format, onchange: (e) => upd({ format: e.target.value }) });
+      return view(
+        g.title,
+        sub,
+        p(recordText(g), 'note'),
+        h(
+          'div',
+          { class: 'list' },
+          item('¡He ganado!', () => {
+            store.logResult(id, true);
+            sfx.select();
+            toast(`¡Victoria con ${g.title}! ${g.wins + 1}V · ${g.losses}D`);
+          }, { cls: 'primary', id: 'cf-gane' }),
+          item('He perdido', () => {
+            store.logResult(id, false);
+            sfx.back();
+            toast(`Derrota apuntada. La próxima, mejor robo.`);
+          }, { id: 'cf-perdi' }),
+          stepper('Juego', tcg(g.tcg).short, (dir) => upd({ tcg: cycle(TCG_IDS, g.tcg, dir) }), { id: 'cf-juego' }),
+          h('label', { class: 'item field' }, h('span', { class: 'item-label', text: 'Formato' }), format),
+          stepper('Estado', DECK_STATUS_LABEL[g.status], (dir) => upd({ status: cycle(DECK_STATUSES, g.status, dir) }), { id: 'cf-estado' }),
+          stepper('Nota', stars(g.score), (dir) => upd({ score: cycle(SCORES, g.score, dir) }), { id: 'cf-nota' }),
+          item(`Lista del mazo (${deckCount(g.list)} cartas)`, () => go('listaMazo', { id }), { id: 'cf-lista' }),
+          item(g.review ? `“${g.review.slice(0, 70)}${g.review.length > 70 ? '…' : ''}”` : 'Escribir notas…', () => go('resena', { id }), { meta: 'Notas', cls: 'review', id: 'cf-notas' }),
+          item('Ver en la habitación', () => actions.showInRoom(id), { id: 'cf-ver' }),
+          item('Borrar mazo', () => go('confirmar', { text: `¿Borrar el mazo «${g.title}»?`, yes: 'Sí, borrar', action: 'borrar', id }), { cls: 'danger', id: 'cf-borrar' }),
+        ),
+      );
+    },
+
+    listaMazo({ id }) {
+      const g = store.getGame(id);
+      if (!g) return SCREENS.mazoFicha({ id });
+      const counter = h('span', { class: 'counter', 'aria-live': 'polite', text: `${deckCount(g.list)} cartas` });
+      const area = h('textarea', {
+        id: 'lm-texto',
+        rows: '8',
+        maxlength: '6000',
+        'data-nav': '',
+        'aria-label': `Lista del mazo ${g.title}`,
+        placeholder: '4 Rayo\n1 Sol Ring\n…',
+        oninput: (e) => (counter.textContent = `${deckCount(e.target.value)} cartas`),
+      });
+      area.value = g.list;
+      return view(
+        'Lista del mazo',
+        p(g.title, 'sub'),
+        area,
+        counter,
+        h(
+          'div',
+          { class: 'list' },
+          item('Guardar lista', () => {
+            store.updateGame(id, { list: area.value });
+            toast(`Lista guardada: ${deckCount(area.value)} cartas`);
+            back();
+          }, { id: 'lm-guardar' }),
+          item('Cancelar', back),
+        ),
+      );
+    },
+
+    mazoNuevo() {
+      const form = h(
+        'form',
+        { class: 'form', autocomplete: 'off', onsubmit: (e) => (e.preventDefault(), addFromForm(form, { kind: 'mazo' })) },
+        h('label', {}, 'Nombre del mazo', h('input', { name: 'title', id: 'cn-titulo', required: true, maxlength: '120', 'data-nav': '', placeholder: 'Ej.: Rojo Burn' })),
+        h('label', {}, 'Juego', h('select', { name: 'tcg', id: 'cn-juego', 'data-nav': '' }, TCGS.map((t) => h('option', { value: t.id, text: t.name })))),
+        h('label', {}, 'Formato', h('input', { name: 'format', id: 'cn-formato', maxlength: '40', 'data-nav': '', placeholder: 'Commander, Estándar…' })),
+        h('label', {}, 'Estado', h('select', { name: 'status', id: 'cn-estado', 'data-nav': '' }, DECK_STATUSES.map((st) => h('option', { value: st, text: DECK_STATUS_LABEL[st] })))),
+        h('button', { type: 'submit', class: 'item primary', id: 'cn-anadir', 'data-nav': '' }, h('span', { class: 'item-label', text: 'Crear mazo' })),
+      );
+      return view('Nuevo mazo', form);
+    },
+
+    carpetaNueva() {
+      const form = h(
+        'form',
+        { class: 'form', autocomplete: 'off', onsubmit: (e) => (e.preventDefault(), addFromForm(form, { kind: 'carpeta' })) },
+        h('label', {}, 'Nombre de la carpeta', h('input', { name: 'title', id: 'pn-titulo', required: true, maxlength: '120', 'data-nav': '', placeholder: 'Ej.: Mis brillis' })),
+        h('label', {}, 'Juego', h('select', { name: 'tcg', id: 'pn-juego', 'data-nav': '' }, TCGS.map((t) => h('option', { value: t.id, text: t.name })))),
+        h(
+          'div',
+          { class: 'row2' },
+          h('label', {}, 'Cartas', h('input', { name: 'cards', id: 'pn-cartas', type: 'number', min: '0', max: '1000000', value: '0', inputmode: 'numeric', 'data-nav': '' })),
+          h('label', {}, 'Valor (€)', h('input', { name: 'value', id: 'pn-valor', type: 'number', min: '0', step: '0.01', value: '0', inputmode: 'decimal', 'data-nav': '' })),
+        ),
+        h('label', {}, 'Estado', h('select', { name: 'status', id: 'pn-estado', 'data-nav': '' }, BINDER_STATUSES.map((st) => h('option', { value: st, text: BINDER_STATUS_LABEL[st] })))),
+        h('button', { type: 'submit', class: 'item primary', id: 'pn-anadir', 'data-nav': '' }, h('span', { class: 'item-label', text: 'Crear carpeta' })),
+      );
+      return view('Nueva carpeta', form);
+    },
+
+    carpetaFicha({ id }) {
+      const g = store.getGame(id);
+      if (!g) return view('Carpeta borrada', p('Esta carpeta ya no está en tu colección.'), h('div', { class: 'list' }, item('Volver', back)));
+      const sub = p(`${tcg(g.tcg).name} · ${g.cards.toLocaleString('es-ES')} cartas · ${euros(g.value)}`, 'sub');
+      if (store.visiting()) {
+        return view(g.title, sub, h('dl', { class: 'stats' }, statRow('Estado', statusLabel(g))), p(g.review ? `“${g.review}”` : 'Sin notas.', 'note quote'), h('div', { class: 'list' }, item('Ver en la habitación', () => actions.showInRoom(id), { id: 'f-ver' }), item('Volver', back)));
+      }
+      const upd = (patch) => {
+        store.updateGame(id, patch);
+        sfx.save();
+      };
+      const num = (idf, label, value, step, key) =>
+        h('label', { class: 'item field' }, h('span', { class: 'item-label', text: label }), h('input', { type: 'number', id: idf, min: '0', step, value: String(value), inputmode: 'decimal', 'data-nav': '', onchange: (e) => upd({ [key]: e.target.value }) }));
+      return view(
+        g.title,
+        sub,
+        h(
+          'div',
+          { class: 'list' },
+          stepper('Juego', tcg(g.tcg).short, (dir) => upd({ tcg: cycle(TCG_IDS, g.tcg, dir) }), { id: 'pf-juego' }),
+          stepper('Estado', BINDER_STATUS_LABEL[g.status], (dir) => upd({ status: cycle(BINDER_STATUSES, g.status, dir) }), { id: 'pf-estado' }),
+          stepper('Nota', stars(g.score), (dir) => upd({ score: cycle(SCORES, g.score, dir) }), { id: 'pf-nota' }),
+          num('pf-cartas', 'Cartas', g.cards, '1', 'cards'),
+          num('pf-valor', 'Valor (€)', g.value, '0.01', 'value'),
+          item(g.review ? `“${g.review.slice(0, 70)}${g.review.length > 70 ? '…' : ''}”` : 'Escribir notas…', () => go('resena', { id }), { meta: 'Notas', cls: 'review', id: 'pf-notas' }),
+          item('Ver en la habitación', () => actions.showInRoom(id), { id: 'pf-ver' }),
+          item('Borrar carpeta', () => go('confirmar', { text: `¿Borrar la carpeta «${g.title}»?`, yes: 'Sí, borrar', action: 'borrar', id }), { cls: 'danger', id: 'pf-borrar' }),
+        ),
+      );
+    },
+
+    cartasStats() {
+      const cs = cardsStats(store.getCards());
+      return view(
+        'Estadísticas',
+        h(
+          'dl',
+          { class: 'stats' },
+          statRow('Mazos', String(cs.decks)),
+          statRow('Carpetas', String(cs.binders)),
+          statRow('Cartas en carpetas', cs.cards.toLocaleString('es-ES')),
+          statRow('Valor estimado', euros(cs.value)),
+          statRow('Récord total', cs.winRate === null ? 'Sin partidas' : `${cs.wins}V · ${cs.losses}D (${cs.winRate}%)`),
+        ),
+        cs.best ? p(`Tu mejor mazo: ${cs.best.title} (${recordText(cs.best)})`) : null,
+        h('div', { class: 'list' }, item('Volver', back)),
+      );
+    },
+
     ajustes() {
       const s = store.getSettings();
       const file = h('input', { type: 'file', accept: 'application/json,.json', hidden: true, onchange: (e) => restore(e.target.files?.[0]) });
@@ -806,13 +1019,13 @@ export function createDevice(root, actions) {
   }
 
   function loadDemo() {
-    const { added } = store.importGames([...DEMO_GAMES, ...DEMO_BOARDS]);
+    const { added } = store.importGames([...DEMO_GAMES, ...DEMO_BOARDS, ...DEMO_CARDS]);
     toast(added ? `Demo cargada: ${added} juegos han caído en tu habitación` : 'La demo ya estaba cargada');
     if (!root.dataset.disk) root.dataset.disk = 'videojuegos';
     history.length = 0;
     current = { name: 'menu', params: {} };
     render(0);
-    if (added) root.dataset.disk === 'mesa' ? actions.showZone('kallax') : actions.lower();
+    if (added) root.dataset.disk === 'mesa' ? actions.showZone('kallax') : root.dataset.disk === 'cartas' ? actions.showZone('mazos') : actions.lower();
   }
 
   function backup() {
@@ -864,6 +1077,7 @@ export function createDevice(root, actions) {
       booted = true;
       if (store.getVideoGames().length || store.visiting()) insertDisk('videojuegos');
       else if (store.getBoards().length) insertDisk('mesa');
+      else if (store.getCards().length) insertDisk('cartas');
       else {
         current = { name: 'disquetes', params: {} };
         render(0);

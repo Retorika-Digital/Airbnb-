@@ -153,3 +153,16 @@ Lo que se ha ido haciendo mientras dormías, tanda por tanda.
   - Los títulos con una palabra muy larga («AVENTUREROS») se cortaban en la portada. Ahora la letra se ajusta a la palabra más larga.
   - El aviso flotante oculto asomaba como una mancha oscura bajo la habitación.
 - **Pruebas**: 44 unitarias (antes 35), con el filtro de «¿Qué jugamos?», los préstamos, que los cubos de la Kallax no se desborden y el enlace con juegos de mesa. Y 17 en navegador (antes 16), con el recorrido completo del disquete azul y axe-core sin errores en sus 7 pantallas.
+
+## Tanda 8: el disquete verde de CARTAS
+
+- **Tercer disquete, «CARTAS»**, para cualquier juego de cartas: Magic, Pokémon, Yu-Gi-Oh!, One Piece, Lorcana, Flesh and Blood, Star Wars Unlimited, Riftbound, Digimon u otro. Solo se usan los nombres, sin logos ni arte.
+- **Mazos**:
+  - Cada mazo es una **cajita de mazo de pie delante de la tele de tubo**, con su etiqueta: nombre, formato y récord, por ejemplo **«23V · 11D (68%)»**. Los desmontados llevan un sello rojo de «DESMONTADO».
+  - **«¡He ganado!» / «He perdido»** apuntan el resultado y llevan el porcentaje de victorias.
+  - La **lista del mazo** («4 Lightning Bolt», «4x Rift Bolt», «Sol Ring»…) cuenta las cartas mientras escribes e ignora los comentarios y las cabeceras como «Sideboard:».
+  - Estados: Montado, En construcción o Desmontado.
+- **Carpetas**: tu colección en carpetas acolchadas, con placa, número de cartas y **valor estimado en euros**. Van **en los cubos de abajo de la Kallax, empezando por la derecha**, y no se mezclan con los juegos de mesa, que llenan desde arriba a la izquierda.
+- **Estadísticas de cartas**: mazos, carpetas, cartas, valor total, récord total y **tu mejor mazo** (con al menos 3 partidas).
+- La demo trae **5 mazos y 3 carpetas**, y el enlace de visita también los lleva (sin las listas, para que no sea eterno).
+- **Pruebas**: 51 unitarias (antes 44), con el contador de cartas, el récord y que los mazos y las carpetas vayan a su sitio. Y 18 en navegador (antes 17), con el recorrido del disquete verde y axe-core sin errores en sus 8 pantallas.

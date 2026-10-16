@@ -18,6 +18,9 @@ export const BOXES = {
   mesaM: { w: 0.25, h: 0.25, d: 0.06 },
   mesaL: { w: 0.297, h: 0.297, d: 0.072 },
   mesaXL: { w: 0.31, h: 0.31, d: 0.11 },
+  // Cartas: cajita de mazo (de pie, con la etiqueta delante) y carpeta A4
+  deckbox: { w: 0.072, h: 0.095, d: 0.045 },
+  binder: { w: 0.27, h: 0.3, d: 0.05 },
 };
 
 // Tamaños de caja de juego de mesa (se eligen al añadirlo).
@@ -69,9 +72,15 @@ const BOARD_PLATFORMS = [
   { id: 'mesa-xl', name: 'Juego de mesa', short: 'MESA', box: 'mesaXL', band: '#2f5d62', board: true },
 ];
 
+// Y las de las cartas: la cajita de un mazo y la carpeta de la colección.
+const CARD_PLATFORMS = [
+  { id: 'deckbox', name: 'Mazo', short: 'MAZO', box: 'deckbox', band: '#231e1a' },
+  { id: 'binder', name: 'Carpeta de cartas', short: 'CARP', box: 'binder', band: '#231e1a' },
+];
+
 export const PLATFORM_IDS = PLATFORMS.map((p) => p.id);
 export const BOARD_IDS = BOARD_PLATFORMS.map((p) => p.id);
-const BY_ID = Object.fromEntries([...PLATFORMS, ...BOARD_PLATFORMS].map((p, i) => [p.id, { ...p, order: i }]));
+const BY_ID = Object.fromEntries([...PLATFORMS, ...BOARD_PLATFORMS, ...CARD_PLATFORMS].map((p, i) => [p.id, { ...p, order: i }]));
 
 export const platform = (id) => BY_ID[id] || BY_ID.otra;
 export const boxFor = (id) => BOXES[platform(id).box];

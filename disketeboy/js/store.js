@@ -3,13 +3,19 @@
 // una versión vieja nunca rompen la consola ni la habitación.
 import { PLATFORM_IDS, BOARD_IDS } from './platforms.js';
 import { uid, clamp, titleKey } from './util.js';
+import { TCG_IDS, DECK_STATUSES, DECK_STATUS_LABEL, BINDER_STATUSES, BINDER_STATUS_LABEL } from './cards.js';
 
 const KEY = 'dkb:v1';
 
-// Videojuegos y juegos de mesa viven en la misma colección (kind: 'video' | 'mesa').
+// Todo vive en la misma colección; cada cosa tiene su kind:
+// 'video' (videojuego), 'mesa' (juego de mesa), 'mazo' y 'carpeta' (cartas).
 export const STATUSES = ['pendiente', 'jugando', 'jugado', 'terminado', 'abandonado'];
 export const BOARD_STATUSES = ['pendiente', 'jugado', 'favorito'];
-export const ALL_STATUSES = [...STATUSES, 'favorito']; // el orden importa: lo usan los enlaces de visita
+// El orden importa: lo usan los enlaces de visita. Lo nuevo, siempre al final.
+export const ALL_STATUSES = [...STATUSES, 'favorito', ...DECK_STATUSES, ...BINDER_STATUSES];
+const KINDS = ['video', 'mesa', 'mazo', 'carpeta'];
+const STATUS_BY_KIND = { video: STATUSES, mesa: BOARD_STATUSES, mazo: DECK_STATUSES, carpeta: BINDER_STATUSES };
+const DEFAULT_STATUS = { video: 'pendiente', mesa: 'jugado', mazo: 'montado', carpeta: 'progreso' };
 export const STATUS_LABEL = {
   pendiente: 'Pendiente',
   jugando: 'Jugando',
@@ -20,7 +26,9 @@ export const STATUS_LABEL = {
 };
 export const BOARD_STATUS_LABEL = { pendiente: 'Sin estrenar', jugado: 'Jugado', favorito: 'Favorito' };
 export const isBoard = (g) => g?.kind === 'mesa';
-export const statusLabel = (g) => (isBoard(g) ? BOARD_STATUS_LABEL : STATUS_LABEL)[g.status];
+export const isCard = (g) => g?.kind === 'mazo' || g?.kind === 'carpeta';
+const LABELS = { video: STATUS_LABEL, mesa: BOARD_STATUS_LABEL, mazo: DECK_STATUS_LABEL, carpeta: BINDER_STATUS_LABEL };
+export const statusLabel = (g) => (LABELS[g.kind] || STATUS_LABEL)[g.status];
 export const PALETTES = ['verde', 'ambar', 'hielo', 'gris'];
 export const SORTS = ['plataforma', 'nota', 'color', 'az', 'horas'];
 export const LIMITS = { title: 120, review: 2000, games: 2000 };
@@ -60,24 +68,44 @@ export function cleanGame(raw) {
   const hours = Number(raw.hours);
   const appid = Number(raw.steamAppId);
   const now = new Date().toISOString();
-  const board = raw.kind === 'mesa';
+  const kind = KINDS.includes(raw.kind) ? raw.kind : 'video';
+  const board = kind === 'mesa';
+  const int = (v, min, max, def) => (v !== '' && v !== null && Number.isFinite(Number(v)) ? clamp(Math.round(Number(v)), min, max) : def);
+  const platformFor = {
+    video: () => (PLATFORM_IDS.includes(raw.platform) ? raw.platform : 'otra'),
+    mesa: () => (BOARD_IDS.includes(raw.platform) ? raw.platform : 'mesa-l'),
+    mazo: () => 'deckbox',
+    carpeta: () => 'binder',
+  };
   const game = {
     id: typeof raw.id === 'string' && /^[\w-]{1,40}$/.test(raw.id) ? raw.id : uid(),
-    kind: board ? 'mesa' : 'video',
+    kind,
     title,
-    platform: board ? (BOARD_IDS.includes(raw.platform) ? raw.platform : 'mesa-l') : PLATFORM_IDS.includes(raw.platform) ? raw.platform : 'otra',
-    status: board ? (BOARD_STATUSES.includes(raw.status) ? raw.status : 'jugado') : STATUSES.includes(raw.status) ? raw.status : 'pendiente',
+    platform: platformFor[kind](),
+    status: STATUS_BY_KIND[kind].includes(raw.status) ? raw.status : DEFAULT_STATUS[kind],
     score: Number.isFinite(score) ? clamp(Math.round(score), 0, 10) : null,
     hours: Number.isFinite(hours) ? clamp(Math.round(hours * 10) / 10, 0, 99999) : 0,
     review: cleanText(raw.review, LIMITS.review),
-    steamAppId: !board && Number.isInteger(appid) && appid > 0 && appid < 1e8 ? appid : null,
+    steamAppId: kind === 'video' && Number.isInteger(appid) && appid > 0 && appid < 1e8 ? appid : null,
     cover: cleanUrl(raw.cover),
     color: /^#[0-9a-f]{6}$/i.test(raw.color || '') ? raw.color.toLowerCase() : null,
     addedAt: validDate(raw.addedAt) || now,
     updatedAt: validDate(raw.updatedAt) || now,
   };
+  if (kind === 'mazo' || kind === 'carpeta') game.tcg = TCG_IDS.includes(raw.tcg) ? raw.tcg : 'otro';
+  if (kind === 'mazo') {
+    game.format = cleanText(raw.format, 40).replace(/\s+/g, ' ');
+    game.list = cleanText(raw.list, 6000);
+    game.wins = int(raw.wins, 0, 99999, 0);
+    game.losses = int(raw.losses, 0, 99999, 0);
+    game.lastPlayed = validDate(raw.lastPlayed);
+  }
+  if (kind === 'carpeta') {
+    game.cards = int(raw.cards, 0, 1000000, 0);
+    const value = Number(raw.value);
+    game.value = raw.value !== '' && Number.isFinite(value) ? clamp(Math.round(value * 100) / 100, 0, 1e7) : 0;
+  }
   if (board) {
-    const int = (v, min, max, def) => (Number.isFinite(Number(v)) && v !== '' && v !== null ? clamp(Math.round(Number(v)), min, max) : def);
     game.minPlayers = int(raw.minPlayers, 1, 20, 2);
     game.maxPlayers = Math.max(game.minPlayers, int(raw.maxPlayers, 1, 99, Math.max(game.minPlayers, 4)));
     game.minutes = int(raw.minutes, 5, 1000, 45);
@@ -162,8 +190,9 @@ export function startVisit(games, name = '') {
 export const visiting = () => visit;
 
 export const getGames = () => get().games;
-export const getVideoGames = () => get().games.filter((g) => !isBoard(g));
+export const getVideoGames = () => get().games.filter((g) => g.kind === 'video');
 export const getBoards = () => get().games.filter(isBoard);
+export const getCards = () => get().games.filter(isCard);
 export const getGame = (id) => get().games.find((g) => g.id === id) || null;
 export const getSettings = () => get().settings;
 
@@ -293,7 +322,14 @@ export function logPlay(id) {
   return updateGame(id, { plays: g.plays + 1, lastPlayed: new Date().toISOString(), status: g.status === 'pendiente' ? 'jugado' : g.status });
 }
 
-/** Estadísticas de los videojuegos (los juegos de mesa tienen las suyas en boards.js). */
+/** Apunta el resultado de una partida con un mazo. */
+export function logResult(id, won) {
+  const g = getGame(id);
+  if (g?.kind !== 'mazo') return null;
+  return updateGame(id, won ? { wins: g.wins + 1, lastPlayed: new Date().toISOString() } : { losses: g.losses + 1, lastPlayed: new Date().toISOString() });
+}
+
+/** Estadísticas de los videojuegos (los juegos de mesa y las cartas tienen las suyas). */
 export function stats(games = getVideoGames()) {
   const by = Object.fromEntries(STATUSES.map((st) => [st, 0]));
   let hours = 0;
