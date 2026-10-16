@@ -696,6 +696,180 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
   pileSign.visible = false;
   scene.add(pileSign);
 
+  // ---------------------------------------------------------------- cosméticos: temas y gato
+  // (pensados como futuras ventajas para quien apoye el proyecto; aquí, gratis en Ajustes)
+  const ledGroup = new THREE.Group();
+  ledGroup.name = 'led';
+  const ledLights = [new THREE.PointLight('#a24bff', 2.4, 6, 2), new THREE.PointLight('#22d3ee', 2.4, 6, 2)];
+  for (const l of ledLights) l.visible = false;
+  ledLights[0].position.set(-1.3, ROOM.height - 0.25, -1.1);
+  ledLights[1].position.set(1.5, ROOM.height - 0.25, -1.1);
+  {
+    const strip = (len, x, z, ry, color) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(len, 0.014, 0.014), new THREE.MeshBasicMaterial({ color, toneMapped: false }));
+      m.position.set(x, ROOM.height - 0.04, z);
+      m.rotation.y = ry;
+      ledGroup.add(m);
+    };
+    strip(W - 0.1, cx, ROOM.minZ + 0.02, 0, '#b061ff');
+    strip(D - 0.1, ROOM.minX + 0.02, cz, Math.PI / 2, '#ff4fd8');
+    strip(D - 0.1, ROOM.maxX - 0.02, cz, Math.PI / 2, '#22d3ee');
+    // La tira de verdad: detrás del escritorio, con su halo en la pared
+    const rgb = (ctx, w) => {
+      const g = ctx.createLinearGradient(0, 0, w, 0);
+      g.addColorStop(0, '#a24bff');
+      g.addColorStop(0.5, '#ff4fd8');
+      g.addColorStop(1, '#22d3ee');
+      return g;
+    };
+    const tube = new THREE.Mesh(
+      new THREE.BoxGeometry(1.24, 0.012, 0.01),
+      new THREE.MeshBasicMaterial({ map: toTexture(paint(256, 4, (ctx, w, h) => { ctx.fillStyle = rgb(ctx, w); ctx.fillRect(0, 0, w, h); })), toneMapped: false }),
+    );
+    tube.position.set(DESK.x, DESK.top + 0.3, ROOM.minZ + 0.008);
+    const halo = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.7, 0.5),
+      new THREE.MeshBasicMaterial({
+        map: toTexture(paint(256, 64, (ctx, w, h) => {
+          ctx.fillStyle = rgb(ctx, w);
+          ctx.fillRect(0, 0, w, h);
+          ctx.globalCompositeOperation = 'destination-in';
+          const v = ctx.createLinearGradient(0, 0, 0, h);
+          v.addColorStop(0, 'rgba(0,0,0,0)');
+          v.addColorStop(0.5, 'rgba(0,0,0,0.75)');
+          v.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = v;
+          ctx.fillRect(0, 0, w, h);
+          const u = ctx.createLinearGradient(0, 0, w, 0);
+          u.addColorStop(0, 'rgba(0,0,0,0)');
+          u.addColorStop(0.18, 'rgba(0,0,0,1)');
+          u.addColorStop(0.82, 'rgba(0,0,0,1)');
+          u.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = u;
+          ctx.fillRect(0, 0, w, h);
+        })),
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        toneMapped: false,
+      }),
+    );
+    halo.position.set(DESK.x, DESK.top + 0.3, ROOM.minZ + 0.004);
+    ledGroup.add(tube, halo);
+  }
+  ledGroup.visible = false;
+  scene.add(ledGroup, ...ledLights);
+  const THEME_LOOK = {
+    crema: { wall: '#ffffff', side: '#ffffff', led: false },
+    gamer: { wall: '#5d6290', side: '#4b5079', led: true },
+    retro: { wall: '#a6e6dd', side: '#ffbfcd', led: false },
+  };
+  let themeName = null;
+  function applyTheme(name) {
+    if (name === themeName) return;
+    themeName = name;
+    const t = THEME_LOOK[name] || THEME_LOOK.crema;
+    wallMat.color.set(t.wall);
+    sideMat.color.set(t.side);
+    ledGroup.visible = t.led;
+    // Apagadas del todo (no a intensidad 0) para que el resto de temas no pague su coste
+    for (const l of ledLights) l.visible = t.led;
+    invalidate();
+  }
+
+  // El gato: duerme hecho un ovillo en la alfombra, junto a tu pila de la vergüenza
+  const cat = new THREE.Group();
+  cat.name = 'gato';
+  {
+    const fur = mat({ color: '#e0913f', roughness: 0.9 });
+    const furDark = mat({ color: '#a95e22', roughness: 0.9 });
+    // Lomo atigrado: rayas que dan la vuelta al cuerpo, solo por arriba y por los lados
+    const tabby = mat({
+      roughness: 0.9,
+      map: toTexture(paint(256, 128, (ctx, w, h) => {
+        ctx.fillStyle = '#e0913f';
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = '#a95e22';
+        for (let i = 0; i < 6; i++) {
+          const y0 = h * (0.27 + i * 0.095);
+          for (let x = 0; x < w; x += 2) {
+            const t = Math.max(0, Math.sin((x / w) * Math.PI) - 0.25) * 9;
+            ctx.fillRect(x, y0 + Math.sin(x * 0.07 + i) * 2 - t / 2, 2, t);
+          }
+        }
+      })),
+    });
+    const bodyGeo = new THREE.SphereGeometry(0.1, 24, 16);
+    bodyGeo.rotateZ(Math.PI / 2); // los polos a lo largo del lomo: las rayas quedan de lado a lado
+    const body = solid(bodyGeo, tabby);
+    body.scale.set(1.5, 0.72, 1.12);
+    body.position.y = 0.07;
+    // Cola rodeando el cuerpo hasta la nariz
+    const tail = solid(new THREE.TorusGeometry(0.125, 0.02, 8, 28, Math.PI * 0.95), furDark);
+    tail.rotation.x = Math.PI / 2;
+    tail.scale.set(1.2, 1.05, 1);
+    tail.position.y = 0.022;
+    // Cabeza apoyada delante, de lado hacia ti
+    const headG = new THREE.Group();
+    headG.position.set(0.15, 0.085, 0.07);
+    headG.rotation.set(0, -0.55, -0.12);
+    const head = solid(new THREE.SphereGeometry(0.064, 20, 14), fur);
+    head.scale.set(1, 0.88, 1.06);
+    const muzzle = solid(new THREE.SphereGeometry(0.03, 14, 10), mat({ color: '#f6e3c8', roughness: 0.9 }));
+    muzzle.scale.set(0.75, 0.62, 1.2);
+    muzzle.position.set(0.05, -0.016, 0);
+    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.007, 8, 6), new THREE.MeshBasicMaterial({ color: '#d9737a' }));
+    nose.position.set(0.072, -0.006, 0);
+    headG.add(head, muzzle, nose);
+    const lineMat = new THREE.MeshBasicMaterial({ color: '#3a2618' });
+    const pink = mat({ color: '#f0a0a6', roughness: 0.8 });
+    for (const side of [-1, 1]) {
+      const ear = solid(new THREE.ConeGeometry(0.03, 0.06, 4), fur);
+      ear.position.set(-0.008, 0.062, side * 0.036);
+      ear.rotation.set(side * 0.42, Math.PI / 4, 0);
+      const inner = new THREE.Mesh(new THREE.ConeGeometry(0.016, 0.036, 3), pink);
+      inner.position.set(0.012, 0.056, side * 0.034);
+      inner.rotation.set(side * 0.42, 0, -0.2);
+      // Ojos cerrados: dos rayitas pegadas a la cara
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.006, 8, 6), lineMat);
+      eye.scale.set(0.45, 0.4, 1.9);
+      eye.position.set(0.0588, 0.014, side * 0.024);
+      eye.rotation.set(side * 0.25, -side * 0.35, 0);
+      headG.add(ear, inner, eye);
+    }
+    cat.add(body, tail, headG);
+    const zzz = new THREE.Sprite(
+      new THREE.SpriteMaterial({
+        map: toTexture(paint(128, 128, (ctx) => {
+          ctx.fillStyle = '#fbf3e4';
+          ctx.strokeStyle = '#2b2622';
+          ctx.lineWidth = 4;
+          const font = '"Comic Sans MS", "Segoe Print", cursive';
+          for (const [size, x, y] of [[46, 14, 112], [34, 58, 70], [26, 94, 38]]) {
+            ctx.font = `900 ${size}px ${font}`;
+            ctx.strokeText('z', x, y);
+            ctx.fillText('z', x, y);
+          }
+        })),
+        transparent: true,
+        depthWrite: false,
+      }),
+    );
+    zzz.scale.set(0.15, 0.15, 1);
+    zzz.position.set(0.2, 0.27, 0.07);
+    cat.add(zzz);
+  }
+  cat.position.set(0.12, 0.004, -0.62);
+  cat.rotation.y = -1.1;
+  scene.add(cat);
+  const catHit = (x, y) => {
+    if (!cat.visible) return false;
+    const rect = canvas.getBoundingClientRect();
+    ndc.set(((x - rect.left) / rect.width) * 2 - 1, -((y - rect.top) / rect.height) * 2 + 1);
+    raycaster.setFromCamera(ndc, camera);
+    return raycaster.intersectObject(cat, true).length > 0;
+  };
+
   // Pósteres de tus favoritos en la pared derecha
   const posters = [-1.58, -0.9].map((z) => {
     const frame = boxMesh(0.02, 0.62, 0.45, mat({ color: '#1d1a16', roughness: 0.4 }), ROOM.maxX - 0.012, 1.55, z, { cast: false });
@@ -936,7 +1110,13 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
 
   function sync(games, settings, change = {}) {
     settingsCache = settings;
+    applyTheme(settings.theme);
+    cat.visible = settings.pet !== false;
     const layout = computeLayout(games, settings);
+    // El gato se aparta si la pila de la vergüenza crece hasta su sitio
+    let pileEdge = -Infinity;
+    for (const p of layout.placements.values()) if (p.zone === 'pila') pileEdge = Math.max(pileEdge, p.x);
+    cat.position.x = Math.min(0.95, Math.max(0.12, pileEdge + 0.34));
     const fresh = new Set(change.type === 'add' || change.type === 'import' ? change.ids : []);
     const ids = new Set(games.map((g) => g.id));
 
@@ -1293,6 +1473,10 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
     if (e && e === inspected) flip();
     else if (e) inspect(e.id);
     else if (inspected) release();
+    else if (catHit(ev.clientX, ev.clientY)) {
+      sfx.meow();
+      onNotice('Prrr… 🐱 (mejor no despertarlo)');
+    }
   };
   canvas.addEventListener('pointerup', endPointer);
   canvas.addEventListener('pointercancel', (ev) => {

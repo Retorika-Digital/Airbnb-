@@ -1,7 +1,7 @@
 // «Visita mi habitación»: la colección viaja comprimida dentro del enlace
 // (después de la #, que nunca llega a ningún servidor). Sin cuentas ni base de
 // datos: quien abre el enlace ve tu habitación en modo visita, sin tocar la suya.
-import { ALL_STATUSES, cleanGame } from './store.js';
+import { ALL_STATUSES, THEMES, cleanGame } from './store.js';
 
 const REVIEW_MAX = 140;
 export const LONG_URL = 8000;
@@ -29,8 +29,10 @@ async function pipe(bytes, stream) {
  *   juego de mesa → [«m», jugadores mín., máx., minutos, partidas, prestado a]
  *   mazo          → [«k», juego de cartas, formato, victorias, derrotas] (la lista no viaja)
  *   carpeta       → [«c», juego de cartas, cartas, valor]
+ * El aspecto de la habitación (tema y gato) también viaja, para que la visita
+ * vea la habitación como la tienes tú.
  */
-export async function encodeRoom(games, { name = '' } = {}) {
+export async function encodeRoom(games, { name = '', theme = 'crema', pet = true } = {}) {
   const rows = (withReviews) =>
     games.map((g) => {
       const row = [g.title, g.platform, ALL_STATUSES.indexOf(g.status), g.score ?? -1, g.hours, g.steamAppId || 0, withReviews ? (g.review || '').slice(0, REVIEW_MAX) : '', g.color || ''];
@@ -39,8 +41,9 @@ export async function encodeRoom(games, { name = '' } = {}) {
       if (g.kind === 'carpeta') row.push('c', g.tcg, g.cards, g.value);
       return row;
     });
-  let json = JSON.stringify({ v: 1, n: String(name).slice(0, 30), g: rows(true) });
-  if (json.length > 60000) json = JSON.stringify({ v: 1, n: String(name).slice(0, 30), g: rows(false) });
+  const pack = (withReviews) => JSON.stringify({ v: 1, n: String(name).slice(0, 30), t: theme, p: pet ? 1 : 0, g: rows(withReviews) });
+  let json = pack(true);
+  if (json.length > 60000) json = pack(false);
   return toBase64Url(await pipe(new TextEncoder().encode(json), new CompressionStream('deflate-raw')));
 }
 
@@ -76,7 +79,11 @@ export async function decodeRoom(text) {
         : null,
     )
     .filter(Boolean);
-  return { name: typeof data.n === 'string' ? data.n.slice(0, 30) : '', games };
+  // Los enlaces sin aspecto (los primeros) se ven con el de quien visita
+  const look = {};
+  if (THEMES.includes(data.t)) look.theme = data.t;
+  if (data.p === 0 || data.p === 1) look.pet = data.p === 1;
+  return { name: typeof data.n === 'string' ? data.n.slice(0, 30) : '', games, look };
 }
 
 export const visitUrl = (base, data) => `${base}#visita=${data}`;

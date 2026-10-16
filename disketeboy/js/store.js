@@ -31,6 +31,7 @@ const LABELS = { video: STATUS_LABEL, mesa: BOARD_STATUS_LABEL, mazo: DECK_STATU
 export const statusLabel = (g) => (LABELS[g.kind] || STATUS_LABEL)[g.status];
 export const PALETTES = ['verde', 'ambar', 'hielo', 'gris'];
 export const SORTS = ['plataforma', 'nota', 'color', 'az', 'horas'];
+export const THEMES = ['crema', 'gamer', 'retro'];
 export const LIMITS = { title: 120, review: 2000, games: 2000 };
 
 let state = null;
@@ -125,6 +126,8 @@ function cleanSettings(raw) {
     sort: SORTS.includes(s.sort) ? s.sort : 'plataforma',
     tidy: s.tidy === true,
     name: cleanText(s.name, 30).replace(/\s+/g, ' '),
+    theme: THEMES.includes(s.theme) ? s.theme : 'crema',
+    pet: s.pet !== false,
   };
 }
 
@@ -179,11 +182,11 @@ export function _reload() {
   visit = null;
 }
 
-/** Entra de visita en la habitación de otra persona (solo en memoria). */
-export function startVisit(games, name = '') {
+/** Entra de visita en la habitación de otra persona (solo en memoria), con su tema y su gato. */
+export function startVisit(games, name = '', look = {}) {
   const settings = get().settings;
   visit = { name: cleanText(name, 30) };
-  state = normalize({ games, settings: { ...settings, tidy: false } });
+  state = normalize({ games, settings: { ...settings, ...look, tidy: false } });
   save({ type: 'reset' });
 }
 

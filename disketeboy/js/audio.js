@@ -100,6 +100,23 @@ export const sfx = {
     noise(0, 0.12, 0.16 * strength, 380);
     tone(75, 0, 0.12, { type: 'sine', vol: 0.1 * strength, slide: -30 });
   },
+  meow: () => {
+    const c = ac();
+    if (!c) return;
+    const t = c.currentTime;
+    const osc = c.createOscillator();
+    const gain = c.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(520, t);
+    osc.frequency.linearRampToValueAtTime(880, t + 0.12);
+    osc.frequency.linearRampToValueAtTime(600, t + 0.45);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.06, t + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+    osc.connect(gain).connect(c.destination);
+    osc.start(t);
+    osc.stop(t + 0.55);
+  },
   print: () => {
     for (let i = 0; i < 12; i++) noise(i * 0.055, 0.04, 0.045, 4200);
   },

@@ -153,3 +153,24 @@ test('el límite de la colección se respeta', () => {
   assert.equal(r.skipped, 5);
   assert.throws(() => store.addGame({ title: 'Uno más' }), /llena/);
 });
+
+test('tema y gato: valores de serie, se guardan y uno inventado se ignora', () => {
+  assert.equal(store.getSettings().theme, 'crema');
+  assert.equal(store.getSettings().pet, true, 'el gato viene de serie');
+  store.setSettings({ theme: 'gamer', pet: false });
+  store._reload();
+  assert.equal(store.getSettings().theme, 'gamer');
+  assert.equal(store.getSettings().pet, false);
+  mem.set('dkb:v1', JSON.stringify({ games: [], settings: { theme: 'unicornio' } }));
+  store._reload();
+  assert.equal(store.getSettings().theme, 'crema');
+});
+
+test('de visita se ve el tema de quien comparte, sin tocar el tuyo', () => {
+  store.setSettings({ theme: 'retro' });
+  store.startVisit([{ title: 'Tetris', platform: 'gb' }], 'Laura', { theme: 'gamer', pet: false });
+  assert.equal(store.getSettings().theme, 'gamer');
+  assert.equal(store.getSettings().pet, false);
+  store.setSettings({ theme: 'crema' });
+  assert.equal(JSON.parse(mem.get('dkb:v1')).settings.theme, 'retro', 'la visita no se guarda encima de lo tuyo');
+});

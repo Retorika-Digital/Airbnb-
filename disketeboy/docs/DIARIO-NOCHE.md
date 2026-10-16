@@ -2,6 +2,13 @@
 
 Lo que se ha ido haciendo mientras dormías, tanda por tanda.
 
+> **Resumen rápido para el café ☕**
+> - **Qué hay**: una consola propia (la DisketeBoy) con **3 disquetes**: videojuegos, juegos de mesa y cartas. Detrás, una **habitación 3D** donde cada juego acaba en su sitio: la pila de la vergüenza, la estantería, el escritorio, la caja de abandonados, la Kallax o las cajitas de mazo.
+> - **Extras**: importar de Steam, el ticket de la DisketePrinter, el enlace «Visita mi habitación», la ruleta de «¿Qué jugamos esta noche?», 3 temas de habitación y un gato.
+> - **Cómo verlo**: `node disketeboy/server.mjs` y abre http://localhost:5180/?demo=1. Las capturas están en el [README](../README.md).
+> - **Calidad**: 56 pruebas unitarias y 20 en navegador, todas verdes, y axe-core sin errores de accesibilidad.
+> - **Lo que te toca a ti**: está en [LANZAMIENTO.md](LANZAMIENTO.md), en el apartado «Antes de publicar nada»: dominio, comprobar el nombre, clave de Steam y página de donaciones.
+
 ## Tanda 1: la consola DisketeBoy
 
 - **Diseño propio**, para no tener problemas con Nintendo:
@@ -177,3 +184,29 @@ Lo que se ha ido haciendo mientras dormías, tanda por tanda.
   - El escritorio admite como mucho **12 juegos «jugando»** y la caja de abandonados **24**. El resto va a la estantería, en vez de levantar torres hasta el techo.
   - Las pilas de la vergüenza enormes **crecen en altura** en vez de invadir toda la habitación.
 - **Pruebas**: 53 unitarias y 19 en navegador, todas verdes.
+
+## Tanda 10: plan de lanzamiento, temas de habitación y un gato
+
+- **Plan de lanzamiento** en [LANZAMIENTO.md](LANZAMIENTO.md):
+  - Qué tener listo antes de publicar.
+  - El guion del vídeo de 20 segundos.
+  - Qué subreddits, en qué orden y con qué títulos.
+  - Cómo pedir donaciones sin muros.
+  - Riesgos y la hoja de ruta.
+- **Temas de habitación** (Ajustes → Habitación):
+  - **Crema**, el de siempre.
+  - **Gamer RGB**: paredes moradas y una **tira LED** detrás de la tele que tiñe la pared de morado, rosa y cian.
+  - **Retro 90**: pared verde menta y paredes salmón.
+  - Las luces del tema Gamer se apagan del todo con los otros temas, para que no gasten.
+- **Un gato** (Ajustes → Gato):
+  - Es atigrado y duerme hecho un ovillo en la alfombra, con la cola rodeándolo y sus «zzz».
+  - Si lo tocas, ronronea («Prrr… mejor no despertarlo»), con un maullido hecho con código.
+  - **Se aparta solo** si la pila de la vergüenza crece hasta su sitio. Lo descubrí en la captura de 800 juegos, donde estaba tumbado encima de las cajas.
+  - La primera versión parecía un pan con una raja, así que lo rehíce: rayas pintadas alrededor del lomo, orejas con el interior rosa, hocico blanco y nariz.
+- **El tema y el gato viajan en el enlace de visita**: quien visita tu habitación la ve como la tienes tú. Al salir, vuelve a la suya. Los enlaces antiguos siguen funcionando.
+- Los temas y el gato están pensados como **ventajas para mecenas** («cosas que se lucen, sin quitar nada a nadie»). De momento son gratis para todos.
+- **Capturas nuevas**: tema Gamer, tema Retro y el gato de cerca. Las demás se han rehecho para que salga el gato.
+- **Pruebas**: 56 unitarias (antes 53) y 20 en navegador (antes 19), todas verdes:
+  - El tema y el gato se guardan, y un tema inventado se ignora.
+  - Viajan en el enlace de visita sin pisar los tuyos.
+  - Los botones de Ajustes encienden la tira LED y esconden al gato.

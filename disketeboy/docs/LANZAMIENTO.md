@@ -1,0 +1,93 @@
+# Plan de lanzamiento de DisketeBoy 🚀
+
+Cómo sacarlo a Reddit para que la gente lo use, lo comparta y done. Está ordenado por pasos: primero lo que hay que tener listo, luego el lanzamiento y después lo que viene.
+
+## 1. Antes de publicar nada
+
+**Imprescindible**
+- [ ] **Dominio y despliegue.** Un dominio corto (`disketeboy.app` o similar). Netlify ya sirve la carpeta en `/disketeboy/`, pero para el lanzamiento queda mejor en la raíz de su propio dominio y en su propio repositorio.
+- [ ] **Comprobar el nombre.** Que «DisketeBoy» esté libre como dominio y como marca (EUIPO y OEPM). La terminación *Boy* recuerda a Nintendo: el diseño ya es propio, pero si el nombre diera problemas, es mejor cambiarlo **antes** de lanzar que después.
+- [ ] **Clave de Steam** en las variables de entorno de Netlify (`STEAM_API_KEY`, gratis en steamcommunity.com/dev/apikey). Sin ella, la importación ofrece la demo.
+- [ ] **Probar en móviles de verdad**: un iPhone (Safari) y un Android de gama media (Chrome). La mitad de Reddit entra desde el móvil.
+- [ ] **Página de donaciones** (Ko-fi, Buy Me a Coffee o Patreon) y un botón discreto en Créditos y en el ticket.
+- [ ] **Vista previa del enlace** (`og:image`): la captura del arcoíris de 800 juegos. Así, cada enlace compartido se ve bonito en Reddit, WhatsApp y Discord.
+
+**Muy recomendable**
+- [ ] **Estadísticas sin cookies** (Plausible o GoatCounter), para saber de qué subreddit viene la gente. Sin cookies no hace falta banner.
+- [ ] **Un texto corto de privacidad**: todo se guarda en tu navegador, Steam solo lee lo que tu perfil ya tiene público, y el enlace de visita no pasa por ningún servidor.
+
+## 2. Qué enseñar: el vídeo de 20 segundos
+
+En Reddit gana el vídeo corto y sin voz. Guion:
+1. (0–3 s) Se mete el disquete en la consola: *clic*, pantalla verde.
+2. (3–8 s) «Importar de Steam» y **lluvia de cajas** cayendo en la habitación.
+3. (8–12 s) Las que nunca has abierto forman la **pila de la vergüenza**, con su cartel.
+4. (12–16 s) «Ordenar habitación»: las cajas vuelan y forman el **arcoíris de la estantería**.
+5. (16–20 s) Coges una caja, la giras y **detrás está tu reseña**.
+
+**Imágenes que funcionan solas:**
+- El ticket de la DisketePrinter («PENDIENTE DE PAGO: 7 JUEGOS»).
+- El arcoíris de 800 juegos.
+- La ruleta de «¿Qué jugamos esta noche?».
+
+## 3. Dónde y cómo
+
+**Orden de publicación.** Primero lugares pequeños para pulir con críticas reales; después, los grandes.
+
+| Semana | Subreddit | Ángulo |
+|---|---|---|
+| 1 | r/threejs, r/webdev (Showoff Saturday), r/SideProject | «Hecho con three.js sin assets: todo procedural». Comentarios técnicos para pulir |
+| 2 | r/patientgamers, r/gamecollecting, r/CozyGamers | La pila de la vergüenza y la habitación acogedora |
+| 2 | r/Steam, r/pcgaming (revisa sus normas) | «Tu biblioteca de Steam, pero física» |
+| 3 | r/boardgames (normas de autopromoción) | La Kallax y la ruleta de «¿Qué jugamos esta noche?» |
+| 3 | r/EDH, r/PokemonTCG, r/OnePieceTCG… | Los mazos con su récord |
+| 4 | r/InternetIsBeautiful | Cuando esté pulido del todo: es el grande |
+| — | En español: r/spain, Mediavida, Forocoches (sección de juegos) | Con la versión en español tal cual |
+
+**Títulos de ejemplo** (en inglés para los subreddits grandes):
+- *I made a free web app that turns your game collection into a cozy 3D room — unplayed games pile up on the floor*
+- *My Steam backlog, but physical: a «pile of shame» that grows on my bedroom floor*
+- *I built a free tool for board gamers: your games in a virtual Kallax + a roulette that picks tonight's game*
+
+**Normas que más cuentan:**
+- Lee las normas de autopromoción de cada subreddit: algunos solo la permiten ciertos días o piden que participes antes.
+- Publica en primera persona, sin anuncios y diciendo que es gratis y que no pide registro.
+- Mejor de martes a jueves, entre las 15:00 y las 17:00 hora española (mañana en EE. UU.).
+- **Contesta a todos los comentarios durante las primeras 3 horas.** Es lo que más pesa para que el post suba.
+- Pide feedback de verdad («¿qué le añadiríais?») y apunta las ideas en público.
+
+**Bucles para que se comparta solo:**
+- **«Compartir mi habitación»**: cada enlace que alguien pega en un comentario es un anuncio.
+- **El ticket**: la gente lo sube como imagen.
+- En el post, anima a los comentaristas: *«share your room link below!»*.
+
+## 4. Donaciones sin cobrar nada
+
+- **Todo gratis y sin muros.** Las donaciones se agradecen, no se exigen.
+- **Ventajas que se pueden lucir, sin quitar nada a nadie**:
+  - Temas de habitación y una mascota (el gato).
+  - Carcasas de colores para la DisketeBoy.
+  - Tu nombre en los créditos.
+  - Votar la siguiente función.
+- **Transparencia**: «el servidor cuesta X € al mes, este mes vamos por el Y %».
+- **El botón de donar, después del momento «¡qué chulo!»** (tras imprimir el ticket o compartir la habitación), nunca en una ventana al entrar.
+- **Hacienda**: en España las donaciones tributan. Consúltalo con un gestor antes de que lleguen en serio.
+
+## 5. Riesgos y cómo se han tenido en cuenta
+
+| Riesgo | Qué se ha hecho |
+|---|---|
+| Rechazo al arte con IA | Todo lo visible está hecho con código. Se puede decir con orgullo en el post |
+| Parecerse a Nintendo | Diseño de consola propio: carcasa crema, ranura de disquete, LED «PILA». Ni la forma ni el logo de Game Boy |
+| Portadas de Steam | Se cargan desde Steam, como hacen otras webs de colecciones, y se citan en Créditos |
+| Juegos de cartas y de mesa | Solo los nombres, para identificarlos; los dibujos son genéricos |
+| Móviles lentos | Solo dibuja cuando algo se mueve, y para colecciones grandes hay lomos ligeros y 3 veces menos dibujado |
+| Datos | Todo en el navegador, con copia de seguridad en JSON. Nada se pierde si no hay cuenta |
+
+## 6. Lo siguiente (hoja de ruta)
+
+1. **Cuentas opcionales y sincronizar** entre móvil y ordenador (Supabase), y enlaces de visita cortos.
+2. **Importar de BoardGameGeek** (juegos de mesa) **y de ManaBox o Moxfield** (cartas).
+3. **El resumen del año de tu habitación** en diciembre.
+4. **Escanear el código de barras** con la cámara para añadir juegos físicos.
+5. **Mascota y temas** como ventajas para mecenas.

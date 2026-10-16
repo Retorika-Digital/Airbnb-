@@ -19,6 +19,11 @@
   <img src="docs/capturas/ticket.jpg" width="32%" alt="El ticket de la DisketePrinter con el resumen de la colección">
 </p>
 <p>
+  <img src="docs/capturas/tema-gamer.jpg" width="40%" alt="La habitación con el tema Gamer RGB: paredes moradas y tira LED detrás de la tele">
+  <img src="docs/capturas/tema-retro.jpg" width="40%" alt="La habitación con el tema Retro 90: pared verde menta y paredes salmón">
+  <img src="docs/capturas/gato.jpg" width="18%" alt="El gato atigrado durmiendo hecho un ovillo en la alfombra">
+</p>
+<p>
   <img src="docs/capturas/visita.jpg" width="49%" alt="Modo visita en la habitación de Laura">
   <img src="docs/capturas/movil-consola.jpg" width="24%" alt="La consola en el móvil">
   <img src="docs/capturas/movil-habitacion.jpg" width="24%" alt="La habitación en el móvil">
@@ -40,6 +45,8 @@ Coges una caja, la giras y **en la contraportada está tu reseña**, con tu nota
 **Disquete de cartas**, para cualquier juego de cartas: los **mazos** son cajitas delante de la tele, con su récord («23V · 11D (68%)») y la lista, que cuenta las cartas sola. Las **carpetas** van a los cubos de abajo de la Kallax, con el número de cartas y el valor estimado.
 
 **«Compartir mi habitación»** crea un enlace con tu colección comprimida dentro, sin cuentas ni servidor. Quien lo abre ve tu habitación de visita, sin tocar la suya.
+
+**Tu habitación, a tu gusto**: en Ajustes eliges el tema (*Crema*, *Gamer RGB* con tira LED o *Retro 90*) y si quieres al gato, que duerme en la alfombra y ronronea si lo tocas. El tema y el gato viajan en el enlace de visita. Están pensados como futuras ventajas para mecenas; ahora son gratis para todos.
 
 > Prototipo en desarrollo. Está en esta carpeta para no mezclarlo con retorika Home; cuando guste, se pasa a su propio repositorio.
 
@@ -92,10 +99,10 @@ En Netlify se sirve en `/disketeboy/`, con sus funciones en `netlify/functions/d
 
 ```bash
 npm ci                                        # en la raíz: Playwright y axe-core
-node --test disketeboy/tests/unit/*.test.mjs  # 53 pruebas unitarias
-node disketeboy/tests/e2e/run.mjs             # 19 pruebas en Chromium (E2E_SHOTS=1 guarda capturas)
+node --test disketeboy/tests/unit/*.test.mjs  # 56 pruebas unitarias
+node disketeboy/tests/e2e/run.mjs             # 20 pruebas en Chromium (E2E_SHOTS=1 guarda capturas)
 ```
 
 En GitHub se ejecutan solas con `.github/workflows/disketeboy.yml` cada vez que cambia algo en `disketeboy/`.
 
-Lo que se ha hecho cada noche está en [docs/DIARIO-NOCHE.md](docs/DIARIO-NOCHE.md).
+Lo que se ha hecho cada noche está en [docs/DIARIO-NOCHE.md](docs/DIARIO-NOCHE.md), y el plan para sacarlo a Reddit, en [docs/LANZAMIENTO.md](docs/LANZAMIENTO.md).

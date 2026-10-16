@@ -78,7 +78,8 @@ const device = createDevice(deviceEl, actions);
 // ------------------------------------------------------------------ visitas
 async function shareVisit() {
   const { encodeRoom, visitUrl, LONG_URL } = await import('./share.js');
-  const url = visitUrl(location.origin + location.pathname, await encodeRoom(store.getGames(), { name: store.getSettings().name }));
+  const { name, theme, pet } = store.getSettings();
+  const url = visitUrl(location.origin + location.pathname, await encodeRoom(store.getGames(), { name, theme, pet }));
   const long = url.length > LONG_URL ? ` Ojo: tu colección es enorme y el enlace mide ${Math.round(url.length / 1000)} mil caracteres; alguna app podría cortarlo.` : '';
   if (navigator.share && matchMedia('(pointer: coarse)').matches) {
     try {
@@ -105,8 +106,8 @@ async function maybeVisit() {
   if (!location.hash.startsWith('#visita=')) return;
   try {
     const { decodeRoom } = await import('./share.js');
-    const { name, games } = await decodeRoom(location.hash.slice('#visita='.length));
-    store.startVisit(games, name);
+    const { name, games, look } = await decodeRoom(location.hash.slice('#visita='.length));
+    store.startVisit(games, name, look);
     document.getElementById('visit-name').textContent = name || 'alguien';
     document.getElementById('visit-banner').hidden = false;
     document.getElementById('i-editar').hidden = true;

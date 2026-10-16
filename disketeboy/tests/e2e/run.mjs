@@ -324,7 +324,7 @@ try {
     page.on('dialog', (d) => d.dismiss());
     await page.goto(`${BASE}/?demo=1`);
     await booted(page);
-    await page.evaluate(() => window.disketeboy.store.setSettings({ name: 'Laura' }));
+    await page.evaluate(() => window.disketeboy.store.setSettings({ name: 'Laura', theme: 'gamer', pet: false }));
     await page.click('#m-compartir');
     await page.waitForFunction(() => window.disketeboy.lastVisitUrl);
     const url = await page.evaluate(() => window.disketeboy.lastVisitUrl);
@@ -340,6 +340,8 @@ try {
     eq(await visitor.evaluate(() => window.disketeboy.store.getBoards().length), 15, 'y sus juegos de mesa');
     eq(await visitor.evaluate(() => window.disketeboy.store.getCards().length), 8, 'y sus mazos y carpetas');
     expect(await visitor.isHidden('#m-nuevo'), 'de visita no se puede añadir');
+    const look = await visitor.evaluate(() => ({ ...window.disketeboy.store.getSettings() }));
+    eq(`${look.theme}/${look.pet}`, 'gamer/false', 'la visita ve su tema y sin gato');
     await visitor.click('#m-coleccion');
     await visitor.click('#screen .item.game >> nth=0');
     expect(await visitor.isHidden('#f-estado'), 'la ficha es de solo lectura');
@@ -348,6 +350,7 @@ try {
     await visitor.click('#visit-leave');
     await visitor.waitForFunction(() => !location.hash && window.disketeboy && !window.disketeboy.store.visiting());
     eq(await visitor.evaluate(() => window.disketeboy.store.getGames().map((g) => g.title).join()), 'Mi juego', 'al salir vuelves a tu habitación');
+    eq(await visitor.evaluate(() => window.disketeboy.store.getSettings().theme), 'crema', 'y a tu tema');
     eq(visitor.errors.join('\n') + page.errors.join('\n'), '', 'errores en consola');
     await page.close();
     await visitor.close();
@@ -441,6 +444,32 @@ try {
     await idle(page);
     expect((await page.textContent('#inspect-meta')).includes('2V · 1D'), 'la caja cogida enseña el récord');
     await shot(page, '10-cartas');
+    eq(page.errors.join('\n'), '', 'errores en consola');
+    await page.close();
+  });
+
+  await check('ajustes: tema de la habitación y el gato que duerme en la alfombra', async () => {
+    const page = await newPage(browser);
+    await page.goto(`${BASE}/?demo=1`);
+    await booted(page);
+    await page.evaluate(() => window.disketeboy.device.go('ajustes', {}));
+    await page.waitForSelector('#a-tema');
+    const wall = () => page.evaluate(() => {
+      const { scene } = window.disketeboy.room.debug;
+      return { cat: scene.getObjectByName('gato').visible, led: scene.getObjectByName('led').visible };
+    });
+    eq(JSON.stringify(await wall()), '{"cat":true,"led":false}', 'de serie: gato y sin luces');
+    await page.click('#a-tema');
+    await page.waitForFunction(() => window.disketeboy.store.getSettings().theme === 'gamer');
+    expect((await page.getAttribute('#a-tema', 'aria-label')).includes('Gamer RGB'), 'el ajuste dice el tema');
+    eq((await wall()).led, true, 'el tema gamer enciende la tira LED');
+    await page.click('#a-gato');
+    await page.waitForFunction(() => window.disketeboy.store.getSettings().pet === false);
+    eq((await wall()).cat, false, 'sin gato');
+    await page.reload();
+    await booted(page);
+    const s = await page.evaluate(() => window.disketeboy.store.getSettings());
+    eq(`${s.theme}/${s.pet}`, 'gamer/false', 'se guarda al recargar');
     eq(page.errors.join('\n'), '', 'errores en consola');
     await page.close();
   });

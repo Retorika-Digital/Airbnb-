@@ -2,7 +2,7 @@
 // La pantalla es DOM de verdad (botones y campos), así que funciona con ratón,
 // dedo, teclado y lector de pantalla; la cruceta y A/B son un atajo más.
 import * as store from './store.js';
-import { STATUSES, STATUS_LABEL, PALETTES, SORTS, BOARD_STATUSES, BOARD_STATUS_LABEL, isBoard, statusLabel } from './store.js';
+import { STATUSES, STATUS_LABEL, PALETTES, SORTS, THEMES, BOARD_STATUSES, BOARD_STATUS_LABEL, isBoard, statusLabel } from './store.js';
 import { PLATFORMS, BOARD_SIZES, platform } from './platforms.js';
 import { mapSteamGames } from './steam.js';
 import { DEMO_GAMES, DEMO_BOARDS, DEMO_CARDS } from './demo.js';
@@ -13,6 +13,7 @@ import { clamp } from './util.js';
 
 const PALETTE_LABEL = { verde: 'Verde clásico', ambar: 'Ámbar', hielo: 'Hielo', gris: 'Gris' };
 const SORT_LABEL = { plataforma: 'Plataforma', nota: 'Nota', color: 'Color', az: 'A-Z', horas: 'Horas' };
+const THEME_LABEL = { crema: 'Crema', gamer: 'Gamer RGB', retro: 'Retro 90' };
 const ZONE_TEXT = {
   pendiente: 'tu pila de la vergüenza',
   jugando: 'tu escritorio',
@@ -902,6 +903,8 @@ export function createDevice(root, actions) {
       const looks = [
         stepper('Pantalla', PALETTE_LABEL[s.palette], (dir) => store.setSettings({ palette: cycle(PALETTES, s.palette, dir) }), { id: 'a-paleta' }),
         stepper('Sonido', s.sound ? 'Sí' : 'No', () => store.setSettings({ sound: !s.sound }), { id: 'a-sonido' }),
+        stepper('Habitación', THEME_LABEL[s.theme], (dir) => store.setSettings({ theme: cycle(THEMES, s.theme, dir) }), { id: 'a-tema' }),
+        stepper('Gato', s.pet ? 'Sí, durmiendo' : 'No', () => store.setSettings({ pet: !s.pet }), { id: 'a-gato' }),
       ];
       if (store.visiting()) return view('Ajustes', h('div', { class: 'list' }, ...looks, item('Volver', back)));
       const nameInput = h('input', {
