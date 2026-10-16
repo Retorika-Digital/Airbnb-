@@ -415,3 +415,17 @@ Pensada para r/CozyGamers, donde lo que más gusta es una habitación acogedora 
 - Es otra de las ventajas que se pueden ofrecer a los mecenas más adelante; de momento, gratis.
 - **Pruebas**: la de ajustes cambia la carcasa y comprueba que se guarda; la de «Visita mi habitación» (unitaria) comprueba que viaja en el enlace y que una carcasa inventada se ignora.
 
+## Tanda 22: consejos para descubrir lo escondido
+
+Con tantas cosas que se pueden tocar, había que contarlas sin llenar la pantalla de carteles.
+
+- La línea de ayuda de la habitación («Arrastra para mirar · Toca una caja…») ahora **alterna con un consejo** cada 7 segundos, con un fundido suave:
+  - «Toca el flexo para apagar la luz 🌙»
+  - «El gato se deja acariciar 🐱»
+  - «Toca un trofeo del alféizar para ver qué logro es 🏆»
+  - «¿Te apetece lluvia? Ajustes → Clima 🌧️»
+  - «"Mi resumen" está en el menú de la consola ✨»
+- El código Konami **no sale**: los secretos se quedan para los comentarios de Reddit.
+- Al subir la consola, la ayuda vuelve a la de siempre.
+- **Pruebas**: la del móvil espera a que salga el primer consejo.
+

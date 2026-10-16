@@ -71,7 +71,8 @@ body.device-down #room:active { cursor: grabbing; }
   transition: opacity 0.35s, transform 0.35s, visibility 0s 0.35s;
 }
 body.device-down .room-ui { opacity: 1; visibility: visible; transform: none; transition: opacity 0.35s 0.2s, transform 0.35s 0.2s; }
-.room-help { margin: 0; flex-basis: 100%; font-size: 13px; color: #fbf3e4; text-shadow: 0 1px 3px #000c; }
+.room-help { margin: 0; flex-basis: 100%; font-size: 13px; color: #fbf3e4; text-shadow: 0 1px 3px #000c; transition: opacity 0.3s; }
+.room-help.is-fading { opacity: 0; }
 
 .visit-banner {
   position: fixed;

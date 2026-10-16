@@ -570,4 +570,9 @@ export default {
   "Amarillo plátano": "Banana yellow",
   "Rojo": "Red",
   "Negro mate": "Matte black",
+  "Toca el flexo para apagar la luz 🌙": "Tap the desk lamp to turn the lights off 🌙",
+  "El gato se deja acariciar 🐱": "The cat likes being petted 🐱",
+  "Toca un trofeo del alféizar para ver qué logro es 🏆": "Tap a trophy on the windowsill to see which achievement it is 🏆",
+  "¿Te apetece lluvia? Ajustes → Clima 🌧️": "In the mood for rain? Settings → Weather 🌧️",
+  "«Mi resumen» está en el menú de la consola ✨": "“My recap” is in the console menu ✨",
 };

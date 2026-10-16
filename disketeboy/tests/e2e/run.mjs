@@ -766,6 +766,8 @@ try {
     await page.waitForTimeout(700);
     await shot(page, '07-movil-habitacion');
     expect(await page.isVisible('#r-subir'), 'botón para volver a la consola');
+    // Al rato, la línea de ayuda enseña un consejo
+    await page.waitForFunction(() => /flexo/.test(document.getElementById('room-help').textContent), null, { timeout: 15000 });
     await page.close();
   });
 

@@ -8,7 +8,7 @@ import { platform } from './platforms.js';
 import { statusLabel, isBoard } from './store.js';
 import { playersText, minutesText, lentText } from './boards.js';
 import { tcg, recordText, euros, deckCount } from './cards.js';
-import { t, tp, num, setLang, detectLang } from './i18n.js';
+import { t, tp, num, mark, setLang, detectLang } from './i18n.js';
 import { createLogros, logrosOf, pickShowcase } from './logros.js';
 import { confetti } from './fx.js';
 import { sfx, setRain } from './audio.js';
@@ -33,6 +33,7 @@ const deviceParts = () => deviceEl.querySelectorAll('.dkb-bezel, .dkb-controls, 
 
 function lower() {
   if (isLowered()) return;
+  startTips();
   body.classList.replace('device-up', 'device-down');
   deviceParts().forEach((el) => (el.inert = true));
   room?.setActive(true);
@@ -41,11 +42,47 @@ function lower() {
 
 function raise() {
   if (!isLowered()) return;
+  stopTips();
   release();
   body.classList.replace('device-down', 'device-up');
   deviceParts().forEach((el) => (el.inert = false));
   room?.setActive(false);
   device.focus();
+}
+
+// ------------------------------------------------------------------ consejos
+// La línea de ayuda de la habitación va enseñando, poco a poco, lo que se puede tocar.
+const helpEl = document.getElementById('room-help');
+const TIPS = [
+  mark('Toca el flexo para apagar la luz 🌙'),
+  mark('El gato se deja acariciar 🐱'),
+  mark('Toca un trofeo del alféizar para ver qué logro es 🏆'),
+  mark('¿Te apetece lluvia? Ajustes → Clima 🌧️'),
+  mark('«Mi resumen» está en el menú de la consola ✨'),
+];
+let tipTimer = 0;
+let tipAt = 0;
+let helpText = '';
+function showHelp(text) {
+  helpEl.classList.add('is-fading');
+  setTimeout(() => {
+    helpEl.textContent = text;
+    helpEl.classList.remove('is-fading');
+  }, 300);
+}
+function startTips() {
+  helpText ||= helpEl.textContent;
+  clearInterval(tipTimer);
+  // Se alternan la ayuda de siempre y un consejo nuevo cada vez
+  let step = 0;
+  tipTimer = setInterval(() => {
+    step++;
+    showHelp(step % 2 ? t(TIPS[tipAt++ % TIPS.length]) : helpText);
+  }, 7000);
+}
+function stopTips() {
+  clearInterval(tipTimer);
+  if (helpText) helpEl.textContent = helpText;
 }
 
 function release() {
