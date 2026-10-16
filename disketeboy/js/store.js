@@ -34,6 +34,7 @@ export const statusLabel = (g) => t((LABELS[g.kind] || STATUS_LABEL)[g.status]);
 export const PALETTES = ['verde', 'ambar', 'hielo', 'gris'];
 export const SORTS = ['plataforma', 'nota', 'color', 'az', 'horas'];
 export const THEMES = ['crema', 'gamer', 'retro'];
+export const WEATHERS = ['auto', 'lluvia', 'despejado'];
 export const LIMITS = { title: 120, review: 2000, games: 2000 };
 
 let state = null;
@@ -134,6 +135,7 @@ function cleanSettings(raw) {
     pet: s.pet !== false,
     lang: LANGS.includes(s.lang) ? s.lang : '',
     ambient: s.ambient !== false,
+    weather: WEATHERS.includes(s.weather) ? s.weather : 'auto',
   };
 }
 

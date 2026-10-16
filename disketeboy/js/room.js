@@ -13,6 +13,8 @@ import { t } from './i18n.js';
 import { createDust, createDeskClock, animateCat } from './ambiente.js';
 import { makeTrophy } from './trofeos.js';
 import { createHalloween, createChristmas } from './temporada.js';
+import { createRain } from './clima.js';
+import { weatherOf } from './util.js';
 
 const REDUCED = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ease = {
@@ -26,6 +28,7 @@ const ZONE_CENTER = {
   estanteria: new THREE.Vector3(BOOKCASE_SPOTS[0].x + 0.4, 1.1, BOOKCASE_SPOTS[0].z),
   escritorio: new THREE.Vector3(DESK.x, DESK.top + 0.1, DESK.z),
   caja: new THREE.Vector3(BIN.x, 0.2, BIN.z),
+  ventana: new THREE.Vector3(DESK.x, 1.32, DESK.z),
   kallax: new THREE.Vector3(KALLAX.x - 0.1, 0.45, KALLAX.z),
   mazos: new THREE.Vector3(DESK.x, DESK.top + 0.08, DESK.z + 0.24),
   encima: new THREE.Vector3(KALLAX.x - 0.1, 0.85, KALLAX.z),
@@ -280,7 +283,7 @@ function posterPaint(game, image) {
 }
 
 // ------------------------------------------------------------------ la habitación
-export function createRoom(canvas, { hour = null, onInspect = () => {}, onRelease = () => {}, onColors = () => {}, onNotice = () => {}, onPet = () => {}, season = null } = {}) {
+export function createRoom(canvas, { hour = null, onInspect = () => {}, onRelease = () => {}, onColors = () => {}, onNotice = () => {}, onPet = () => {}, season = null, weather = null, onWeather = () => {}, onLights = () => {} } = {}) {
   let renderer;
   try {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true, powerPreference: 'low-power' });
@@ -640,6 +643,9 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
   crt.add(screenMesh);
   crt.position.set(DESK.x, DESK.top, DESK.z - 0.08);
   scene.add(crt);
+  const tvGlow = new THREE.PointLight('#8fd0ff', 0, 3.2, 2);
+  tvGlow.position.set(DESK.x, DESK.top + 0.2, DESK.z + 0.3);
+  scene.add(tvGlow);
   const consoleMesh = boxMesh(0.26, 0.055, 0.19, mat({ color: '#5e5a63', roughness: 0.5 }), DESK.x - 0.45, DESK.top + 0.0275, DESK.z - 0.13);
   scene.add(consoleMesh);
   const lampGroup = new THREE.Group();
@@ -657,6 +663,7 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
   bulb.position.set(-0.08, 0.345, 0.02);
   lampGroup.add(bulb);
   lampGroup.position.set(DESK.x + 0.5, DESK.top, DESK.z - 0.12);
+  lampGroup.name = 'flexo';
   scene.add(lampGroup);
 
   // Caja de cartón de los abandonados
@@ -1098,6 +1105,10 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
   let ambientOn = !REDUCED;
   let ambientTimer = 0;
   let lastAmbient = 0;
+  // La luz del cuarto (el flexo la apaga y la enciende) y la lluvia de la ventana
+  let lightsOn = true;
+  let raining = false;
+  let rain = null;
   let lastInput = performance.now();
   for (const type of ['pointerdown', 'pointermove', 'wheel', 'keydown']) window.addEventListener(type, () => (lastInput = performance.now()), { passive: true });
   function ambientTick() {
@@ -1111,6 +1122,7 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
       dust.step(secs, dt);
       if (cat.visible) animateCat(cat, secs);
       seasonDecor?.step(secs, dt);
+      if (raining) rain.step(secs, dt);
       crtMat.color.setScalar(0.94 + Math.random() * 0.06);
       deskClock.update();
       invalidate();
@@ -1284,6 +1296,7 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
     settingsCache = settings;
     applyTheme(settings.theme);
     cat.visible = settings.pet !== false;
+    applyWeather(settings.weather);
     const layout = computeLayout(games, settings);
     // El gato se aparta si la pila de la vergüenza crece hasta su sitio
     let pileEdge = -Infinity;
@@ -1632,6 +1645,7 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
     if (ev.pointerType === 'mouse') {
       const e = pick(ev.clientX, ev.clientY);
       hover(e, ev.clientX, ev.clientY);
+      if (!e) canvas.style.cursor = catHit(ev.clientX, ev.clientY) || lampHit(ev.clientX, ev.clientY) || trophyAt(ev.clientX, ev.clientY) ? 'pointer' : '';
     }
   });
   const endPointer = (ev) => {
@@ -1650,6 +1664,8 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
       onNotice(t('Prrr… 🐱 (mejor no despertarlo)'));
       onPet();
       floatHearts(cat.localToWorld(new THREE.Vector3(0.15, 0.19, 0.07)));
+    } else if (lampHit(ev.clientX, ev.clientY)) {
+      toggleLights();
     } else {
       const trophy = trophyAt(ev.clientX, ev.clientY);
       if (trophy) {
@@ -1770,7 +1786,57 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
     shelfLight.intensity = night ? 14 : dusk ? 10 : 5;
     bulbMat.color.set(night || dusk ? '#ffd9a0' : '#c9b48f');
     scene.background.set(night ? '#0f0d14' : '#1d1814');
+    // Día de lluvia: menos sol y una luz más fría
+    if (raining) {
+      sun.intensity *= 0.45;
+      hemi.intensity *= 0.85;
+      hemi.color.set(night ? '#b9c4ef' : '#e4e9f2');
+      rain.setHour(h);
+    }
+    // Luz apagada: queda la luna (o el día), el brillo de la tele y lo que tengas encendido
+    if (!lightsOn) {
+      lamp.intensity = 0;
+      fill.intensity = 0;
+      shelfLight.intensity = 0;
+      hemi.intensity *= night ? 0.4 : 0.85;
+      bulbMat.color.set('#4a4236');
+    }
+    tvGlow.intensity = lightsOn ? 0 : night ? 2.6 : 0.6;
     invalidate();
+  }
+  function lampHit(x, y) {
+    const rect = canvas.getBoundingClientRect();
+    ndc.set(((x - rect.left) / rect.width) * 2 - 1, -((y - rect.top) / rect.height) * 2 + 1);
+    raycaster.setFromCamera(ndc, camera);
+    return raycaster.intersectObject(lampGroup, true).length > 0;
+  }
+  function setLights(on) {
+    if (lightsOn === !!on) return;
+    lightsOn = !!on;
+    applyTime();
+    onLights(lightsOn);
+  }
+  function toggleLights() {
+    sfx.click();
+    setLights(!lightsOn);
+  }
+  /** Llueve según el ajuste (o ?tiempo= en la dirección) y el día. */
+  function applyWeather(setting) {
+    const want = weatherOf(new Date(), weather || setting || 'auto', season) === 'lluvia';
+    if (want === raining) return;
+    raining = want;
+    if (want && !rain) {
+      rain = createRain({
+        win: { x: win.x, y: win.y, w: win.w - 0.04, h: win.h - 0.04, z: ROOM.minZ },
+        onThunder: () => active && sfx.thunder(),
+        reduced: REDUCED,
+      });
+      scene.add(rain.group);
+      rain.step(0, 0);
+    }
+    if (rain) rain.group.visible = want;
+    applyTime();
+    onWeather(want);
   }
   applyTime();
   const clock = setInterval(applyTime, 10 * 60 * 1000);
@@ -1840,11 +1906,23 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
     },
     setTrophies,
     wave,
+    setLights,
+    toggleLights,
+    get lightsOn() {
+      return lightsOn;
+    },
+    get raining() {
+      return raining;
+    },
+    /** Cuántos relámpagos lleva la tormenta (para las pruebas). */
+    get flashes() {
+      return rain ? rain.flashes : 0;
+    },
     setAmbient(on) {
       ambientOn = !!on && !REDUCED;
       if (ambientOn && active) startAmbient();
     },
-    debug: { scene, camera, renderer, entries, view, tweens, trophies },
+    debug: { scene, camera, renderer, entries, view, tweens, trophies, rain: () => rain },
     dispose() {
       clearInterval(clock);
       clearTimeout(ambientTimer);

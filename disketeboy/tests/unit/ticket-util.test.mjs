@@ -52,3 +52,14 @@ test('la habitación se decora sola según la fecha', async () => {
   assert.equal(seasonOf(new Date(2026, 5, 1), 'navidad'), 'navidad', 'se puede forzar para probar');
   assert.equal(seasonOf(new Date(2026, 9, 31), 'ninguna'), null, 'y quitar');
 });
+
+test('clima: llueve uno de cada tres días, todo el día, y en Navidad nieva', async () => {
+  const { weatherOf } = await import('../../js/util.js');
+  assert.equal(weatherOf(new Date(2026, 3, 1), 'lluvia'), 'lluvia', 'se puede forzar');
+  assert.equal(weatherOf(new Date(2026, 3, 1), 'despejado'), 'despejado');
+  assert.equal(weatherOf(new Date(2026, 11, 24), 'auto', 'navidad'), 'despejado', 'en Navidad, nieve en vez de lluvia');
+  const year = Array.from({ length: 365 }, (_, i) => weatherOf(new Date(2026, 0, 1 + i)));
+  const rainy = year.filter((w) => w === 'lluvia').length;
+  assert.ok(rainy > 90 && rainy < 155, `días de lluvia en un año: ${rainy}`);
+  assert.equal(weatherOf(new Date(2026, 4, 5, 9)), weatherOf(new Date(2026, 4, 5, 22)), 'el mismo tiempo todo el día');
+});

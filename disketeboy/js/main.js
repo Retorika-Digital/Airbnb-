@@ -11,7 +11,7 @@ import { tcg, recordText, euros, deckCount } from './cards.js';
 import { t, tp, num, setLang, detectLang } from './i18n.js';
 import { createLogros, logrosOf, pickShowcase } from './logros.js';
 import { confetti } from './fx.js';
-import { sfx } from './audio.js';
+import { sfx, setRain } from './audio.js';
 import { seasonOf } from './util.js';
 
 const params = new URLSearchParams(location.search);
@@ -23,6 +23,7 @@ const deviceEl = document.getElementById('dkb');
 const inspectEl = document.getElementById('inspect');
 const ticketEl = document.getElementById('ticket');
 const tidyBtn = document.getElementById('r-ordenar');
+const lightBtn = document.getElementById('r-luz');
 let room = null;
 let inspecting = null;
 let lastFocus = null;
@@ -192,6 +193,9 @@ async function startRoom() {
       onNotice: (text) => device.toast(text),
       onPet: () => logroEvent('gato'),
       season: seasonOf(new Date(), params.get('temporada')),
+      weather: ['lluvia', 'despejado'].includes(params.get('tiempo')) ? params.get('tiempo') : null,
+      onWeather: (on) => setRain(on),
+      onLights: (on) => lightBtn.setAttribute('aria-pressed', String(!on)),
     });
     if (!room) return showFallback();
     room.sync(store.getGames(), store.getSettings(), { type: 'init' });
@@ -369,6 +373,7 @@ tidyBtn.addEventListener('click', () => {
   device.toast(tidy ? t('¡Todo a la estantería! (la pila sigue contando, tranquilo)') : t('Vuelta al caos natural de tu habitación'));
 });
 document.getElementById('r-compartir').addEventListener('click', shareRoom);
+lightBtn.addEventListener('click', () => room?.toggleLights());
 document.getElementById('i-girar').addEventListener('click', () => room?.flip());
 document.getElementById('i-cerrar').addEventListener('click', release);
 document.getElementById('i-editar').addEventListener('click', () => {

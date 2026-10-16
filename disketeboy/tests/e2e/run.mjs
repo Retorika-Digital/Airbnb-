@@ -668,6 +668,44 @@ try {
     await page.close();
   });
 
+  await check('noche de lluvia: la ventana llueve, el clima se elige en Ajustes y la luz se apaga', async () => {
+    const page = await newPage(browser);
+    await page.goto(`${BASE}/?demo=1&hora=23&tiempo=lluvia`);
+    await booted(page);
+    expect(await page.evaluate(() => window.disketeboy.room.raining), 'llueve con ?tiempo=lluvia');
+    expect(await page.evaluate(() => window.disketeboy.room.debug.scene.getObjectByName('lluvia').visible), 'lluvia en la ventana');
+    await page.evaluate(() => window.disketeboy.lower());
+    await idle(page);
+    // El botón apaga la luz...
+    await page.click('#r-luz');
+    eq(await page.getAttribute('#r-luz', 'aria-pressed'), 'true', 'botón pulsado');
+    expect(!(await page.evaluate(() => window.disketeboy.room.lightsOn)), 'luz apagada');
+    // ...y el flexo de la mesa la vuelve a encender
+    const lamp = await page.evaluate(() => {
+      const { scene, camera } = window.disketeboy.room.debug;
+      const f = scene.getObjectByName('flexo');
+      const p = f.children[2].getWorldPosition(f.position.clone());
+      p.project(camera);
+      return { x: ((p.x + 1) / 2) * innerWidth, y: ((1 - p.y) / 2) * innerHeight };
+    });
+    await page.mouse.click(lamp.x, lamp.y);
+    await page.waitForFunction(() => window.disketeboy.room.lightsOn);
+    eq(await page.getAttribute('#r-luz', 'aria-pressed'), 'false', 'botón suelto');
+    // Sin ?tiempo=, manda el ajuste: Según el día → Lluvia → Despejado
+    await page.goto(`${BASE}/?demo=1&hora=12`);
+    await booted(page);
+    await page.evaluate(() => window.disketeboy.device.go('ajustes', {}));
+    await page.waitForSelector('#a-clima');
+    await page.click('#a-clima');
+    await page.waitForFunction(() => window.disketeboy.store.getSettings().weather === 'lluvia');
+    expect(await page.evaluate(() => window.disketeboy.room.raining), 'el ajuste trae la lluvia');
+    await page.click('#a-clima');
+    await page.waitForFunction(() => window.disketeboy.store.getSettings().weather === 'despejado');
+    expect(!(await page.evaluate(() => window.disketeboy.room.raining)), 'y se la lleva');
+    eq(page.errors.join('\n'), '', 'errores en consola');
+    await page.close();
+  });
+
   await check('inglés: un navegador en inglés lo ve todo en inglés, y se cambia en Ajustes', async () => {
     const page = await newPage(browser, { locale: 'en-US' });
     await page.goto(`${BASE}/?demo=1`);

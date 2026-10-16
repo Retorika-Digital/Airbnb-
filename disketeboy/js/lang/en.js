@@ -559,4 +559,9 @@ export default {
   "Código Konami": "Konami Code",
   "↑ ↑ ↓ ↓ ← → ← → B A": "↑ ↑ ↓ ↓ ← → ← → B A",
   "↑↑↓↓←→←→BA: ¡30 vidas extra! (bueno, una ola de cajas)": "↑↑↓↓←→←→BA: 30 extra lives! (well, a wave of boxes)",
+  "Clima": "Weather",
+  "Según el día": "Depends on the day",
+  "Lluvia": "Rain",
+  "Despejado": "Clear",
+  "🌙 Apagar la luz": "🌙 Lights off",
 };

@@ -6,12 +6,14 @@ let lastThud = 0;
 
 export function setSound(on) {
   enabled = !!on;
+  syncRain();
 }
 
 // Los navegadores no dejan sonar nada hasta que la persona toca o pulsa algo.
 if (typeof window !== 'undefined') {
   const unlock = () => {
     unlocked = true;
+    syncRain();
     window.removeEventListener('pointerdown', unlock, true);
     window.removeEventListener('keydown', unlock, true);
   };
@@ -63,6 +65,61 @@ function noise(start, dur, vol = 0.15, cutoff = 600) {
   src.connect(filter).connect(gain).connect(c.destination);
   src.start(c.currentTime + start);
 }
+
+// Lluvia de fondo: ruido rosa en bucle, filtrado, que entra y sale con suavidad.
+// Solo suena con el sonido activado, después de tocar algo y con la pestaña a la vista.
+let rainWanted = false;
+let rainNode = null;
+export function setRain(on) {
+  rainWanted = !!on;
+  syncRain();
+}
+function syncRain() {
+  const want = rainWanted && enabled && unlocked && !(typeof document !== 'undefined' && document.hidden);
+  if (want && !rainNode) {
+    const c = ac();
+    if (!c) return;
+    const len = c.sampleRate * 4;
+    const buf = c.createBuffer(2, len, c.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const data = buf.getChannelData(ch);
+      let b0 = 0;
+      let b1 = 0;
+      let b2 = 0;
+      for (let i = 0; i < len; i++) {
+        const white = Math.random() * 2 - 1;
+        b0 = 0.99765 * b0 + white * 0.099046;
+        b1 = 0.963 * b1 + white * 0.2965164;
+        b2 = 0.57 * b2 + white * 1.0526913;
+        data[i] = (b0 + b1 + b2 + white * 0.1848) * 0.11;
+      }
+    }
+    const src = c.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    const low = c.createBiquadFilter();
+    low.type = 'lowpass';
+    low.frequency.value = 2600;
+    const high = c.createBiquadFilter();
+    high.type = 'highpass';
+    high.frequency.value = 280;
+    const gain = c.createGain();
+    gain.gain.setValueAtTime(0.0001, c.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.07, c.currentTime + 2.5);
+    src.connect(low).connect(high).connect(gain).connect(c.destination);
+    src.start();
+    rainNode = { src, gain };
+  } else if (!want && rainNode && ctx) {
+    const { src, gain } = rainNode;
+    rainNode = null;
+    const t = ctx.currentTime;
+    gain.gain.cancelScheduledValues(t);
+    gain.gain.setValueAtTime(Math.max(0.0001, gain.gain.value), t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.8);
+    src.stop(t + 0.85);
+  }
+}
+if (typeof document !== 'undefined') document.addEventListener('visibilitychange', syncRain);
 
 export const sfx = {
   move: () => tone(880, 0, 0.03, { vol: 0.025 }),
@@ -129,6 +186,17 @@ export const sfx = {
   powerup: () => {
     [392, 523, 659, 784, 1047, 1319, 1568].forEach((f, i) => tone(f, i * 0.045, 0.07, { vol: 0.035 }));
     tone(2093, 0.33, 0.3, { vol: 0.03, type: 'triangle' });
+  },
+  /** Trueno lejano, después del relámpago. */
+  thunder: () => {
+    noise(0, 2.4, 0.3, 140);
+    noise(0.15, 1.2, 0.12, 420);
+    tone(46, 0, 1.8, { type: 'sine', vol: 0.09, slide: -12 });
+  },
+  /** El interruptor de la luz. */
+  click: () => {
+    noise(0, 0.02, 0.3, 3200);
+    tone(2200, 0, 0.012, { vol: 0.02 });
   },
   print: () => {
     for (let i = 0; i < 12; i++) noise(i * 0.055, 0.04, 0.045, 4200);

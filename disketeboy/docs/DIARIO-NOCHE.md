@@ -7,7 +7,7 @@ Lo que se ha ido haciendo mientras dormías, tanda por tanda.
 > - **Extras**: 25 logros con trofeos en el alféizar, «Mi resumen» para compartir, importar de Steam y de BoardGameGeek, el ticket de la DisketePrinter, el enlace «Visita mi habitación», la ruleta de «¿Qué jugamos esta noche?», 3 temas de habitación y un gato.
 > - **Cómo verlo**: `node disketeboy/server.mjs` y abre http://localhost:5180/?demo=1. Las capturas están en el [README](../README.md), y el **vídeo para Reddit** en [`docs/video/`](video/).
 > - **Idiomas**: español e inglés. Sale en el idioma del navegador y se cambia en Ajustes.
-> - **Calidad**: 84 pruebas unitarias y 28 en navegador, todas verdes, y axe-core sin errores de accesibilidad. Además, una revisión independiente del código, con sus arreglos.
+> - **Calidad**: 85 pruebas unitarias y 29 en navegador, todas verdes, y axe-core sin errores de accesibilidad. Además, una revisión independiente del código, con sus arreglos.
 > - **Lo que te toca a ti**: está en [LANZAMIENTO.md](LANZAMIENTO.md), en el apartado «Antes de publicar nada»: dominio, comprobar el nombre, clave de Steam y crear la página de Ko-fi. El botón de donar ya está hecho: solo hay que pegar el enlace en `js/config.js`.
 
 ## Tanda 1: la consola DisketeBoy
@@ -374,3 +374,19 @@ Con la demo o tras importar Steam salen 50, 200 u 800 juegos, y bajar con la cru
 - **Batería**: si nadie toca nada en un minuto, el polvo, el gato y el despertador se mueven a 6 fotogramas por segundo en vez de 24. Al mover el ratón o tocar la pantalla vuelve a ir fino.
 - **Detalle**: si borras el título en una ficha y sales del campo, vuelve el de antes, en vez de quedarse el campo vacío.
 - **Pruebas**: la de logros ahora también teclea el código Konami y comprueba el logro y el aviso. Con `E2E_ONLY=logros` se ejecutan solo las pruebas que contienen esa palabra, para ir más rápido.
+
+## Tanda 19: noches de lluvia y la luz del cuarto
+
+Pensada para r/CozyGamers, donde lo que más gusta es una habitación acogedora con lluvia fuera.
+
+- **Lluvia tras la ventana**, pintada con código:
+  - el cielo se encapota (de noche tapa la luna);
+  - dos cortinas de agua que caen a distinta velocidad, un poco inclinadas;
+  - gotas pegadas al cristal, con su brillo, y algún reguero;
+  - de noche, de vez en cuando, un **relámpago**: dos destellos dentro de la ventana y, un segundo después, el **trueno**. Con «movimiento reducido» no hay destellos.
+  - Con lluvia, entra menos sol y la luz es más fría.
+- **Sonido de lluvia**: ruido rosa filtrado en bucle, muy suave. Solo suena con el sonido activado, después de tocar algo (como piden los navegadores) y con la pestaña a la vista.
+- **Ajustes → Clima**: *Según el día* (llueve uno de cada tres días, todo el día igual; en Navidad, nieve en vez de lluvia), *Lluvia* o *Despejado*. Para probarlo: `?tiempo=lluvia`.
+- **Apagar la luz**: toca el **flexo** del escritorio o el botón «🌙 Apagar la luz». Se apagan el flexo, la lámpara del techo y el foco de la estantería, y queda la luz de la luna y el **brillo azul de la tele** de tubo. Con el tema Gamer RGB, la tira LED luce todavía más.
+- **La manita**: al pasar el ratón por el gato, el flexo o los trofeos, el cursor avisa de que se pueden tocar.
+- **Pruebas**: 85 unitarias (antes 84) y 29 en navegador (antes 28). La nueva comprueba la lluvia, el botón y el flexo, y el ajuste de clima.

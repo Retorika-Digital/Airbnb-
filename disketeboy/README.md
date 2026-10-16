@@ -60,6 +60,8 @@ Coges una caja, la giras y **en la contraportada está tu reseña**, con tu nota
 
 **Una habitación con vida**: polvo flotando en la luz, un despertador retro con la hora real, el gato que respira (y suelta corazones si lo acaricias), la tele de tubo que parpadea y una entrada de cine la primera vez que bajas la consola. Se apaga en Ajustes → Ambiente, y con «movimiento reducido» no se mueve nada. En **Halloween** aparecen una calabaza con vela y murciélagos, y en **Navidad**, nieve tras la ventana y luces en la cortina.
 
+**Noches de lluvia** 🌧️: algunos días llueve tras la ventana, con gotas en el cristal, sonido de lluvia y, de noche, algún relámpago lejano con su trueno. Se elige en Ajustes → Clima (*Según el día*, *Lluvia* o *Despejado*). Y si tocas el **flexo** (o «🌙 Apagar la luz»), la habitación se queda con la luz de la luna y el brillo azul de la tele.
+
 **Tu habitación, a tu gusto**: en Ajustes eliges el tema (*Crema*, *Gamer RGB* con tira LED o *Retro 90*) y si quieres al gato, que duerme en la alfombra y ronronea si lo tocas. El tema y el gato viajan en el enlace de visita. Están pensados como futuras ventajas para mecenas; ahora son gratis para todos.
 
 > Vive en esta carpeta para no mezclarlo con retorika Home; cuando guste, se pasa a su propio repositorio.
@@ -81,6 +83,7 @@ BGG_TOKEN=xxxx node disketeboy/server.mjs
 | Solo la consola, sin 3D | añade `&sin3d=1` |
 | En inglés | añade `&lang=en` |
 | Decoración de temporada | `&temporada=halloween`, `navidad` o `ninguna` |
+| Lluvia (o no) | `&tiempo=lluvia` o `despejado` |
 
 En Netlify se sirve en `/disketeboy/`, con sus funciones en `netlify/functions/disketeboy-*.mjs`.
 
@@ -93,6 +96,7 @@ En Netlify se sirve en `/disketeboy/`, con sus funciones en `netlify/functions/d
 - **Habitación:**
   - Arrastra para mirar alrededor y usa la rueda o pellizca para acercarte.
   - Toca una caja para cogerla y vuelve a tocarla para darle la vuelta.
+  - Toca el flexo del escritorio para apagar o encender la luz, y al gato para acariciarlo.
   - Con el teclado, ← y → recorren las cajas.
 
 ## Cómo está hecho
@@ -118,6 +122,7 @@ En Netlify se sirve en `/disketeboy/`, con sus funciones en `netlify/functions/d
 | `js/trofeos.js` | Las copas 3D de los logros, para el alféizar |
 | `js/resumen.js` / `js/story.js` | «Mi resumen»: los datos (con tests) y las tarjetas animadas con su imagen para compartir |
 | `js/ambiente.js` / `js/fx.js` | Polvo, despertador y gato que respira; confeti de las celebraciones |
+| `js/clima.js` | La lluvia de la ventana: cortinas de agua, gotas en el cristal y relámpagos |
 | `js/config.js` | Lo que se cambia a mano antes de publicar: el enlace de donaciones |
 | `js/i18n.js` | Idiomas: `t('texto en español')` lo traduce con el diccionario |
 | `js/lang/en.js` | El diccionario inglés (una prueba vigila que no falte ni sobre nada) |
@@ -130,8 +135,8 @@ En Netlify se sirve en `/disketeboy/`, con sus funciones en `netlify/functions/d
 
 ```bash
 npm ci                                        # en la raíz: Playwright y axe-core
-node --test disketeboy/tests/unit/*.test.mjs  # 84 pruebas unitarias
-node disketeboy/tests/e2e/run.mjs             # 28 pruebas en Chromium (E2E_SHOTS=1 guarda capturas)
+node --test disketeboy/tests/unit/*.test.mjs  # 85 pruebas unitarias
+node disketeboy/tests/e2e/run.mjs             # 29 pruebas en Chromium (E2E_SHOTS=1 guarda capturas, E2E_ONLY=texto filtra)
 ```
 
 En GitHub se ejecutan solas con `.github/workflows/disketeboy.yml` cada vez que cambia algo en `disketeboy/`.

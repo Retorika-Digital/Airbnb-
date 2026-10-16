@@ -93,6 +93,16 @@ export function titleKey(title) {
 }
 
 /** La temporada de una fecha para decorar la habitación (o la que se fuerce con ?temporada=…). */
+/**
+ * ¿Llueve hoy? Con «auto», uno de cada tres días, siempre el mismo para cada fecha
+ * (así no cambia al recargar). En Navidad, en vez de lluvia, nieve.
+ */
+export function weatherOf(date = new Date(), setting = 'auto', season = null) {
+  if (setting === 'lluvia' || setting === 'despejado') return setting;
+  if (season === 'navidad') return 'despejado';
+  return hash(`lluvia-${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`) % 3 === 0 ? 'lluvia' : 'despejado';
+}
+
 export function seasonOf(date = new Date(), force = null) {
   if (force === 'halloween' || force === 'navidad') return force;
   if (force === 'ninguna') return null;
