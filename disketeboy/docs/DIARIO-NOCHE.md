@@ -7,7 +7,7 @@ Lo que se ha ido haciendo mientras dormías, tanda por tanda.
 > - **Extras**: 25 logros con trofeos en el alféizar (dos secretos), «Mi resumen» para compartir, importar de Steam y de BoardGameGeek, el ticket de la DisketePrinter, el enlace «Visita mi habitación», la ruleta de «¿Qué jugamos esta noche?», noches de lluvia con la luz apagada, 3 temas de habitación, 6 carcasas para la consola y un gato que suelta corazones.
 > - **Cómo verlo**: `node disketeboy/server.mjs` y abre http://localhost:5180/?demo=1. Las capturas están en el [README](../README.md), y los **3 vídeos para Reddit** (videojuegos, juegos de mesa y cozy, en inglés y en español) en [`docs/video/`](video/).
 > - **Idiomas**: español e inglés. Sale en el idioma del navegador y se cambia en Ajustes.
-> - **Calidad**: 85 pruebas unitarias y 29 en navegador, todas verdes, y axe-core sin errores de accesibilidad. Además, una revisión independiente del código, con sus arreglos.
+> - **Calidad**: 85 pruebas unitarias y 29 en navegador, todas verdes, y axe-core sin errores de accesibilidad. Además, dos revisiones independientes del código (a mitad de noche y al final), con todos sus arreglos.
 > - **Lo que te toca a ti**: está en [LANZAMIENTO.md](LANZAMIENTO.md), en el apartado «Antes de publicar nada»: dominio, comprobar el nombre, clave de Steam y crear la página de Ko-fi. El botón de donar ya está hecho: solo hay que pegar el enlace en `js/config.js`.
 
 ## Tanda 1: la consola DisketeBoy
