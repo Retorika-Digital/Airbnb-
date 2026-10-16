@@ -3,11 +3,12 @@
 // texturas pintadas en canvas): ni modelos ni dibujos ajenos.
 // Solo se redibuja cuando algo cambia o se mueve, para no gastar batería.
 import * as THREE from 'three';
-import { computeLayout, BOOKCASE, BOOKCASE_SPOTS, DESK, PILE, BIN, ROOM } from './layout.js';
+import { computeLayout, BOOKCASE, BOOKCASE_SPOTS, DESK, PILE, BIN, ROOM, KALLAX } from './layout.js';
 import { boxFor, platform } from './platforms.js';
 import { drawCover, drawSpine, drawBack, loadCover, loadSpineColor, dominantColor, gameColor, wrap, spineSize, SPINE_STRIP } from './covers.js';
 import { sfx } from './audio.js';
 import { rng, hexToHsl, hslToHex } from './util.js';
+import { isBoard } from './store.js';
 
 const REDUCED = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ease = {
@@ -21,12 +22,16 @@ const ZONE_CENTER = {
   estanteria: new THREE.Vector3(BOOKCASE_SPOTS[0].x + 0.4, 1.1, BOOKCASE_SPOTS[0].z),
   escritorio: new THREE.Vector3(DESK.x, DESK.top + 0.1, DESK.z),
   caja: new THREE.Vector3(BIN.x, 0.2, BIN.z),
+  kallax: new THREE.Vector3(KALLAX.x - 0.1, 0.45, KALLAX.z),
+  encima: new THREE.Vector3(KALLAX.x - 0.1, 0.85, KALLAX.z),
 };
 const PLASTIC = {
   ps5: '#ececef', ps4: '#1f3f8f', wii: '#f1f1f1', wiiu: '#2a86c8', switch: '#b3141a', switch2: '#b81d22',
   xsx: '#16612a', xone: '#16612a', x360: '#4f8f28', ds: '#e6e6e6', '3ds': '#b5121b', vita: '#2b5aa6', dc: '#e2e2e2',
 };
-const CARDBOARD = new Set(['carton', 'cartonV', 'pocket']);
+const CARDBOARD = new Set(['carton', 'cartonV', 'pocket', 'mesaS', 'mesaM', 'mesaL', 'mesaXL']);
+// En la estantería y en la Kallax las cajas están de pie: solo se ve el lomo.
+const showsFront = (zone) => zone !== 'estanteria' && zone !== 'kallax';
 
 // ------------------------------------------------------------------ texturas de la habitación
 function paint(w, h, fn) {
@@ -664,6 +669,21 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
   binGroup.rotation.y = -0.18;
   scene.add(binGroup);
 
+  // Kallax blanca para los juegos de mesa
+  const kallaxGroup = new THREE.Group();
+  const birch = mat({ color: '#f1ece2', roughness: 0.6 });
+  {
+    const K = KALLAX;
+    kallaxGroup.add(boxMesh(K.width, K.wall, K.depth, birch, 0, K.wall / 2, 0));
+    kallaxGroup.add(boxMesh(K.width, K.wall, K.depth, birch, 0, K.height - K.wall / 2, 0));
+    for (const sx of [-1, 1]) kallaxGroup.add(boxMesh(K.wall, K.height, K.depth, birch, sx * (K.width / 2 - K.wall / 2), K.height / 2, 0));
+    for (let c = 1; c < K.cols; c++) kallaxGroup.add(boxMesh(K.wall, K.height - 2 * K.wall, K.depth, birch, -K.width / 2 + K.wall / 2 + c * (K.cell + K.wall), K.height / 2, 0));
+    for (let r = 1; r < K.rows; r++) kallaxGroup.add(boxMesh(K.width - 2 * K.wall, K.wall, K.depth, birch, 0, r * (K.cell + K.wall) + K.wall / 2, 0));
+  }
+  kallaxGroup.position.set(KALLAX.x, 0, KALLAX.z);
+  kallaxGroup.rotation.y = KALLAX.yaw;
+  scene.add(kallaxGroup);
+
   // Cartel clavado junto a la pila de la vergüenza
   const pileSign = new THREE.Group();
   pileSign.add(boxMesh(0.016, 0.46, 0.016, woodDark, 0, 0.23, -0.006));
@@ -768,7 +788,7 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
 
   /** Al quedarse en la estantería vuelve a dibujarse de un trazo y suelta portada y contraportada. */
   function slim(e) {
-    if (!entries.has(e.id) || e.zone !== 'estanteria' || inspected === e || (e.front === 'none' && !e.back)) return;
+    if (!entries.has(e.id) || showsFront(e.zone) || inspected === e || (e.front === 'none' && !e.back)) return;
     e.version++;
     e.front = 'none';
     e.back = false;
@@ -782,7 +802,9 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
     if (e.front !== 'none') return;
     e.front = 'art';
     e.mesh.geometry = geometryFor(e.game.platform, true);
-    setSlot(e, 1, mat({ map: toTexture(drawCover(e.game)), roughness: 0.42 }));
+    // Los juegos de mesa sin estrenar brillan: aún llevan el plástico
+    const wrapped = isBoard(e.game) && e.game.status === 'pendiente';
+    setSlot(e, 1, mat({ map: toTexture(drawCover(e.game)), roughness: wrapped ? 0.12 : 0.42, metalness: wrapped ? 0.05 : 0 }));
     const version = e.version;
     loadCover(e.game).then((img) => {
       if (!img || !entries.has(e.id) || e.version !== version || e.front === 'none') return;
@@ -902,8 +924,10 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
   // ---------------------------------------------------------------- sincronizar con la colección
   let settingsCache = { tidy: false, sort: 'plataforma' };
   let shownBookcases = 1;
-  const sameLook = (a, b) => a.title === b.title && a.platform === b.platform && a.status === b.status && a.color === b.color && a.steamAppId === b.steamAppId;
-  const sameBack = (a, b) => sameLook(a, b) && a.score === b.score && a.review === b.review && a.hours === b.hours;
+  const sameLook = (a, b) =>
+    a.title === b.title && a.platform === b.platform && a.status === b.status && a.color === b.color && a.steamAppId === b.steamAppId &&
+    a.minPlayers === b.minPlayers && a.maxPlayers === b.maxPlayers && a.minutes === b.minutes && a.lentTo === b.lentTo;
+  const sameBack = (a, b) => sameLook(a, b) && a.score === b.score && a.review === b.review && a.hours === b.hours && a.plays === b.plays && a.lentAt === b.lentAt;
 
   function sync(games, settings, change = {}) {
     settingsCache = settings;
@@ -942,7 +966,7 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
         e.version++;
         buildMaterials(e);
         for (const m of new Set(old)) if (owns(m)) (m.map?.dispose(), m.dispose());
-        if (e.zone !== 'estanteria' || inspected === e) ensureFront(e);
+        if (showsFront(e.zone) || inspected === e) ensureFront(e);
       }
     }
 
@@ -964,7 +988,7 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
         buildMaterials(e);
         entries.set(g.id, e);
         boxesGroup.add(mesh);
-        if (p.zone !== 'estanteria') ensureFront(e);
+        if (showsFront(p.zone)) ensureFront(e);
         if (fresh.has(g.id) && !REDUCED) {
           const r = rng(g.id);
           const delay = Math.min(2.6, fallIndex++ * (fresh.size > 30 ? 0.035 : 0.12));
@@ -999,11 +1023,11 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
         const old = e.mesh.material;
         buildMaterials(e);
         for (const m of new Set(old)) if (owns(m)) (m.map?.dispose(), m.dispose());
-        if (p.zone !== 'estanteria' || inspected === e) ensureFront(e);
+        if (showsFront(p.zone) || inspected === e) ensureFront(e);
       } else if (!sameLook(prev, g)) {
         e.version++;
         setSlot(e, 0, spineMaterial(g));
-        if (e.front !== 'none' && (prev.title !== g.title || (e.front === 'art' && prev.color !== g.color))) {
+        if (e.front !== 'none' && (prev.title !== g.title || isBoard(g) || (e.front === 'art' && prev.color !== g.color))) {
           e.front = 'none';
           ensureFront(e);
         }
@@ -1013,7 +1037,7 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
         if (inspected === e) ensureBack(e);
         else setSlot(e, 2, placeholder);
       }
-      if (p.zone !== 'estanteria') ensureFront(e);
+      if (showsFront(p.zone)) ensureFront(e);
 
       const moved = e.home.pos.distanceToSquared(pos) > 1e-6 || e.home.quat.angleTo(quat) > 1e-3;
       e.home = { pos, quat };

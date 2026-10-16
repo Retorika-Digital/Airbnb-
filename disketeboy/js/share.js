@@ -1,7 +1,7 @@
 // «Visita mi habitación»: la colección viaja comprimida dentro del enlace
 // (después de la #, que nunca llega a ningún servidor). Sin cuentas ni base de
 // datos: quien abre el enlace ve tu habitación en modo visita, sin tocar la suya.
-import { STATUSES, cleanGame } from './store.js';
+import { ALL_STATUSES, cleanGame } from './store.js';
 
 const REVIEW_MAX = 140;
 export const LONG_URL = 8000;
@@ -23,10 +23,17 @@ async function pipe(bytes, stream) {
   return new Uint8Array(await out.arrayBuffer());
 }
 
-/** Empaqueta la colección: [título, plataforma, estado, nota, horas, steam, reseña, color]. */
+/**
+ * Empaqueta la colección: [título, plataforma, estado, nota, horas, steam, reseña, color]
+ * y, si es un juego de mesa, además [«m», jugadores mín., máx., minutos, partidas, prestado a].
+ */
 export async function encodeRoom(games, { name = '' } = {}) {
   const rows = (withReviews) =>
-    games.map((g) => [g.title, g.platform, STATUSES.indexOf(g.status), g.score ?? -1, g.hours, g.steamAppId || 0, withReviews ? (g.review || '').slice(0, REVIEW_MAX) : '', g.color || '']);
+    games.map((g) => {
+      const row = [g.title, g.platform, ALL_STATUSES.indexOf(g.status), g.score ?? -1, g.hours, g.steamAppId || 0, withReviews ? (g.review || '').slice(0, REVIEW_MAX) : '', g.color || ''];
+      if (g.kind === 'mesa') row.push('m', g.minPlayers, g.maxPlayers, g.minutes, g.plays, g.lentTo || '');
+      return row;
+    });
   let json = JSON.stringify({ v: 1, n: String(name).slice(0, 30), g: rows(true) });
   if (json.length > 60000) json = JSON.stringify({ v: 1, n: String(name).slice(0, 30), g: rows(false) });
   return toBase64Url(await pipe(new TextEncoder().encode(json), new CompressionStream('deflate-raw')));
@@ -46,7 +53,19 @@ export async function decodeRoom(text) {
     .slice(0, 2000)
     .map((r, i) =>
       Array.isArray(r)
-        ? cleanGame({ id: `v${i}`, title: r[0], platform: r[1], status: STATUSES[r[2]], score: r[3] === -1 ? null : r[3], hours: r[4], steamAppId: r[5] || null, review: r[6], color: r[7] || null, addedAt: new Date(Date.UTC(2020, 0, 1, 0, 0, i)).toISOString() })
+        ? cleanGame({
+            id: `v${i}`,
+            title: r[0],
+            platform: r[1],
+            status: ALL_STATUSES[r[2]],
+            score: r[3] === -1 ? null : r[3],
+            hours: r[4],
+            steamAppId: r[5] || null,
+            review: r[6],
+            color: r[7] || null,
+            addedAt: new Date(Date.UTC(2020, 0, 1, 0, 0, i)).toISOString(),
+            ...(r[8] === 'm' ? { kind: 'mesa', minPlayers: r[9], maxPlayers: r[10], minutes: r[11], plays: r[12], lentTo: r[13] } : {}),
+          })
         : null,
     )
     .filter(Boolean);

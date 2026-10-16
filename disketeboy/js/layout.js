@@ -27,6 +27,11 @@ export const BOOKCASE_SPOTS = [
   { x: -2.04, z: -0.06, yaw: Math.PI / 2 },
 ];
 
+// Kallax de 4×2 cubos en la pared derecha para los juegos de mesa.
+export const KALLAX = { x: ROOM.maxX - 0.2, z: -0.42, yaw: -Math.PI / 2, cols: 4, rows: 2, cell: 0.335, wall: 0.016, depth: 0.39 };
+KALLAX.width = KALLAX.cols * KALLAX.cell + (KALLAX.cols + 1) * KALLAX.wall;
+KALLAX.height = KALLAX.rows * KALLAX.cell + (KALLAX.rows + 1) * KALLAX.wall;
+
 export const DESK = { x: 1.25, z: -1.6, width: 1.3, depth: 0.6, top: 0.74 };
 export const PILE = { x: -0.8, z: -0.78 };
 export const BIN = { x: 1.48, z: -0.98, w: 0.5, d: 0.38, h: 0.3 };
@@ -195,11 +200,53 @@ function bin(games, out) {
 }
 
 /**
+ * Juegos de mesa: de pie en los cubos de la Kallax (fila de arriba primero) y,
+ * encima, en montones, los que siguen con el plástico y los que ya no caben.
+ */
+function kallax(games, out, tidy) {
+  const K = KALLAX;
+  const byTitle = (a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' });
+  const inCubes = games.filter((g) => tidy || g.status !== 'pendiente').sort(byTitle);
+  const onTop = games.filter((g) => !tidy && g.status === 'pendiente').sort((a, b) => a.addedAt.localeCompare(b.addedAt) || a.id.localeCompare(b.id));
+  const spot = { x: K.x, z: K.z, yaw: K.yaw };
+  const cells = [];
+  for (let r = K.rows - 1; r >= 0; r--) for (let c = 0; c < K.cols; c++) cells.push({ c, r, used: 0 });
+  let cell = 0;
+  for (const g of inCubes) {
+    const box = boxFor(g.platform);
+    while (cell < cells.length && cells[cell].used + box.d > K.cell) cell++;
+    if (cell >= cells.length) {
+      onTop.push(g);
+      continue;
+    }
+    const { c, r } = cells[cell];
+    const lx = -K.width / 2 + K.wall + c * (K.cell + K.wall) + cells[cell].used + box.d / 2;
+    const lz = K.depth / 2 - 0.015 - box.w / 2;
+    const { x, z } = toWorld(spot, lx, lz);
+    out.set(g.id, { zone: 'kallax', x, y: K.wall + r * (K.cell + K.wall) + box.h / 2, z, rx: 0, ry: K.yaw + Math.PI / 2, rz: 0 });
+    cells[cell].used += box.d + 0.004;
+  }
+  // Montones encima de la Kallax (y, si no caben, en el suelo a su lado)
+  const stacks = [-0.48, 0, 0.48].map((lx) => ({ lx, lz: 0, y: K.height }));
+  for (let i = 0; i < 6; i++) stacks.push({ lx: K.width / 2 + 0.25 + (i % 2) * 0.36, lz: 0.05 + Math.floor(i / 2) * 0.36, y: 0 });
+  onTop.forEach((g, i) => {
+    const box = boxFor(g.platform);
+    const s = stacks.find((st) => st.y + box.d < (st.lx > K.width / 2 ? 0.9 : K.height + 0.55)) || stacks[i % stacks.length];
+    const r = rng(g.id);
+    const { x, z } = toWorld(spot, s.lx + (r() - 0.5) * 0.02, s.lz + (r() - 0.5) * 0.02);
+    out.set(g.id, { zone: 'encima', x, y: s.y + box.d / 2, z, rx: -Math.PI / 2, ry: K.yaw + (r() - 0.5) * 0.3, rz: 0 });
+    s.y += box.d;
+  });
+}
+
+/**
  * Calcula la habitación entera.
  * @returns {{ placements: Map<string, object>, bookcases: number, counts: object }}
  */
-export function computeLayout(games, { tidy = false, sort = 'plataforma' } = {}) {
+export function computeLayout(all, { tidy = false, sort = 'plataforma' } = {}) {
   const placements = new Map();
+  const games = all.filter((g) => g.kind !== 'mesa');
+  const boards = all.filter((g) => g.kind === 'mesa');
   const zones = { estanteria: [], pila: [], escritorio: [], caja: [] };
   for (const g of games) zones[tidy ? 'estanteria' : ZONE_OF_STATUS[g.status] || 'pila'].push(g);
   const byAdded = (a, b) => a.addedAt.localeCompare(b.addedAt) || a.id.localeCompare(b.id);
@@ -207,10 +254,19 @@ export function computeLayout(games, { tidy = false, sort = 'plataforma' } = {})
   pile([...zones.pila.sort(byAdded), ...overflow], placements);
   desk(zones.escritorio.sort(byAdded), placements);
   bin(zones.caja.sort(byAdded), placements);
+  kallax(boards, placements, tidy);
+  const inZone = (z) => [...placements.values()].filter((p) => p.zone === z).length;
   return {
     placements,
     bookcases: Math.max(1, bookcases),
     decor: shelfDecor(used, Math.max(1, bookcases)),
-    counts: { estanteria: zones.estanteria.length - overflow.length, pila: zones.pila.length + overflow.length, escritorio: zones.escritorio.length, caja: zones.caja.length },
+    counts: {
+      estanteria: zones.estanteria.length - overflow.length,
+      pila: zones.pila.length + overflow.length,
+      escritorio: zones.escritorio.length,
+      caja: zones.caja.length,
+      kallax: inZone('kallax'),
+      encima: inZone('encima'),
+    },
   };
 }

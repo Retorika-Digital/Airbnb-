@@ -2,8 +2,9 @@
 // diseño propio (estable, sale del título) y, si es de Steam, su portada real.
 import { platform, boxFor } from './platforms.js';
 import { colorFor, inkFor, rng, hexToHsl, hslToHex } from './util.js';
-import { STATUS_LABEL } from './store.js';
+import { statusLabel, isBoard } from './store.js';
 import { steamCover } from './steam.js';
+import { playersText, minutesText, lentText } from './boards.js';
 
 const SANS = '"Trebuchet MS", "Segoe UI", system-ui, sans-serif';
 const HEAVY = '"Arial Black", "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
@@ -17,6 +18,15 @@ function canvas(w, h) {
 }
 
 export const gameColor = (g) => g.color || colorFor(g.title);
+
+/** Baja el tamaño de letra hasta que la palabra más larga quepa en el ancho (para no cortar «AVENTUREROS»). */
+function fitWords(ctx, text, maxWidth, size, font) {
+  const longest = String(text).split(/\s+/).reduce((a, b) => (b.length > a.length ? b : a), '');
+  let s = size;
+  ctx.font = font(s);
+  while (s > 8 && ctx.measureText(longest).width > maxWidth) ctx.font = font(--s);
+  return s;
+}
 
 /** Parte un texto en líneas que caben en maxWidth; la última acaba en «…» si no cabe. */
 export function wrap(ctx, text, maxWidth, maxLines) {
@@ -133,8 +143,7 @@ function drawArt(ctx, g, W, H, top) {
   panel.addColorStop(1, '#000a');
   ctx.fillStyle = panel;
   ctx.fillRect(0, H * 0.55, W, H * 0.45);
-  const size = Math.round(W * (g.title.length > 28 ? 0.1 : g.title.length > 14 ? 0.12 : 0.15));
-  ctx.font = `900 ${size}px ${HEAVY}`;
+  const size = fitWords(ctx, g.title.toUpperCase(), W * 0.86, Math.round(W * (g.title.length > 28 ? 0.1 : g.title.length > 14 ? 0.12 : 0.15)), (s) => `900 ${s}px ${HEAVY}`);
   const lines = wrap(ctx, g.title.toUpperCase(), W * 0.86, 4);
   ctx.textBaseline = 'alphabetic';
   ctx.lineJoin = 'round';
@@ -149,8 +158,148 @@ function drawArt(ctx, g, W, H, top) {
   }
 }
 
+/** Silueta de meeple genérica (la ficha de persona de los juegos de mesa). */
+function meeple(ctx, x, y, s, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y - s * 0.62, s * 0.22, 0, Math.PI * 2);
+  ctx.moveTo(x - s * 0.5, y - s * 0.28);
+  ctx.quadraticCurveTo(x, y - s * 0.48, x + s * 0.5, y - s * 0.28);
+  ctx.lineTo(x + s * 0.42, y - s * 0.12);
+  ctx.lineTo(x + s * 0.2, y - s * 0.12);
+  ctx.lineTo(x + s * 0.38, y + s * 0.42);
+  ctx.lineTo(x + s * 0.08, y + s * 0.42);
+  ctx.lineTo(x, y + s * 0.12);
+  ctx.lineTo(x - s * 0.08, y + s * 0.42);
+  ctx.lineTo(x - s * 0.38, y + s * 0.42);
+  ctx.lineTo(x - s * 0.2, y - s * 0.12);
+  ctx.lineTo(x - s * 0.42, y - s * 0.12);
+  ctx.closePath();
+  ctx.fill();
+}
+
+/** Portada de juego de mesa: marco, meeples/dados/losetas, título y jugadores·duración. */
+function drawBoardCover(g) {
+  const box = boxFor(g.platform);
+  const W = 256;
+  const H = Math.round((W * box.h) / box.w);
+  const c = canvas(W, H);
+  const ctx = c.getContext('2d');
+  const base = gameColor(g);
+  const { h, s, l } = hexToHsl(base);
+  const dark = hslToHex(h, s, Math.max(10, l - 20));
+  const light = hslToHex((h + 30) % 360, Math.min(80, s + 10), Math.min(78, l + 25));
+  const r = rng(`mesa:${g.title.toLowerCase()}`);
+  const bg = ctx.createRadialGradient(W / 2, H * 0.4, 10, W / 2, H * 0.5, W * 0.8);
+  bg.addColorStop(0, light);
+  bg.addColorStop(1, dark);
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+  const style = Math.floor(r() * 3);
+  const palette = ['#c8553d', '#3e6fb0', '#f2c14e', '#4f8a4a', '#f4efe4', '#6b4a7a'];
+  if (style === 0) {
+    for (let i = 0; i < 5; i++) meeple(ctx, W * (0.18 + i * 0.16), H * (0.62 + (i % 2) * 0.05), W * (0.16 + r() * 0.06), palette[i % palette.length]);
+  } else if (style === 1) {
+    for (let i = 0; i < 7; i++) {
+      const cx = W * (0.2 + r() * 0.6);
+      const cy = H * (0.45 + r() * 0.3);
+      const R = W * 0.06;
+      ctx.fillStyle = palette[i % palette.length];
+      ctx.beginPath();
+      for (let k = 0; k < 6; k++) ctx.lineTo(cx + Math.cos((k / 6) * Math.PI * 2) * R, cy + Math.sin((k / 6) * Math.PI * 2) * R);
+      ctx.fill();
+    }
+  } else {
+    for (let i = 0; i < 3; i++) {
+      const x = W * (0.25 + i * 0.25);
+      const y = H * (0.6 + (i % 2) * 0.06);
+      const S = W * 0.15;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate((r() - 0.5) * 0.8);
+      ctx.fillStyle = '#f4efe4';
+      ctx.beginPath();
+      ctx.roundRect(-S / 2, -S / 2, S, S, S * 0.18);
+      ctx.fill();
+      ctx.fillStyle = '#231e1a';
+      const pips = 1 + Math.floor(r() * 6);
+      const spots = { 1: [[0, 0]], 2: [[-1, -1], [1, 1]], 3: [[-1, -1], [0, 0], [1, 1]], 4: [[-1, -1], [1, -1], [-1, 1], [1, 1]], 5: [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]], 6: [[-1, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [1, 1]] }[pips];
+      for (const [px, py] of spots) {
+        ctx.beginPath();
+        ctx.arc(px * S * 0.26, py * S * 0.26, S * 0.08, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+  // Título arriba, gordo y con contorno
+  const size = fitWords(ctx, g.title.toUpperCase(), W * 0.8, Math.round(W * (g.title.length > 22 ? 0.09 : g.title.length > 12 ? 0.11 : 0.14)), (s) => `900 ${s}px ${HEAVY}`);
+  ctx.textAlign = 'center';
+  ctx.lineJoin = 'round';
+  let y = H * 0.16 + size * 0.5;
+  for (const line of wrap(ctx, g.title.toUpperCase(), W * 0.8, 3)) {
+    ctx.lineWidth = size * 0.25;
+    ctx.strokeStyle = dark;
+    ctx.strokeText(line, W / 2, y);
+    ctx.fillStyle = '#fffaf0';
+    ctx.fillText(line, W / 2, y);
+    y += size * 1.05;
+  }
+  // Barra inferior: jugadores y duración
+  const bar = H * 0.13;
+  ctx.fillStyle = '#231e1acc';
+  ctx.fillRect(0, H - bar, W, bar);
+  ctx.fillStyle = '#fbf3e4';
+  ctx.font = `800 ${Math.round(bar * 0.42)}px ${SANS}`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  meeple(ctx, W * 0.1, H - bar / 2 + bar * 0.05, bar * 0.55, '#fbf3e4');
+  ctx.fillText(g.minPlayers === g.maxPlayers ? `${g.minPlayers}` : `${g.minPlayers}-${g.maxPlayers}`, W * 0.17, H - bar / 2);
+  ctx.beginPath();
+  ctx.strokeStyle = '#fbf3e4';
+  ctx.lineWidth = 3;
+  ctx.arc(W * 0.58, H - bar / 2, bar * 0.24, 0, Math.PI * 2);
+  ctx.moveTo(W * 0.58, H - bar / 2);
+  ctx.lineTo(W * 0.58, H - bar / 2 - bar * 0.16);
+  ctx.moveTo(W * 0.58, H - bar / 2);
+  ctx.lineTo(W * 0.58 + bar * 0.12, H - bar / 2);
+  ctx.stroke();
+  ctx.fillText(`${g.minutes}'`, W * 0.65, H - bar / 2);
+  // Marco clásico de caja
+  ctx.strokeStyle = '#fbf3e4';
+  ctx.lineWidth = W * 0.025;
+  ctx.strokeRect(W * 0.03, W * 0.03, W * 0.94, H - W * 0.06);
+  if (g.status === 'pendiente') {
+    // Pegatina de «sin estrenar»
+    ctx.save();
+    ctx.translate(W * 0.8, H * 0.42);
+    ctx.rotate(0.3);
+    ctx.fillStyle = '#f2c14e';
+    ctx.beginPath();
+    for (let i = 0; i < 24; i++) {
+      const rr = i % 2 ? W * 0.11 : W * 0.14;
+      ctx.lineTo(Math.cos((i / 24) * Math.PI * 2) * rr, Math.sin((i / 24) * Math.PI * 2) * rr);
+    }
+    ctx.fill();
+    ctx.fillStyle = '#231e1a';
+    ctx.font = `900 ${Math.round(W * 0.042)}px ${SANS}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('SIN', 0, -W * 0.025);
+    ctx.fillText('ESTRENAR', 0, W * 0.025, W * 0.2);
+    ctx.restore();
+  }
+  const gloss = ctx.createLinearGradient(0, 0, W, H);
+  gloss.addColorStop(0, '#ffffff2e');
+  gloss.addColorStop(0.5, '#ffffff00');
+  ctx.fillStyle = gloss;
+  ctx.fillRect(0, 0, W, H);
+  return c;
+}
+
 /** Portada: dibujo generado o la imagen real, con la franja de la plataforma. */
 export function drawCover(g, image = null) {
+  if (isBoard(g)) return drawBoardCover(g);
   const box = boxFor(g.platform);
   const pl = platform(g.platform);
   const W = 256;
@@ -215,10 +364,12 @@ export function drawSpine(g, { strip = '#1c1b20', small = false } = {}) {
   ctx.font = `800 ${Math.round(W * 0.34)}px ${SANS}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(pl.short.slice(0, 4), W / 2, band / 2 + 1, W * 0.9);
+  const board = isBoard(g);
+  ctx.fillText(board ? (g.minPlayers === g.maxPlayers ? String(g.minPlayers) : `${g.minPlayers}-${g.maxPlayers}`) : pl.short.slice(0, 4), W / 2, band / 2 + 1, W * 0.9);
   // Título en vertical, de arriba abajo
   const ink = inkFor(color);
-  const foot = g.status === 'terminado' ? W * 1.2 : W * 0.4;
+  const starred = g.status === 'terminado' || g.status === 'favorito';
+  const foot = (starred ? W * 1.2 : W * 0.4) + (board && g.lentTo ? W * 1.3 : 0);
   const avail = H - band - foot - W * 0.4;
   let size = Math.round(W * 0.56);
   ctx.font = `800 ${size}px ${SANS}`;
@@ -234,11 +385,25 @@ export function drawSpine(g, { strip = '#1c1b20', small = false } = {}) {
   ctx.fillStyle = ink;
   ctx.fillText(title, 0, 1);
   ctx.restore();
-  if (g.status === 'terminado') {
+  if (starred) {
     ctx.fillStyle = '#f2c14e';
     ctx.font = `${Math.round(W * 0.8)}px ${SANS}`;
     ctx.textAlign = 'center';
     ctx.fillText('★', W / 2, H - W * 0.62);
+  }
+  if (board && g.lentTo) {
+    // Pósit amarillo: este juego no está en casa
+    const y0 = H - (starred ? W * 1.2 : W * 0.4) - W * 1.25;
+    ctx.fillStyle = '#f7d154';
+    ctx.fillRect(W * 0.08, y0, W * 0.84, W * 1.15);
+    ctx.save();
+    ctx.translate(W / 2, y0 + W * 0.575);
+    ctx.rotate(Math.PI / 2);
+    ctx.fillStyle = '#231e1a';
+    ctx.font = `900 ${Math.round(W * 0.3)}px ${SANS}`;
+    ctx.textAlign = 'center';
+    ctx.fillText('PRESTADO', 0, 1, W * 1.05);
+    ctx.restore();
   }
   return c;
 }
@@ -270,7 +435,8 @@ export function drawBack(g) {
   }
   ctx.font = `600 ${Math.round(W * 0.038)}px ${SANS}`;
   ctx.fillStyle = '#6b5f50';
-  ctx.fillText(`${platform(g.platform).name} · ${STATUS_LABEL[g.status]}`, pad, y + 4);
+  const board = isBoard(g);
+  ctx.fillText(board ? `${playersText(g)} · ${minutesText(g.minutes)} · ${statusLabel(g)}` : `${platform(g.platform).name} · ${statusLabel(g)}`, pad, y + 4, W - pad * 2 - (g.score !== null ? W * 0.24 : 0));
   y += W * 0.07;
   // Nota en un círculo gordo
   if (g.score !== null) {
@@ -316,10 +482,11 @@ export function drawBack(g) {
   const fy = H - footer + H * 0.02;
   ctx.fillStyle = '#231e1a';
   ctx.font = `800 ${Math.round(W * 0.042)}px ${SANS}`;
-  ctx.fillText(g.hours ? `${g.hours} h jugadas` : 'Sin horas apuntadas', pad, fy);
+  if (board) ctx.fillText(g.plays ? `${g.plays} partida${g.plays === 1 ? '' : 's'}` : '¡Aún sin estrenar!', pad, fy);
+  else ctx.fillText(g.hours ? `${g.hours} h jugadas` : 'Sin horas apuntadas', pad, fy);
   ctx.font = `500 ${Math.round(W * 0.032)}px ${SANS}`;
-  ctx.fillStyle = '#6b5f50';
-  ctx.fillText(`En tu colección desde ${new Date(g.addedAt).toLocaleDateString('es-ES')}`, pad, fy + W * 0.06);
+  ctx.fillStyle = board && g.lentTo ? '#b3261e' : '#6b5f50';
+  ctx.fillText(board && g.lentTo ? lentText(g) : `En tu colección desde ${new Date(g.addedAt).toLocaleDateString('es-ES')}`, pad, fy + W * 0.06, W * 0.6);
   const r = rng(g.id);
   let bx = W - pad - W * 0.26;
   ctx.fillStyle = '#111';

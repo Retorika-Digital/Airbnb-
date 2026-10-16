@@ -1,19 +1,26 @@
 // La colección de DisketeBoy, guardada en el navegador (localStorage).
 // Todo lo que entra se valida y se limpia: datos corruptos, manipulados o de
 // una versión vieja nunca rompen la consola ni la habitación.
-import { PLATFORM_IDS } from './platforms.js';
+import { PLATFORM_IDS, BOARD_IDS } from './platforms.js';
 import { uid, clamp, titleKey } from './util.js';
 
 const KEY = 'dkb:v1';
 
+// Videojuegos y juegos de mesa viven en la misma colección (kind: 'video' | 'mesa').
 export const STATUSES = ['pendiente', 'jugando', 'jugado', 'terminado', 'abandonado'];
+export const BOARD_STATUSES = ['pendiente', 'jugado', 'favorito'];
+export const ALL_STATUSES = [...STATUSES, 'favorito']; // el orden importa: lo usan los enlaces de visita
 export const STATUS_LABEL = {
   pendiente: 'Pendiente',
   jugando: 'Jugando',
   jugado: 'Jugado',
   terminado: 'Terminado',
   abandonado: 'Abandonado',
+  favorito: 'Favorito',
 };
+export const BOARD_STATUS_LABEL = { pendiente: 'Sin estrenar', jugado: 'Jugado', favorito: 'Favorito' };
+export const isBoard = (g) => g?.kind === 'mesa';
+export const statusLabel = (g) => (isBoard(g) ? BOARD_STATUS_LABEL : STATUS_LABEL)[g.status];
 export const PALETTES = ['verde', 'ambar', 'hielo', 'gris'];
 export const SORTS = ['plataforma', 'nota', 'color', 'az', 'horas'];
 export const LIMITS = { title: 120, review: 2000, games: 2000 };
@@ -53,20 +60,33 @@ export function cleanGame(raw) {
   const hours = Number(raw.hours);
   const appid = Number(raw.steamAppId);
   const now = new Date().toISOString();
-  return {
+  const board = raw.kind === 'mesa';
+  const game = {
     id: typeof raw.id === 'string' && /^[\w-]{1,40}$/.test(raw.id) ? raw.id : uid(),
+    kind: board ? 'mesa' : 'video',
     title,
-    platform: PLATFORM_IDS.includes(raw.platform) ? raw.platform : 'otra',
-    status: STATUSES.includes(raw.status) ? raw.status : 'pendiente',
+    platform: board ? (BOARD_IDS.includes(raw.platform) ? raw.platform : 'mesa-l') : PLATFORM_IDS.includes(raw.platform) ? raw.platform : 'otra',
+    status: board ? (BOARD_STATUSES.includes(raw.status) ? raw.status : 'jugado') : STATUSES.includes(raw.status) ? raw.status : 'pendiente',
     score: Number.isFinite(score) ? clamp(Math.round(score), 0, 10) : null,
     hours: Number.isFinite(hours) ? clamp(Math.round(hours * 10) / 10, 0, 99999) : 0,
     review: cleanText(raw.review, LIMITS.review),
-    steamAppId: Number.isInteger(appid) && appid > 0 && appid < 1e8 ? appid : null,
+    steamAppId: !board && Number.isInteger(appid) && appid > 0 && appid < 1e8 ? appid : null,
     cover: cleanUrl(raw.cover),
     color: /^#[0-9a-f]{6}$/i.test(raw.color || '') ? raw.color.toLowerCase() : null,
     addedAt: validDate(raw.addedAt) || now,
     updatedAt: validDate(raw.updatedAt) || now,
   };
+  if (board) {
+    const int = (v, min, max, def) => (Number.isFinite(Number(v)) && v !== '' && v !== null ? clamp(Math.round(Number(v)), min, max) : def);
+    game.minPlayers = int(raw.minPlayers, 1, 20, 2);
+    game.maxPlayers = Math.max(game.minPlayers, int(raw.maxPlayers, 1, 99, Math.max(game.minPlayers, 4)));
+    game.minutes = int(raw.minutes, 5, 1000, 45);
+    game.plays = int(raw.plays, 0, 99999, 0);
+    game.lentTo = cleanText(raw.lentTo, 40).replace(/\s+/g, ' ');
+    game.lentAt = game.lentTo ? validDate(raw.lentAt) || now : null;
+    game.lastPlayed = validDate(raw.lastPlayed);
+  }
+  return game;
 }
 
 function cleanSettings(raw) {
@@ -142,6 +162,8 @@ export function startVisit(games, name = '') {
 export const visiting = () => visit;
 
 export const getGames = () => get().games;
+export const getVideoGames = () => get().games.filter((g) => !isBoard(g));
+export const getBoards = () => get().games.filter(isBoard);
 export const getGame = (id) => get().games.find((g) => g.id === id) || null;
 export const getSettings = () => get().settings;
 
@@ -264,7 +286,15 @@ export function clearAll() {
   save({ type: 'reset' });
 }
 
-export function stats(games = getGames()) {
+/** Una partida más: si estaba sin estrenar, queda estrenado. */
+export function logPlay(id) {
+  const g = getGame(id);
+  if (!isBoard(g)) return null;
+  return updateGame(id, { plays: g.plays + 1, lastPlayed: new Date().toISOString(), status: g.status === 'pendiente' ? 'jugado' : g.status });
+}
+
+/** Estadísticas de los videojuegos (los juegos de mesa tienen las suyas en boards.js). */
+export function stats(games = getVideoGames()) {
   const by = Object.fromEntries(STATUSES.map((st) => [st, 0]));
   let hours = 0;
   let scored = 0;

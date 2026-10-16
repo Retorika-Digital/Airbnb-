@@ -132,3 +132,24 @@ Lo que se ha ido haciendo mientras dormías, tanda por tanda.
   - Con más de 300 juegos, los lomos van a media resolución.
   - **Con 800 juegos: de 4.525 a 1.447 llamadas de dibujo** (3 veces menos) y ordenar la habitación pasa de 4,9 s a 2,4 s.
 - 35 pruebas unitarias (antes 32) y 16 en navegador (antes 15).
+
+## Tanda 7: el disquete azul de JUEGOS DE MESA
+
+- **Segundo disquete**: al meterlo, la etiqueta pasa a **«JUEGOS DE MESA»** en azul. Los juegos de mesa viven en la misma colección que los videojuegos, pero cada disquete enseña lo suyo.
+- **Una Kallax blanca de 4×2 en la pared derecha** (sí, la de IKEA de siempre, hecha con código):
+  - Los juegos están **de pie como libros**, con el número de jugadores en el lomo («2-4») y ★ si es favorito.
+  - Si está prestado, lleva un **pósit amarillo de «PRESTADO»**.
+  - Los **sin estrenar van apilados encima, todavía con su plástico brillante** y una pegatina de «SIN ESTRENAR».
+  - Lo que no cabe en los cubos se apila encima y luego en el suelo, al lado.
+- **Portadas propias de juego de mesa**: marco clásico, título gordo, **meeples, dados o losetas hexagonales**, y abajo los jugadores y la duración. En la contraportada van tu reseña, las partidas jugadas y a quién se lo dejaste.
+- **¿Qué jugamos esta noche?**:
+  - Dices cuántos sois y cuánto tiempo tenéis, y salen los juegos que encajan y que están en casa: primero los favoritos, luego los sin estrenar («¡ya toca!») y después por nota.
+  - Con **«¡Que elija la DisketeBoy!»** gira una **ruleta** que va frenando hasta pararse en uno.
+  - Con «¡Sácalo de la Kallax!», **la caja sale volando hacia ti**.
+- **«¡Hemos jugado!»** suma una partida. Si estaba sin estrenar, se estrena: el juego baja de encima de la Kallax a los cubos.
+- **Préstamos**: «Prestado a Pedro» guarda la fecha, y la pantalla de préstamos te recuerda que **«Lo tiene Pedro desde hace 143 días»**.
+- También tiene estadísticas (partidas, sin estrenar, el más jugado), la **demo con 15 juegos** (Catan, Carcassonne, Aventureros al Tren, Dixit, Virus!…) y entra en el enlace de visita.
+- **Arreglos**:
+  - Los títulos con una palabra muy larga («AVENTUREROS») se cortaban en la portada. Ahora la letra se ajusta a la palabra más larga.
+  - El aviso flotante oculto asomaba como una mancha oscura bajo la habitación.
+- **Pruebas**: 44 unitarias (antes 35), con el filtro de «¿Qué jugamos?», los préstamos, que los cubos de la Kallax no se desborden y el enlace con juegos de mesa. Y 17 en navegador (antes 16), con el recorrido completo del disquete azul y axe-core sin errores en sus 7 pantallas.

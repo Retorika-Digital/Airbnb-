@@ -23,7 +23,8 @@ const center = (s) => {
 };
 
 /** Las líneas del ticket (texto puro: así se puede probar sin navegador). */
-export function ticketLines(games, now = new Date()) {
+export function ticketLines(all, now = new Date()) {
+  const games = all.filter((g) => g.kind !== 'mesa');
   const st = stats(games);
   const rule = '-'.repeat(WIDTH);
   const lines = [
@@ -139,7 +140,9 @@ export function renderTicket(games, now = new Date()) {
 }
 
 /** La foto de tu habitación con un pie: lista para Reddit, WhatsApp o donde sea. */
-export function renderSnapshot(roomCanvas, games) {
+export function renderSnapshot(roomCanvas, all) {
+  const games = all.filter((g) => g.kind !== 'mesa');
+  const boards = all.length - games.length;
   const st = stats(games);
   const W = 1200;
   const scale = W / roomCanvas.width;
@@ -160,6 +163,6 @@ export function renderSnapshot(roomCanvas, games) {
   ctx.fillText('Mi habitación en DisketeBoy', 40, photoH + footer / 2 - 16);
   ctx.font = '500 26px system-ui, sans-serif';
   ctx.fillStyle = '#d9cbb4';
-  ctx.fillText(`${num(st.total)} juegos · ${num(st.hours)} h jugadas · ${st.by.pendiente} en la pila de la vergüenza`, 40, photoH + footer / 2 + 26);
+  ctx.fillText(`${num(st.total)} videojuegos${boards ? ` · ${boards} de mesa` : ''} · ${num(st.hours)} h jugadas · ${st.by.pendiente} en la pila de la vergüenza`, 40, photoH + footer / 2 + 26, W - 80);
   return c;
 }

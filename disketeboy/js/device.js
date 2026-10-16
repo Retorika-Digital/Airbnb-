@@ -2,11 +2,13 @@
 // La pantalla es DOM de verdad (botones y campos), así que funciona con ratón,
 // dedo, teclado y lector de pantalla; la cruceta y A/B son un atajo más.
 import * as store from './store.js';
-import { STATUSES, STATUS_LABEL, PALETTES, SORTS } from './store.js';
-import { PLATFORMS, platform } from './platforms.js';
+import { STATUSES, STATUS_LABEL, PALETTES, SORTS, BOARD_STATUSES, BOARD_STATUS_LABEL, isBoard, statusLabel } from './store.js';
+import { PLATFORMS, BOARD_SIZES, platform } from './platforms.js';
 import { mapSteamGames } from './steam.js';
-import { DEMO_GAMES } from './demo.js';
+import { DEMO_GAMES, DEMO_BOARDS } from './demo.js';
 import { sfx, setSound } from './audio.js';
+import { whatToPlay, playersText, minutesText, lentText, boardStats, pickOne, TIME_OPTIONS } from './boards.js';
+import { clamp } from './util.js';
 
 const PALETTE_LABEL = { verde: 'Verde clásico', ambar: 'Ámbar', hielo: 'Hielo', gris: 'Gris' };
 const SORT_LABEL = { plataforma: 'Plataforma', nota: 'Nota', color: 'Color', az: 'A-Z', horas: 'Horas' };
@@ -19,6 +21,13 @@ const ZONE_TEXT = {
 };
 const MONTHS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 const FILTERS = ['todos', ...STATUSES];
+const SCORES = [null, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const REDUCED = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const sizeName = (id) => BOARD_SIZES.find((s) => s.id === id)?.name || 'Estándar';
+const boardMeta = (g) =>
+  [g.minPlayers === g.maxPlayers ? `${g.minPlayers} jug` : `${g.minPlayers}-${g.maxPlayers} jug`, `${g.minutes}'`, g.score === null ? null : `★${g.score}`, g.plays ? `${g.plays} part.` : 'sin estrenar', g.lentTo ? 'PRESTADO' : null]
+    .filter(Boolean)
+    .join(' · ');
 
 /** Crea elementos sin innerHTML: el texto del usuario nunca se interpreta como HTML. */
 export function h(tag, props = {}, ...kids) {
@@ -49,6 +58,8 @@ export function createDevice(root, actions) {
   let lastPlatform = 'pc';
   let toastTimer = 0;
   let booted = false;
+  const night = { players: 4, minutes: 60 }; // «¿Qué jugamos esta noche?»
+  let spinToken = null;
 
   // ---------------------------------------------------------------- utilidades
   function toast(msg) {
@@ -136,7 +147,7 @@ export function createDevice(root, actions) {
 
   /** Repinta la pantalla actual si muestra datos que han cambiado (sin robar el foco a un campo). */
   function refresh() {
-    if (['boot', 'nuevo', 'resena', 'steam', 'confirmar'].includes(current.name)) return;
+    if (['boot', 'nuevo', 'mesaNuevo', 'resena', 'steam', 'confirmar', 'ruleta'].includes(current.name)) return;
     const active = document.activeElement;
     if (active && screen.contains(active) && active.matches('input, textarea, select')) return;
     const keepFocus = screen.contains(active) ? Math.max(0, focusIndex()) : null;
@@ -201,21 +212,23 @@ export function createDevice(root, actions) {
     },
 
     disquetes() {
-      const n = store.getGames().length;
+      const n = store.getVideoGames().length;
+      const b = store.getBoards().length;
       return view(
         'Inserta un disquete',
         h(
           'div',
           { class: 'list' },
-          item('Videojuegos', () => insertDisk('videojuegos'), { meta: `${n} juego${n === 1 ? '' : 's'}`, cls: 'disk disk-rojo' }),
-          item('Juegos de mesa', null, { meta: 'Próximamente', disabled: true, cls: 'disk disk-azul' }),
+          item('Videojuegos', () => insertDisk('videojuegos'), { meta: `${n} juego${n === 1 ? '' : 's'}`, cls: 'disk disk-rojo', id: 'd-video' }),
+          item('Juegos de mesa', () => insertDisk('mesa'), { meta: `${b} juego${b === 1 ? '' : 's'}`, cls: 'disk disk-azul', id: 'd-mesa' }),
           item('Cartas', null, { meta: 'Próximamente', disabled: true, cls: 'disk disk-verde' }),
         ),
       );
     },
 
     menu() {
-      const games = store.getGames();
+      if (root.dataset.disk === 'mesa') return SCREENS.mesa();
+      const games = store.getVideoGames();
       const st = store.stats(games);
       const visit = store.visiting();
       if (visit) {
@@ -231,6 +244,7 @@ export function createDevice(root, actions) {
             item('Estadísticas', () => go('stats'), { id: 'm-stats' }),
             item('Imprimir su ticket', () => actions.printTicket(), { id: 'm-ticket' }),
             item('Ajustes', () => go('ajustes'), { id: 'm-ajustes' }),
+            item('Cambiar de disquete', ejectDisk, { id: 'm-expulsar' }),
             item('Crear mi propia habitación', () => actions.leaveVisit(), { cls: 'primary', id: 'm-salir' }),
           ),
         );
@@ -240,7 +254,7 @@ export function createDevice(root, actions) {
         h(
           'div',
           { class: 'list' },
-          games.length ? null : item('Habitación vacía: ¿cargo la demo?', loadDemo, { cls: 'hint', id: 'demo-hint' }),
+          store.getGames().length ? null : item('Habitación vacía: ¿cargo la demo?', loadDemo, { cls: 'hint', id: 'demo-hint' }),
           item('Mi colección', () => go('lista', { filter: 'todos' }), { meta: String(st.total), id: 'm-coleccion' }),
           item('Añadir juego', () => go('nuevo'), { id: 'm-nuevo' }),
           item('Importar de Steam', () => go('steam'), { id: 'm-steam' }),
@@ -248,7 +262,7 @@ export function createDevice(root, actions) {
           item('Ver mi habitación', () => actions.lower(), { id: 'm-habitacion' }),
           item('Estadísticas', () => go('stats'), { id: 'm-stats' }),
           item('Imprimir ticket', () => actions.printTicket(), { id: 'm-ticket' }),
-          games.length ? item('Compartir mi habitación', () => actions.shareVisit(), { id: 'm-compartir' }) : null,
+          store.getGames().length ? item('Compartir mi habitación', () => actions.shareVisit(), { id: 'm-compartir' }) : null,
           item('Ajustes', () => go('ajustes'), { id: 'm-ajustes' }),
           item('Expulsar disquete', ejectDisk, { id: 'm-expulsar' }),
         ),
@@ -257,7 +271,7 @@ export function createDevice(root, actions) {
 
     lista({ filter = 'todos' }) {
       const settings = store.getSettings();
-      const all = store.getGames();
+      const all = store.getVideoGames();
       const games = sortForList(filter === 'todos' ? all : all.filter((g) => g.status === filter), settings.sort);
       const label = filter === 'todos' ? 'Todos' : STATUS_LABEL[filter];
       const setFilter = (dir) => {
@@ -280,6 +294,7 @@ export function createDevice(root, actions) {
     ficha({ id }) {
       const g = store.getGame(id);
       if (!g) return view('Juego borrado', p('Este juego ya no está en tu colección.'), h('div', { class: 'list' }, item('Volver', back)));
+      if (isBoard(g)) return SCREENS.mesaFicha({ id });
       if (store.visiting()) {
         return view(
           g.title,
@@ -293,7 +308,7 @@ export function createDevice(root, actions) {
         store.updateGame(id, patch);
         sfx.save();
       };
-      const scores = [null, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+      const scores = SCORES;
       const hours = h('input', {
         type: 'number',
         id: 'f-horas',
@@ -369,7 +384,7 @@ export function createDevice(root, actions) {
 
     nuevoOk({ id }) {
       const g = store.getGame(id);
-      const where = g ? ZONE_TEXT[g.status] : 'tu habitación';
+      const where = !g ? 'tu habitación' : isBoard(g) ? (g.status === 'pendiente' ? 'encima de tu Kallax, aún con su plástico' : 'tu Kallax') : ZONE_TEXT[g.status];
       return view(
         '¡Plof!',
         p(g ? `«${g.title}» acaba de caer en ${where}.` : 'Añadido.', 'big'),
@@ -377,7 +392,7 @@ export function createDevice(root, actions) {
           'div',
           { class: 'list' },
           item('Añadir otro', () => {
-            current = { name: 'nuevo', params: {} };
+            current = { name: g && isBoard(g) ? 'mesaNuevo' : 'nuevo', params: {} };
             render(0);
           }, { id: 'ok-otro' }),
           g ? item('Verlo en la habitación', () => actions.showInRoom(id), { id: 'ok-ver' }) : null,
@@ -436,7 +451,7 @@ export function createDevice(root, actions) {
     },
 
     pila() {
-      const pending = store.getGames().filter((g) => g.status === 'pendiente');
+      const pending = store.getVideoGames().filter((g) => g.status === 'pendiente');
       const f = store.pileForecast(pending.length);
       const text = pending.length
         ? `A un juego al mes, la terminarías en ${MONTHS[f.month]} de ${f.year}.`
@@ -474,6 +489,197 @@ export function createDevice(root, actions) {
         st.top.length ? p(`Tu podio: ${st.top.map((g) => g.title).join(' · ')}`) : null,
         st.mostPlayed.length ? p(`Más horas: ${st.mostPlayed[0].title} (${Math.round(st.mostPlayed[0].hours)} h)`) : null,
         h('div', { class: 'list' }, item('Imprimir ticket', () => actions.printTicket(), { id: 'st-ticket' }), item('Volver', back)),
+      );
+    },
+
+    // ------------------------------------------------ disquete de juegos de mesa
+    mesa() {
+      const boards = store.getBoards();
+      const bs = boardStats(boards);
+      const visit = store.visiting();
+      return view(
+        visit ? 'Sus juegos de mesa' : 'Juegos de mesa',
+        h(
+          'div',
+          { class: 'list' },
+          !boards.length && !visit ? item('Kallax vacía: ¿cargo la demo?', loadDemo, { cls: 'hint', id: 'demo-hint-mesa' }) : null,
+          item(visit ? 'Su Kallax' : 'Mi Kallax', () => go('mesaLista', { filter: 'todos' }), { meta: String(bs.total), id: 'b-coleccion' }),
+          visit ? null : item('Añadir juego de mesa', () => go('mesaNuevo'), { id: 'b-nuevo' }),
+          item('¿Qué jugamos esta noche?', () => go('queJugamos'), { id: 'b-quejugamos' }),
+          item('Sin estrenar', () => go('mesaLista', { filter: 'pendiente' }), { meta: String(bs.unplayed), id: 'b-sinestrenar' }),
+          item('Préstamos', () => go('prestamos'), { meta: String(bs.lent.length), id: 'b-prestamos' }),
+          item(visit ? 'Ver su Kallax en 3D' : 'Ver mi Kallax en 3D', () => actions.showZone('kallax'), { id: 'b-kallax' }),
+          item('Estadísticas', () => go('mesaStats'), { id: 'b-stats' }),
+          item(visit ? 'Cambiar de disquete' : 'Expulsar disquete', ejectDisk, { id: 'm-expulsar' }),
+          visit ? item('Crear mi propia habitación', () => actions.leaveVisit(), { cls: 'primary', id: 'm-salir' }) : null,
+        ),
+      );
+    },
+
+    mesaLista({ filter = 'todos' }) {
+      const all = store.getBoards();
+      const list = (filter === 'todos' ? all : all.filter((g) => g.status === filter)).sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
+      const filters = ['todos', ...BOARD_STATUSES];
+      const label = filter === 'todos' ? 'Todos' : BOARD_STATUS_LABEL[filter];
+      return view(
+        'Juegos de mesa',
+        h(
+          'div',
+          { class: 'list' },
+          stepper('Ver', `${label} (${list.length})`, (dir) => {
+            current.params = { filter: cycle(filters, filter, dir) };
+            render(0);
+          }, { id: 'b-filtro' }),
+          list.length
+            ? list.map((g) => item(g.title, () => go('ficha', { id: g.id }), { meta: boardMeta(g), cls: 'game' }))
+            : store.visiting()
+              ? p('Nada por aquí.')
+              : item('Nada por aquí. Añadir uno', () => go('mesaNuevo')),
+        ),
+      );
+    },
+
+    mesaFicha({ id }) {
+      const g = store.getGame(id);
+      if (!g) return view('Juego borrado', p('Este juego ya no está en tu colección.'), h('div', { class: 'list' }, item('Volver', back)));
+      const sub = p(`${playersText(g)} · ${minutesText(g.minutes)}`, 'sub');
+      if (store.visiting()) {
+        return view(
+          g.title,
+          sub,
+          h('dl', { class: 'stats' }, statRow('Estado', statusLabel(g)), statRow('Nota', g.score === null ? 'Sin nota' : `${g.score}/10`), statRow('Partidas', String(g.plays))),
+          g.lentTo ? p(lentText(g)) : null,
+          p(g.review ? `“${g.review}”` : 'Sin reseña.', 'note quote'),
+          h('div', { class: 'list' }, item('Ver en la habitación', () => actions.showInRoom(id), { id: 'f-ver' }), item('Volver', back)),
+        );
+      }
+      const upd = (patch) => {
+        store.updateGame(id, patch);
+        sfx.save();
+      };
+      const num = (idf, label, value, min, max, key) =>
+        h(
+          'label',
+          { class: 'item field' },
+          h('span', { class: 'item-label', text: label }),
+          h('input', { type: 'number', id: idf, min, max, step: '1', inputmode: 'numeric', value: String(value), 'data-nav': '', onchange: (e) => upd({ [key]: e.target.value }) }),
+        );
+      const lent = h('input', {
+        id: 'bf-prestado',
+        maxlength: '40',
+        'data-nav': '',
+        placeholder: 'Nadie: está en casa',
+        autocomplete: 'off',
+        value: g.lentTo,
+        onchange: (e) => upd({ lentTo: e.target.value, lentAt: e.target.value.trim() ? new Date().toISOString() : null }),
+      });
+      return view(
+        g.title,
+        sub,
+        g.lentTo ? p(lentText(g), 'note lent') : null,
+        h(
+          'div',
+          { class: 'list' },
+          item(g.status === 'pendiente' ? '¡Lo hemos estrenado!' : `¡Hemos jugado! (${g.plays})`, () => {
+            const fresh = g.status === 'pendiente';
+            store.logPlay(id);
+            sfx.select();
+            toast(fresh ? `¡${g.title} estrenado! Fuera plástico.` : `Partida apuntada: ya van ${g.plays + 1}`);
+          }, { cls: 'primary', id: 'bf-jugado' }),
+          stepper('Estado', BOARD_STATUS_LABEL[g.status], (dir) => upd({ status: cycle(BOARD_STATUSES, g.status, dir) }), { id: 'bf-estado' }),
+          stepper('Nota', stars(g.score), (dir) => upd({ score: cycle(SCORES, g.score, dir) }), { id: 'bf-nota' }),
+          num('bf-min', 'Jugadores mín.', g.minPlayers, '1', '20', 'minPlayers'),
+          num('bf-max', 'Jugadores máx.', g.maxPlayers, '1', '99', 'maxPlayers'),
+          num('bf-minutos', 'Minutos', g.minutes, '5', '1000', 'minutes'),
+          stepper('Caja', sizeName(g.platform), (dir) => upd({ platform: cycle(BOARD_SIZES.map((x) => x.id), g.platform, dir) }), { id: 'bf-caja' }),
+          h('label', { class: 'item field' }, h('span', { class: 'item-label', text: 'Prestado a' }), lent),
+          item(g.review ? `“${g.review.slice(0, 70)}${g.review.length > 70 ? '…' : ''}”` : 'Escribir reseña…', () => go('resena', { id }), { meta: 'Reseña', cls: 'review', id: 'bf-resena' }),
+          item('Ver en la habitación', () => actions.showInRoom(id), { id: 'bf-ver' }),
+          item('Borrar de la colección', () => go('confirmar', { text: `¿Borrar «${g.title}» de tu colección?`, yes: 'Sí, borrar', action: 'borrar', id }), { cls: 'danger', id: 'bf-borrar' }),
+        ),
+      );
+    },
+
+    mesaNuevo() {
+      const form = h(
+        'form',
+        { class: 'form', autocomplete: 'off', onsubmit: (e) => (e.preventDefault(), addFromForm(form, { kind: 'mesa' })) },
+        h('label', {}, 'Título', h('input', { name: 'title', id: 'bn-titulo', required: true, maxlength: '120', 'data-nav': '', placeholder: 'Ej.: Catan' })),
+        h(
+          'div',
+          { class: 'row2' },
+          h('label', {}, 'Jugadores mín.', h('input', { name: 'minPlayers', id: 'bn-min', type: 'number', min: '1', max: '20', value: '2', inputmode: 'numeric', 'data-nav': '' })),
+          h('label', {}, 'Máx.', h('input', { name: 'maxPlayers', id: 'bn-max', type: 'number', min: '1', max: '99', value: '4', inputmode: 'numeric', 'data-nav': '' })),
+        ),
+        h('label', {}, 'Duración en minutos', h('input', { name: 'minutes', id: 'bn-minutos', type: 'number', min: '5', max: '1000', step: '5', value: '45', inputmode: 'numeric', 'data-nav': '' })),
+        h('label', {}, 'Tamaño de la caja', h('select', { name: 'platform', id: 'bn-caja', 'data-nav': '' }, BOARD_SIZES.map((x) => h('option', { value: x.id, selected: x.id === 'mesa-l', text: x.name })))),
+        h('label', {}, 'Estado', h('select', { name: 'status', id: 'bn-estado', 'data-nav': '' }, BOARD_STATUSES.map((st) => h('option', { value: st, selected: st === 'jugado', text: BOARD_STATUS_LABEL[st] })))),
+        h('label', {}, 'Nota', h('select', { name: 'score', id: 'bn-nota', 'data-nav': '' }, h('option', { value: '', text: 'Sin nota' }), Array.from({ length: 11 }, (_, i) => h('option', { value: String(10 - i), text: `${10 - i}/10` })))),
+        h('button', { type: 'submit', class: 'item primary', id: 'bn-anadir', 'data-nav': '' }, h('span', { class: 'item-label', text: 'Añadir a mi Kallax' })),
+      );
+      return view('Añadir juego de mesa', form);
+    },
+
+    queJugamos() {
+      const matches = whatToPlay(store.getBoards(), night);
+      const keep = () => render(Math.max(0, focusIndex()));
+      return view(
+        '¿Qué jugamos?',
+        h(
+          'div',
+          { class: 'list' },
+          stepper('Somos', String(night.players), (dir) => ((night.players = clamp(night.players + dir, 1, 12)), keep()), { id: 'q-jugadores' }),
+          stepper('Tiempo', night.minutes ? `hasta ${minutesText(night.minutes)}` : 'Sin prisa', (dir) => ((night.minutes = cycle(TIME_OPTIONS, night.minutes, dir)), keep()), { id: 'q-tiempo' }),
+          matches.length
+            ? item(`¡Que elija la DisketeBoy! (${matches.length})`, () => go('ruleta', { ids: matches.map((g) => g.id) }), { cls: 'primary', id: 'q-ruleta' })
+            : p('Nada encaja esta noche… ¿Más tiempo, menos gente o un juego nuevo?'),
+          matches.slice(0, 15).map((g) => item(g.title, () => go('ficha', { id: g.id }), { meta: boardMeta(g), cls: 'game' })),
+        ),
+      );
+    },
+
+    ruleta({ ids, pick }) {
+      const games = (ids || []).map((x) => store.getGame(x)).filter(Boolean);
+      if (pick && store.getGame(pick)) {
+        const g = store.getGame(pick);
+        return view(
+          '¡Esta noche toca…',
+          h('div', { class: 'big-pick', text: g.title }),
+          p(`${playersText(g)} · ${minutesText(g.minutes)}${g.status === 'pendiente' ? ' · ¡y por fin lo estrenáis!' : ''}`, 'sub'),
+          h(
+            'div',
+            { class: 'list' },
+            item('¡Sácalo de la Kallax!', () => actions.showInRoom(g.id), { cls: 'primary', id: 'r-sacar' }),
+            item('Otra vez', () => {
+              current.params = { ids };
+              render(0);
+            }, { id: 'r-otra' }),
+            item('Volver', back),
+          ),
+        );
+      }
+      const label = h('div', { class: 'big-pick rolling', text: '…' });
+      const el = view('Girando la ruleta…', label, p(`Entre ${games.length} juegos`, 'sub'));
+      setTimeout(() => spin(games, label), 0);
+      return el;
+    },
+
+    prestamos() {
+      const lent = store.getBoards().filter((g) => g.lentTo).sort((a, b) => (a.lentAt || '').localeCompare(b.lentAt || ''));
+      return view(
+        'Préstamos',
+        p(lent.length ? 'Lo que no está en casa, y quién lo tiene:' : 'Todo está en casa. ¡Bien!'),
+        h('div', { class: 'list' }, lent.map((g) => item(g.title, () => go('ficha', { id: g.id }), { meta: lentText(g), cls: 'game' })), item('Volver', back)),
+      );
+    },
+
+    mesaStats() {
+      const bs = boardStats(store.getBoards());
+      return view(
+        'Estadísticas',
+        h('dl', { class: 'stats' }, statRow('Juegos de mesa', String(bs.total)), statRow('Partidas', String(bs.plays)), statRow('Sin estrenar', String(bs.unplayed)), statRow('Prestados', String(bs.lent.length))),
+        bs.mostPlayed ? p(`El más jugado: ${bs.mostPlayed.title} (${bs.mostPlayed.plays} partidas)`) : null,
+        h('div', { class: 'list' }, item('Volver', back)),
       );
     },
 
@@ -550,8 +756,8 @@ export function createDevice(root, actions) {
     return list.sort(byTitle);
   }
 
-  function addFromForm(form) {
-    const data = Object.fromEntries(new FormData(form));
+  function addFromForm(form, extra = {}) {
+    const data = { ...Object.fromEntries(new FormData(form)), ...extra };
     if (!String(data.title || '').trim()) {
       sfx.error();
       form.elements.title.focus();
@@ -559,7 +765,7 @@ export function createDevice(root, actions) {
     }
     try {
       const g = store.addGame(data);
-      lastPlatform = g.platform;
+      if (!isBoard(g)) lastPlatform = g.platform;
       // Sustituye el formulario por la confirmación: B vuelve al menú, no al formulario relleno.
       current = { name: 'nuevoOk', params: { id: g.id } };
       sfx.select();
@@ -570,14 +776,43 @@ export function createDevice(root, actions) {
     }
   }
 
+  /** La ruleta: los títulos pasan cada vez más despacio hasta parar en uno. */
+  function spin(games, label) {
+    const token = {};
+    spinToken = token;
+    const final = pickOne(games);
+    if (!final) return;
+    const total = REDUCED ? 1 : 16 + Math.floor(Math.random() * 6);
+    let steps = 0;
+    let delay = 55;
+    const tick = () => {
+      if (spinToken !== token || current.name !== 'ruleta') return;
+      steps++;
+      label.textContent = steps >= total ? final.title : games[(steps * 7) % games.length].title;
+      sfx.move();
+      if (steps >= total) {
+        current.params = { ...current.params, pick: final.id };
+        setTimeout(() => {
+          if (spinToken !== token || current.name !== 'ruleta') return;
+          sfx.select();
+          render(0);
+        }, REDUCED ? 0 : 450);
+        return;
+      }
+      delay = Math.min(260, delay * 1.14);
+      setTimeout(tick, delay);
+    };
+    tick();
+  }
+
   function loadDemo() {
-    const { added } = store.importGames(DEMO_GAMES);
+    const { added } = store.importGames([...DEMO_GAMES, ...DEMO_BOARDS]);
     toast(added ? `Demo cargada: ${added} juegos han caído en tu habitación` : 'La demo ya estaba cargada');
     if (!root.dataset.disk) root.dataset.disk = 'videojuegos';
     history.length = 0;
     current = { name: 'menu', params: {} };
     render(0);
-    if (added) actions.lower();
+    if (added) root.dataset.disk === 'mesa' ? actions.showZone('kallax') : actions.lower();
   }
 
   function backup() {
@@ -627,7 +862,8 @@ export function createDevice(root, actions) {
     const start = () => {
       if (booted) return;
       booted = true;
-      if (store.getGames().length || store.visiting()) insertDisk('videojuegos');
+      if (store.getVideoGames().length || store.visiting()) insertDisk('videojuegos');
+      else if (store.getBoards().length) insertDisk('mesa');
       else {
         current = { name: 'disquetes', params: {} };
         render(0);

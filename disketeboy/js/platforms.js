@@ -13,7 +13,20 @@ export const BOXES = {
   ds: { w: 0.125, h: 0.137, d: 0.014 },
   estuche: { w: 0.135, h: 0.185, d: 0.022 },
   umd: { w: 0.104, h: 0.178, d: 0.014 },
+  // Juegos de mesa, de pie en la Kallax como libros
+  mesaS: { w: 0.13, h: 0.095, d: 0.035 },
+  mesaM: { w: 0.25, h: 0.25, d: 0.06 },
+  mesaL: { w: 0.297, h: 0.297, d: 0.072 },
+  mesaXL: { w: 0.31, h: 0.31, d: 0.11 },
 };
+
+// Tamaños de caja de juego de mesa (se eligen al añadirlo).
+export const BOARD_SIZES = [
+  { id: 'mesa-s', name: 'Pequeña (de cartas)' },
+  { id: 'mesa-m', name: 'Mediana' },
+  { id: 'mesa-l', name: 'Estándar' },
+  { id: 'mesa-xl', name: 'Enorme' },
+];
 
 // band: color de la franja superior de la portada (genérica, sin logos).
 export const PLATFORMS = [
@@ -48,8 +61,17 @@ export const PLATFORMS = [
   { id: 'otra', name: 'Otra', short: '???', box: 'dvd', band: '#5a5246' },
 ];
 
+// "Plataformas" internas de los juegos de mesa: no salen en los formularios de videojuegos.
+const BOARD_PLATFORMS = [
+  { id: 'mesa-s', name: 'Juego de mesa', short: 'MESA', box: 'mesaS', band: '#2f5d62', board: true },
+  { id: 'mesa-m', name: 'Juego de mesa', short: 'MESA', box: 'mesaM', band: '#2f5d62', board: true },
+  { id: 'mesa-l', name: 'Juego de mesa', short: 'MESA', box: 'mesaL', band: '#2f5d62', board: true },
+  { id: 'mesa-xl', name: 'Juego de mesa', short: 'MESA', box: 'mesaXL', band: '#2f5d62', board: true },
+];
+
 export const PLATFORM_IDS = PLATFORMS.map((p) => p.id);
-const BY_ID = Object.fromEntries(PLATFORMS.map((p, i) => [p.id, { ...p, order: i }]));
+export const BOARD_IDS = BOARD_PLATFORMS.map((p) => p.id);
+const BY_ID = Object.fromEntries([...PLATFORMS, ...BOARD_PLATFORMS].map((p, i) => [p.id, { ...p, order: i }]));
 
 export const platform = (id) => BY_ID[id] || BY_ID.otra;
 export const boxFor = (id) => BOXES[platform(id).box];

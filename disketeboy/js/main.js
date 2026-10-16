@@ -3,9 +3,10 @@
 // consola sigue funcionando igual.
 import * as store from './store.js';
 import { createDevice } from './device.js';
-import { DEMO_GAMES } from './demo.js';
+import { DEMO_GAMES, DEMO_BOARDS } from './demo.js';
 import { platform } from './platforms.js';
-import { STATUS_LABEL } from './store.js';
+import { statusLabel, isBoard } from './store.js';
+import { playersText, minutesText, lentText } from './boards.js';
 
 const params = new URLSearchParams(location.search);
 const body = document.body;
@@ -124,7 +125,9 @@ function onInspect(game) {
     return;
   }
   document.getElementById('inspect-title').textContent = game.title;
-  const bits = [platform(game.platform).name, STATUS_LABEL[game.status], game.score === null ? 'sin nota' : `${game.score}/10`, game.hours ? `${game.hours} h` : null];
+  const bits = isBoard(game)
+    ? [playersText(game), minutesText(game.minutes), statusLabel(game), game.score === null ? 'sin nota' : `${game.score}/10`, `${game.plays} partida${game.plays === 1 ? '' : 's'}`, game.lentTo ? lentText(game) : null]
+    : [platform(game.platform).name, statusLabel(game), game.score === null ? 'sin nota' : `${game.score}/10`, game.hours ? `${game.hours} h` : null];
   document.getElementById('inspect-meta').textContent = bits.filter(Boolean).join(' · ');
   inspectEl.hidden = false;
 }
@@ -166,7 +169,7 @@ async function printTicket() {
   const { renderTicket } = await import('./ticket.js');
   // Que la fuente de terminal esté cargada antes de imprimir (máximo 1,5 s de espera).
   await Promise.race([document.fonts?.load('21px VT323').catch(() => {}), new Promise((r) => setTimeout(r, 1500))]);
-  const canvasTicket = renderTicket(store.getGames());
+  const canvasTicket = renderTicket(store.getVideoGames());
   const img = document.getElementById('ticket-img');
   img.src = canvasTicket.toDataURL('image/png');
   img.alt = 'Ticket con el resumen de tu colección';
@@ -260,6 +263,6 @@ document.addEventListener('keydown', (e) => {
 window.disketeboy = { store, get room() { return room; }, device, lower, raise, shareVisit };
 canvas.tabIndex = 0;
 await maybeVisit();
-if (!store.visiting() && params.get('demo') === '1' && !store.getGames().length) store.importGames(DEMO_GAMES);
+if (!store.visiting() && params.get('demo') === '1' && !store.getGames().length) store.importGames([...DEMO_GAMES, ...DEMO_BOARDS]);
 device.boot();
 startRoom();

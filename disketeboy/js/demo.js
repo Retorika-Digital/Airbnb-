@@ -28,3 +28,22 @@ export const DEMO_GAMES = [
   { title: 'Super Mario World', platform: 'snes', status: 'terminado', score: 10, hours: 20 },
   { title: 'Mario Kart 8 Deluxe', platform: 'switch', status: 'jugado', score: 8, hours: 60 },
 ];
+
+// Juegos de mesa de ejemplo para la Kallax.
+export const DEMO_BOARDS = [
+  { kind: 'mesa', title: 'Catan', minPlayers: 3, maxPlayers: 4, minutes: 90, platform: 'mesa-l', status: 'jugado', score: 7, plays: 23, review: 'Te cambio dos de trigo por una de ladrillo. ¿No? ¿Y por nuestra amistad?' },
+  { kind: 'mesa', title: 'Carcassonne', minPlayers: 2, maxPlayers: 5, minutes: 40, platform: 'mesa-m', status: 'favorito', score: 9, plays: 41, review: 'El campo más grande del mundo, conectado a una sola ciudad. Mío.' },
+  { kind: 'mesa', title: 'Aventureros al Tren', minPlayers: 2, maxPlayers: 5, minutes: 60, platform: 'mesa-l', status: 'favorito', score: 9, plays: 30 },
+  { kind: 'mesa', title: 'Dixit', minPlayers: 3, maxPlayers: 8, minutes: 30, platform: 'mesa-l', status: 'jugado', score: 8, plays: 15, lentTo: 'Pedro', lentAt: '2026-05-26T18:00:00.000Z' },
+  { kind: 'mesa', title: 'Azul', minPlayers: 2, maxPlayers: 4, minutes: 45, platform: 'mesa-l', status: 'jugado', score: 8, plays: 12 },
+  { kind: 'mesa', title: 'Wingspan', minPlayers: 1, maxPlayers: 5, minutes: 70, platform: 'mesa-l', status: 'jugado', score: 9, plays: 9, review: 'Un juego de pájaros en el que la que más sabe de pájaros siempre pierde.' },
+  { kind: 'mesa', title: 'Pandemic', minPlayers: 2, maxPlayers: 4, minutes: 45, platform: 'mesa-l', status: 'jugado', score: 8, plays: 11 },
+  { kind: 'mesa', title: 'Código Secreto', minPlayers: 2, maxPlayers: 8, minutes: 15, platform: 'mesa-m', status: 'favorito', score: 9, plays: 52 },
+  { kind: 'mesa', title: '7 Wonders', minPlayers: 3, maxPlayers: 7, minutes: 30, platform: 'mesa-xl', status: 'jugado', score: 8, plays: 14 },
+  { kind: 'mesa', title: 'Virus!', minPlayers: 2, maxPlayers: 6, minutes: 20, platform: 'mesa-s', status: 'favorito', score: 9, plays: 67, review: 'Diez euros de juego. Ha roto más amistades que el Monopoly.' },
+  { kind: 'mesa', title: 'Love Letter', minPlayers: 2, maxPlayers: 6, minutes: 20, platform: 'mesa-s', status: 'jugado', score: 7, plays: 20, lentTo: 'Lucía', lentAt: '2026-09-30T18:00:00.000Z' },
+  { kind: 'mesa', title: 'Terraforming Mars', minPlayers: 1, maxPlayers: 5, minutes: 120, platform: 'mesa-xl', status: 'jugado', score: 9, plays: 6 },
+  { kind: 'mesa', title: 'Gloomhaven', minPlayers: 1, maxPlayers: 4, minutes: 120, platform: 'mesa-xl', status: 'pendiente', review: 'Pesa diez kilos. De momento hace de mesita auxiliar.' },
+  { kind: 'mesa', title: 'Dune: Imperium', minPlayers: 1, maxPlayers: 4, minutes: 120, platform: 'mesa-l', status: 'pendiente' },
+  { kind: 'mesa', title: 'Brass: Birmingham', minPlayers: 2, maxPlayers: 4, minutes: 120, platform: 'mesa-l', status: 'pendiente' },
+];

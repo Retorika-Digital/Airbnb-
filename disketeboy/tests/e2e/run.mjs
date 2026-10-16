@@ -169,11 +169,11 @@ try {
     await page.close();
   });
 
-  await check('demo: 26 cajas, coger una con el teclado, girarla y soltarla', async () => {
+  await check('demo: 41 cajas, coger una con el teclado, girarla y soltarla', async () => {
     const page = await newPage(browser);
     await page.goto(`${BASE}/?demo=1&hora=22`);
     await booted(page);
-    eq(await page.evaluate(() => window.disketeboy.room.count), 26, 'cajas en la habitación');
+    eq(await page.evaluate(() => window.disketeboy.room.count), 41, 'cajas en la habitación (26 videojuegos + 15 de mesa)');
     await page.click('#m-habitacion');
     await idle(page);
     expect(await page.isVisible('#r-ordenar'), 'botones de la habitación visibles');
@@ -202,8 +202,8 @@ try {
     await page.evaluate(() => window.disketeboy.lower());
     await page.click('#r-ordenar');
     await idle(page);
-    const zones = await page.evaluate(() => [...window.disketeboy.room.debug.entries.values()].map((e) => e.zone));
-    expect(zones.every((z) => z === 'estanteria'), 'todas en la estantería');
+    const zones = await page.evaluate(() => [...window.disketeboy.room.debug.entries.values()].map((e) => [e.game.kind, e.zone]));
+    expect(zones.every(([kind, z]) => z === (kind === 'mesa' ? 'kallax' : 'estanteria')), 'videojuegos a la estantería y juegos de mesa a la Kallax');
     eq(await page.getAttribute('#r-ordenar', 'aria-pressed'), 'true', 'botón marcado');
     await shot(page, '04-ordenada');
     await page.click('#r-ordenar');
@@ -261,7 +261,7 @@ try {
     await page.waitForSelector('#s-demo');
     expect((await page.textContent('#screen')).includes('clave de Steam'), 'explica que falta la clave');
     await page.click('#s-demo');
-    await page.waitForFunction(() => window.disketeboy.store.getGames().length === 26);
+    await page.waitForFunction(() => window.disketeboy.store.getVideoGames().length === 26);
     await page.close();
   });
 
@@ -297,9 +297,9 @@ try {
       if (store.getGames().length) return -1;
       return store.importBackup(backup);
     });
-    eq(n, 26, 'juegos restaurados');
+    eq(n, 41, 'juegos restaurados');
     await idle(page);
-    eq(await page.evaluate(() => window.disketeboy.room.count), 26, 'cajas tras restaurar');
+    eq(await page.evaluate(() => window.disketeboy.room.count), 41, 'cajas tras restaurar');
     await page.close();
   });
 
@@ -320,7 +320,8 @@ try {
     await booted(visitor);
     expect(await visitor.isVisible('#visit-banner'), 'franja de visita');
     eq(await visitor.textContent('#visit-name'), 'Laura', 'nombre de quien comparte');
-    eq(await visitor.evaluate(() => window.disketeboy.store.getGames().length), 26, 'se ve la colección visitada');
+    eq(await visitor.evaluate(() => window.disketeboy.store.getVideoGames().length), 26, 'se ven sus videojuegos');
+    eq(await visitor.evaluate(() => window.disketeboy.store.getBoards().length), 15, 'y sus juegos de mesa');
     expect(await visitor.isHidden('#m-nuevo'), 'de visita no se puede añadir');
     await visitor.click('#m-coleccion');
     await visitor.click('#screen .item.game >> nth=0');
@@ -333,6 +334,51 @@ try {
     eq(visitor.errors.join('\n') + page.errors.join('\n'), '', 'errores en consola');
     await page.close();
     await visitor.close();
+  });
+
+  await check('juegos de mesa: disquete azul, añadir, ¡hemos jugado!, prestar y la ruleta de esta noche', async () => {
+    const page = await newPage(browser);
+    await page.goto(BASE);
+    await booted(page);
+    await page.click('#d-mesa');
+    await page.waitForSelector('#b-coleccion');
+    eq(await page.getAttribute('#dkb', 'data-disk'), 'mesa', 'disquete de juegos de mesa');
+    await page.click('#b-nuevo');
+    await page.fill('#bn-titulo', 'Carcassonne');
+    await page.fill('#bn-min', '2');
+    await page.fill('#bn-max', '5');
+    await page.fill('#bn-minutos', '40');
+    await page.selectOption('#bn-estado', 'pendiente');
+    await page.click('#bn-anadir');
+    await page.waitForSelector('text=¡Plof!');
+    expect((await page.textContent('#screen')).includes('Kallax'), 'dice que ha caído en la Kallax');
+    const id = await page.evaluate(() => window.disketeboy.store.getBoards()[0].id);
+    eq(await page.evaluate((gid) => window.disketeboy.room.debug.entries.get(gid).zone, id), 'encima', 'sin estrenar: encima de la Kallax');
+    await page.evaluate((gid) => window.disketeboy.device.go('ficha', { id: gid }), id);
+    await page.click('#bf-jugado');
+    await idle(page);
+    const g = await page.evaluate((gid) => window.disketeboy.store.getGame(gid), id);
+    eq([g.plays, g.status].join(), '1,jugado', 'estrenado tras la primera partida');
+    eq(await page.evaluate((gid) => window.disketeboy.room.debug.entries.get(gid).zone, id), 'kallax', 'y ya va a los cubos');
+    await page.fill('#bf-prestado', 'Pedro');
+    await page.press('#bf-prestado', 'Enter');
+    await page.waitForFunction((gid) => window.disketeboy.store.getGame(gid).lentTo === 'Pedro', id);
+    await page.evaluate(() => window.disketeboy.device.go('queJugamos'));
+    expect(!(await page.isVisible('#q-ruleta')), 'prestado: no está en casa para esta noche');
+    await page.fill('#bf-prestado', '').catch(() => {});
+    await page.evaluate((gid) => window.disketeboy.store.updateGame(gid, { lentTo: '' }), id);
+    await page.evaluate(() => { window.disketeboy.device.home(); window.disketeboy.device.go('queJugamos'); });
+    await page.waitForSelector('#q-ruleta');
+    await page.click('#q-ruleta');
+    await page.waitForSelector('#r-sacar', { timeout: 20000 });
+    expect((await page.textContent('#screen')).includes('Carcassonne'), 'la ruleta elige el único que encaja');
+    await page.click('#r-sacar');
+    await idle(page);
+    eq(await page.textContent('#inspect-title'), 'Carcassonne', 'la caja sale de la Kallax');
+    expect((await page.textContent('#inspect-meta')).includes('2–5 jugadores'), 'con sus jugadores');
+    await shot(page, '09-mesa');
+    eq(page.errors.join('\n'), '', 'errores en consola');
+    await page.close();
   });
 
   await check('datos corruptos y sin 3D: la consola sigue funcionando', async () => {
@@ -397,6 +443,12 @@ try {
     await page.evaluate((gid) => window.disketeboy.device.go('ficha', { id: gid }), id);
     await page.waitForTimeout(150);
     await axe(page, 'ficha');
+    const boardId = await page.evaluate(() => window.disketeboy.store.getBoards()[0].id);
+    for (const [screen, params] of [['mesa', {}], ['mesaLista', { filter: 'todos' }], ['ficha', { id: boardId }], ['mesaNuevo', {}], ['queJugamos', {}], ['prestamos', {}], ['mesaStats', {}]]) {
+      await page.evaluate(([s, p]) => window.disketeboy.device.go(s, p), [screen, params]);
+      await page.waitForTimeout(150);
+      await axe(page, `mesa: ${screen}`);
+    }
     await page.evaluate(() => window.disketeboy.lower());
     await idle(page);
     await axe(page, 'habitación');
