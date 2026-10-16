@@ -41,14 +41,14 @@ test('una colección de 300 juegos cabe en un enlace razonable', async () => {
 });
 
 test('la visita ve la habitación con su tema y su gato', async () => {
-  const room = await decodeRoom(await encodeRoom(games, { name: 'Laura', theme: 'gamer', pet: false }));
-  assert.deepEqual(room.look, { theme: 'gamer', pet: false });
+  const room = await decodeRoom(await encodeRoom(games, { name: 'Laura', theme: 'gamer', pet: false, shell: 'morado' }));
+  assert.deepEqual(room.look, { theme: 'gamer', pet: false, shell: 'morado' });
   const raw = async (obj) => {
     const bytes = new Uint8Array(await new Response(new Blob([JSON.stringify(obj)]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer());
     return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   };
   const old = await decodeRoom(await raw({ v: 1, n: 'Antiguo', g: [['Tetris', 'gb', 2, 8, 30, 0, '', '']] }));
   assert.deepEqual(old.look, {}, 'los enlaces sin aspecto usan el de quien visita');
-  const evil = await decodeRoom(await raw({ v: 1, n: '', t: '<script>', p: 'sí', g: [] }));
+  const evil = await decodeRoom(await raw({ v: 1, n: '', t: '<script>', p: 'sí', s: '../dorada', g: [] }));
   assert.deepEqual(evil.look, {}, 'un tema inventado se ignora');
 });

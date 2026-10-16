@@ -1204,8 +1204,9 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
     const list = [...entries.values()].filter((e) => e !== inspected && e.mesh.visible && !tweens.has(e.id));
     list.sort((a, b) => a.mesh.position.x - b.mesh.position.x || a.mesh.position.z - b.mesh.position.z);
     list.forEach((e, i) => {
-      // En la Kallax apenas hay hueco encima: ahí saltan menos
-      tweenTo(e.id, e.mesh, { pos: e.mesh.position.clone(), dur: 0.5, delay: (i / Math.max(1, list.length)) * 1.6, arc: e.zone === 'kallax' ? 0.025 : 0.09, fn: ease.inOut });
+      // En las baldas hay poco hueco encima (y en la Kallax, casi nada): ahí saltan menos
+      const arc = e.zone === 'kallax' ? 0.025 : e.zone === 'estanteria' ? 0.1 : 0.16;
+      tweenTo(e.id, e.mesh, { pos: e.mesh.position.clone(), dur: 0.55, delay: (i / Math.max(1, list.length)) * 1.6, arc, fn: ease.inOut });
     });
     return list.length;
   }
@@ -1864,7 +1865,8 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
     handleKey,
     invalidate,
     focusZone(zone) {
-      const c = ZONE_CENTER[zone];
+      // El gato no tiene sitio fijo: duerme junto a la pila, que crece
+      const c = zone === 'gato' ? cat.getWorldPosition(new THREE.Vector3()).setY(0.1) : ZONE_CENTER[zone];
       if (!c) return;
       lookAt(c);
       pulseZone = zone;

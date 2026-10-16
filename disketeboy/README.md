@@ -6,10 +6,18 @@
   <img src="docs/video/disketeboy-es.gif" width="100%" alt="Vídeo: se importa una biblioteca de Steam, llueven cajas en la habitación, se forma la pila de la vergüenza, todo vuela a la estantería por colores y detrás de una caja aparece la reseña">
 </p>
 
-▶️ Vídeos para Reddit: **videojuegos** ([inglés](docs/video/disketeboy-en.mp4) · [español](docs/video/disketeboy-es.mp4)) y **juegos de mesa** ([inglés](docs/video/disketeboy-mesa-en.mp4) · [español](docs/video/disketeboy-mesa-es.mp4)). Se vuelven a grabar con `node disketeboy/tools/video.mjs [mesa] [es]`.
+▶️ Vídeos para Reddit: **videojuegos** ([inglés](docs/video/disketeboy-en.mp4) · [español](docs/video/disketeboy-es.mp4)), **juegos de mesa** ([inglés](docs/video/disketeboy-mesa-en.mp4) · [español](docs/video/disketeboy-mesa-es.mp4)) y **cozy**, de noche y con lluvia ([inglés](docs/video/disketeboy-cozy-en.mp4) · [español](docs/video/disketeboy-cozy-es.mp4)). Se vuelven a grabar con `node disketeboy/tools/video.mjs [mesa|cozy] [es]`.
 
 <p>
   <img src="docs/capturas/estanteria-800.jpg" width="100%" alt="800 juegos en las estanterías, ordenados por color como un arcoíris, con la pila de la vergüenza en la alfombra">
+</p>
+<p>
+  <img src="docs/capturas/lluvia.jpg" width="49%" alt="Noche de lluvia con la luz apagada: gotas en la ventana, la luna tras las nubes y la tele de tubo iluminando el escritorio">
+  <img src="docs/capturas/trofeos.jpg" width="49%" alt="Los trofeos de los logros en el alféizar, con la calabaza de Halloween encendida en el escritorio">
+</p>
+<p>
+  <img src="docs/capturas/carcasas.jpg" width="74%" alt="Las seis carcasas de la DisketeBoy: crema, morado atómico translúcido, turquesa, amarillo plátano, rojo y negro mate">
+  <img src="docs/capturas/resumen.jpg" width="24%" alt="La imagen vertical de «Mi resumen», con la personalidad de jugador al final">
 </p>
 <p>
   <img src="docs/capturas/consola.jpg" width="49%" alt="La consola DisketeBoy con el disquete de videojuegos y la habitación detrás">
@@ -62,7 +70,7 @@ Coges una caja, la giras y **en la contraportada está tu reseña**, con tu nota
 
 **Noches de lluvia** 🌧️: algunos días llueve tras la ventana, con gotas en el cristal, sonido de lluvia y, de noche, algún relámpago lejano con su trueno. Se elige en Ajustes → Clima (*Según el día*, *Lluvia* o *Despejado*). Y si tocas el **flexo** (o «🌙 Apagar la luz»), la habitación se queda con la luz de la luna y el brillo azul de la tele.
 
-**Tu habitación, a tu gusto**: en Ajustes eliges el tema (*Crema*, *Gamer RGB* con tira LED o *Retro 90*) y si quieres al gato, que duerme en la alfombra y ronronea si lo tocas. El tema y el gato viajan en el enlace de visita. Están pensados como futuras ventajas para mecenas; ahora son gratis para todos.
+**Tu habitación, a tu gusto**: en Ajustes eliges el tema (*Crema*, *Gamer RGB* con tira LED o *Retro 90*), si quieres al gato, que duerme en la alfombra y ronronea si lo tocas, y la **carcasa de la DisketeBoy**: crema, *morado atómico* translúcido como los de los 90, turquesa, amarillo plátano, rojo o negro mate. El tema, el gato y la carcasa viajan en el enlace de visita. Están pensados como futuras ventajas para mecenas; ahora son gratis para todos.
 
 > Vive en esta carpeta para no mezclarlo con retorika Home; cuando guste, se pasa a su propio repositorio.
 

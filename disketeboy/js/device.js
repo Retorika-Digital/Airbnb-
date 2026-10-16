@@ -2,7 +2,7 @@
 // La pantalla es DOM de verdad (botones y campos), así que funciona con ratón,
 // dedo, teclado y lector de pantalla; la cruceta y A/B son un atajo más.
 import * as store from './store.js';
-import { STATUSES, STATUS_LABEL, PALETTES, SORTS, THEMES, WEATHERS, BOARD_STATUSES, BOARD_STATUS_LABEL, isBoard, statusLabel } from './store.js';
+import { STATUSES, STATUS_LABEL, PALETTES, SORTS, THEMES, WEATHERS, SHELLS, BOARD_STATUSES, BOARD_STATUS_LABEL, isBoard, statusLabel } from './store.js';
 import { PLATFORMS, BOARD_SIZES, platform } from './platforms.js';
 import { mapSteamGames } from './steam.js';
 import { demoCollection } from './demo.js';
@@ -16,6 +16,7 @@ import { t, tp, mark, num, LANGS, LANG_NAME, getLang } from './i18n.js';
 const PALETTE_LABEL = { verde: mark('Verde clásico'), ambar: mark('Ámbar'), hielo: mark('Hielo'), gris: mark('Gris') };
 const SORT_LABEL = { plataforma: mark('Plataforma'), nota: mark('Nota'), color: mark('Color'), az: 'A-Z', horas: mark('Horas') };
 const THEME_LABEL = { crema: mark('Crema'), gamer: 'Gamer RGB', retro: 'Retro 90' };
+const SHELL_LABEL = { crema: mark('Crema'), morado: mark('Morado atómico'), turquesa: mark('Turquesa'), platano: mark('Amarillo plátano'), rojo: mark('Rojo'), negro: mark('Negro mate') };
 const WEATHER_LABEL = { auto: mark('Según el día'), lluvia: mark('Lluvia'), despejado: mark('Despejado') };
 const ZONE_TEXT = {
   pendiente: mark('tu pila de la vergüenza'),
@@ -1080,6 +1081,7 @@ export function createDevice(root, actions) {
         stepper(t('Idioma'), LANG_NAME[getLang()], setLanguage, { id: 'a-idioma' }),
         stepper(t('Pantalla'), t(PALETTE_LABEL[s.palette]), (dir) => store.setSettings({ palette: cycle(PALETTES, s.palette, dir) }), { id: 'a-paleta' }),
         stepper(t('Sonido'), s.sound ? t('Sí') : t('No'), () => store.setSettings({ sound: !s.sound }), { id: 'a-sonido' }),
+        stepper(t('Carcasa'), t(SHELL_LABEL[s.shell]), (dir) => store.setSettings({ shell: cycle(SHELLS, s.shell, dir) }), { id: 'a-carcasa' }),
         stepper(t('Habitación'), t(THEME_LABEL[s.theme]), (dir) => store.setSettings({ theme: cycle(THEMES, s.theme, dir) }), { id: 'a-tema' }),
         stepper(t('Gato'), s.pet ? t('Sí, durmiendo') : t('No'), () => store.setSettings({ pet: !s.pet }), { id: 'a-gato' }),
         stepper(t('Ambiente'), s.ambient !== false ? t('Sí') : t('No'), () => store.setSettings({ ambient: s.ambient === false }), { id: 'a-ambiente' }),
@@ -1358,6 +1360,7 @@ export function createDevice(root, actions) {
   function applySettings() {
     const s = store.getSettings();
     root.dataset.palette = s.palette;
+    root.dataset.shell = s.shell;
     setSound(s.sound);
   }
 

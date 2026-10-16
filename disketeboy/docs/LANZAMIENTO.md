@@ -21,7 +21,7 @@ Cómo sacarlo a Reddit para que la gente lo use, lo comparta y done. Está orden
 
 ## 2. Qué enseñar: el vídeo de 20 segundos
 
-**Ya está grabado**: [`docs/video/disketeboy-en.mp4`](video/disketeboy-en.mp4) y [`disketeboy-es.mp4`](video/disketeboy-es.mp4) (25 s, 720p, menos de 3 MB). Súbelo directamente a Reddit como vídeo. Para r/boardgames hay otro: [`disketeboy-mesa-en.mp4`](video/disketeboy-mesa-en.mp4), con la importación de BoardGameGeek, la Kallax llenándose y la ruleta de «¿Qué jugamos esta noche?». Si cambias algo de la web, se vuelven a grabar con `node disketeboy/tools/video.mjs [mesa] [es]`.
+**Ya está grabado**: [`docs/video/disketeboy-en.mp4`](video/disketeboy-en.mp4) y [`disketeboy-es.mp4`](video/disketeboy-es.mp4) (25 s, 720p, menos de 3 MB). Súbelo directamente a Reddit como vídeo. Para r/boardgames hay otro: [`disketeboy-mesa-en.mp4`](video/disketeboy-mesa-en.mp4), con la importación de BoardGameGeek, la Kallax llenándose y la ruleta de «¿Qué jugamos esta noche?». Para r/CozyGamers hay un tercero: [`disketeboy-cozy-en.mp4`](video/disketeboy-cozy-en.mp4), de noche y lloviendo: entrada de cine en la habitación, se apaga la luz y cae un relámpago, corazones del gato, la ola del código Konami con su logro y «Mi resumen». Si cambias algo de la web, se vuelven a grabar con `node disketeboy/tools/video.mjs [mesa|cozy] [es]`.
 
 En Reddit gana el vídeo corto y sin voz. Guion (el grabado lo sigue casi tal cual):
 1. (0–3 s) Se mete el disquete en la consola: *clic*, pantalla verde.
@@ -34,6 +34,8 @@ En Reddit gana el vídeo corto y sin voz. Guion (el grabado lo sigue casi tal cu
 - El ticket de la DisketePrinter («PENDIENTE DE PAGO: 7 JUEGOS»).
 - El arcoíris de 800 juegos.
 - La ruleta de «¿Qué jugamos esta noche?».
+- La imagen vertical de «Mi resumen» (1080×1920), con tu personalidad de jugador: pensada para historias.
+- La habitación a oscuras, con lluvia en la ventana y la tele encendida.
 
 ## 3. Dónde y cómo
 
@@ -42,7 +44,8 @@ En Reddit gana el vídeo corto y sin voz. Guion (el grabado lo sigue casi tal cu
 | Semana | Subreddit | Ángulo |
 |---|---|---|
 | 1 | r/threejs, r/webdev (Showoff Saturday), r/SideProject | «Hecho con three.js sin assets: todo procedural». Comentarios técnicos para pulir |
-| 2 | r/patientgamers, r/gamecollecting, r/CozyGamers | La pila de la vergüenza y la habitación acogedora |
+| 2 | r/patientgamers, r/gamecollecting | La pila de la vergüenza |
+| 2 | r/CozyGamers | Noche de lluvia, la luz apagada y el gato (con el vídeo cozy) |
 | 2 | r/Steam, r/pcgaming (revisa sus normas) | «Tu biblioteca de Steam, pero física» |
 | 3 | r/boardgames (normas de autopromoción) | La Kallax y la ruleta de «¿Qué jugamos esta noche?» |
 | 3 | r/EDH, r/PokemonTCG, r/OnePieceTCG… | Los mazos con su récord |
@@ -65,6 +68,10 @@ En Reddit gana el vídeo corto y sin voz. Guion (el grabado lo sigue casi tal cu
 - **«Compartir mi habitación»**: cada enlace que alguien pega en un comentario es un anuncio.
 - **El ticket**: la gente lo sube como imagen.
 - En el post, anima a los comentaristas: *«share your room link below!»*.
+- **«Mi resumen»**: la imagen vertical se comparte en historias de Instagram, TikTok o WhatsApp, con el nombre de la web.
+- **Los logros secretos** (el gato y el código Konami) dan para comentarios del tipo «¿lo habéis encontrado?». No los desveles en el post.
+
+**Halloween**: del 15 de octubre al 2 de noviembre la habitación sale sola con calabaza y murciélagos. Si lanzas en esas fechas, dilo en el título o en la primera línea (*spooky season edition*). En Navidad pasa lo mismo, con nieve y luces.
 
 ## 4. Donaciones sin cobrar nada
 
@@ -93,6 +100,6 @@ En Reddit gana el vídeo corto y sin voz. Guion (el grabado lo sigue casi tal cu
 
 1. **Cuentas opcionales y sincronizar** entre móvil y ordenador (Supabase), y enlaces de visita cortos.
 2. **Importar mazos de Moxfield o Archidekt** (cartas). Ya están hechas la de BoardGameGeek y la del CSV de ManaBox para las carpetas.
-3. **El resumen del año de tu habitación** en diciembre.
+3. **«Mi resumen» del año** en diciembre, con lo que has terminado ese año (el resumen de siempre ya está hecho).
 4. **Escanear el código de barras** con la cámara para añadir juegos físicos.
 5. **Mascota y temas** como ventajas para mecenas.

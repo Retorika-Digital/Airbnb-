@@ -30,7 +30,7 @@ Borradores para el lanzamiento (ver [LANZAMIENTO.md](LANZAMIENTO.md)). Cambia `T
 
 ---
 
-## r/patientgamers · r/gamecollecting · r/CozyGamers
+## r/patientgamers · r/gamecollecting
 
 *Sube con el post el vídeo `docs/video/disketeboy-en.mp4`.*
 
@@ -44,13 +44,34 @@ Borradores para el lanzamiento (ver [LANZAMIENTO.md](LANZAMIENTO.md)). Cambia `T
 > - Beaten → on the shelf.
 > - Dropped → in a cardboard box labeled DROPPED.
 >
-> There's a receipt printer that sums up your collection ("BALANCE DUE: 7 GAMES"), and a sleeping cat that you can pet.
+> There's a receipt printer that sums up your collection ("BALANCE DUE: 7 GAMES"), trophies on the windowsill for your achievements, a Wrapped-style summary that tells you what kind of player you are ("The Mountaineer: your pile of shame has its own weather by now"), and a sleeping cat that you can pet.
 >
 > It's free and has no account, and everything stays in your browser: TU-ENLACE
 >
 > Share your room link in the comments, I want to see your piles 👀
 
 *(Para r/gamecollecting, enseña también la estantería: el arcoíris de 800 juegos.)*
+
+---
+
+## r/CozyGamers (y r/CozyPlaces si lo permiten)
+
+*Sube con el post el vídeo `docs/video/disketeboy-cozy-en.mp4`. Mejor de noche y con algo de lluvia en la calle.*
+
+**Title:** I made a cozy little room for my game collection: rain on the window, a sleeping cat, and every game in its place
+
+> I wanted my backlog to feel less like a to-do list and more like a room I'd want to hang out in, so I made **DisketeBoy** (free, no sign-up).
+>
+> - Your games fall into a little 3D bedroom: the ones you haven't started pile up on the rug, the ones you're playing sit on the desk next to a CRT, and finished ones go on the shelf.
+> - **Some nights it rains.** Drops on the glass, soft rain sound, and the odd far-away thunder. You can also choose rain in Settings.
+> - Click the **desk lamp** to turn the lights off and just watch the rain with the TV glow.
+> - The **cat** sleeps on the rug and purrs (and does little hearts) if you pet it.
+> - There's dust floating in the light, a retro alarm clock with the real time, and a pumpkin with a candle at Halloween.
+> - Your achievements turn into **trophies on the windowsill**.
+>
+> Everything is drawn with code (no stock assets, no AI art), and your collection stays in your browser: TU-ENLACE
+>
+> If you make your room, share the link: I'd love to see your shelves 🌧️📚
 
 ---
 
@@ -99,4 +120,5 @@ Borradores para el lanzamiento (ver [LANZAMIENTO.md](LANZAMIENTO.md)). Cambia `T
 > - **Is it free?** Yes, with no ads and no account. If you want to support it there's a coffee button in Credits, but everything works without paying.
 > - **Where is my data?** In your browser. Use Settings → Save a backup now and then.
 > - **Can I import from BoardGameGeek?** Yes: Board games → Import from BoardGameGeek.
-> - **And from Moxfield / ManaBox?** Not yet, but you can paste a decklist and it counts the cards.
+> - **And from ManaBox / Dragon Shield / Delver Lens?** Yes, for binders: open a binder and import the CSV those apps export (it counts the cards and adds up their value). For decks, paste the decklist and it counts the cards.
+> - **Is there an easter egg?** Maybe. Classic codes are worth a try. 🕹️

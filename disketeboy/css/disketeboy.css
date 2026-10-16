@@ -135,6 +135,30 @@ body.is-visit .room-ui { top: calc(max(10px, env(safe-area-inset-top)) + 58px); 
   transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), left 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 @supports (height: 100dvh) { .dkb { --u: calc(min(380px, 94vw, 60dvh) / 100); } }
+
+/* Carcasas de colores (Ajustes → Carcasa). La morada es translúcida, como las de los 90:
+   deja ver la habitación detrás. */
+.dkb { --shell-text: #6d6455; --holes: #6d6455; --brand: #2f4f8f; --brand-accent: var(--rojo); --brand-shadow: #fff9; }
+.dkb[data-shell='morado'] {
+  --shell: rgb(112 78 176 / 0.78); --shell-hi: rgb(205 182 250 / 0.55); --shell-lo: rgb(70 42 124 / 0.86); --shell-edge: #3b226c;
+  --shell-text: #efe6ff; --holes: #2a1552; --brand: #fff; --brand-accent: #ffd27a; --brand-shadow: #0006;
+}
+.dkb[data-shell='turquesa'] {
+  --shell: #3aa39d; --shell-hi: #7fd9d2; --shell-lo: #2a837e; --shell-edge: #1d5f5b;
+  --shell-text: #e9fffc; --holes: #164a47; --brand: #fff7dc; --brand-accent: #ffd27a; --brand-shadow: #0005;
+}
+.dkb[data-shell='platano'] {
+  --shell: #f2c94c; --shell-hi: #ffe7a0; --shell-lo: #dcae2c; --shell-edge: #b0861a;
+  --shell-text: #5e470e; --holes: #8a6a14;
+}
+.dkb[data-shell='rojo'] {
+  --shell: #c9473b; --shell-hi: #ee8578; --shell-lo: #a8362c; --shell-edge: #7f251d;
+  --shell-text: #fff0ec; --holes: #5e1a14; --brand: #fff3d6; --brand-accent: #ffd27a; --brand-shadow: #0005;
+}
+.dkb[data-shell='negro'] {
+  --shell: #2f2d34; --shell-hi: #504c5a; --shell-lo: #222026; --shell-edge: #121115;
+  --shell-text: #c9c2d6; --holes: #0e0d10; --brand: #ece7f5; --brand-shadow: #0008;
+}
 body.device-down .dkb { transform: translate(-50%, calc(100% - var(--u) * 14)); }
 /* En pantallas anchas, la consola bajada se aparta a la esquina para no tapar la pila */
 @media (min-width: 760px) {
@@ -204,7 +228,7 @@ body.device-down .dkb { transform: translate(-50%, calc(100% - var(--u) * 14)); 
   gap: calc(var(--u) * 1.2);
   font: 700 calc(var(--u) * 2.4) / 1 var(--font-ui);
   letter-spacing: 0.12em;
-  color: #6d6455;
+  color: var(--shell-text);
 }
 .dkb-led i {
   width: calc(var(--u) * 2.2);
@@ -364,10 +388,10 @@ body.device-down .dkb { transform: translate(-50%, calc(100% - var(--u) * 14)); 
   left: calc(var(--u) * 8);
   font: italic 900 calc(var(--u) * 6.4) / 1 'Trebuchet MS', var(--font-ui);
   letter-spacing: -0.02em;
-  color: #2f4f8f;
-  text-shadow: 0 calc(var(--u) * 0.3) 0 #fff9;
+  color: var(--brand);
+  text-shadow: 0 calc(var(--u) * 0.3) 0 var(--brand-shadow);
 }
-.dkb-brand span { color: var(--rojo); }
+.dkb-brand span { color: var(--brand-accent); }
 
 .dkb-controls {
   position: absolute;
@@ -451,7 +475,7 @@ body.device-down .dkb { transform: translate(-50%, calc(100% - var(--u) * 14)); 
   right: calc(var(--u) * 10);
   width: calc(var(--u) * 18);
   height: calc(var(--u) * 9);
-  background: radial-gradient(circle, #6d6455 calc(var(--u) * 0.75), transparent calc(var(--u) * 0.85)) 0 0 / calc(var(--u) * 3) calc(var(--u) * 3);
+  background: radial-gradient(circle, var(--holes) calc(var(--u) * 0.75), transparent calc(var(--u) * 0.85)) 0 0 / calc(var(--u) * 3) calc(var(--u) * 3);
   opacity: 0.8;
 }
 
@@ -464,7 +488,7 @@ body.device-down .dkb { transform: translate(-50%, calc(100% - var(--u) * 14)); 
   border: 0;
   border-radius: calc(var(--u) * 6) calc(var(--u) * 6) 0 0;
   background: transparent;
-  color: #6d6455;
+  color: var(--shell-text);
   font-size: calc(var(--u) * 4);
   cursor: pointer;
   display: none;

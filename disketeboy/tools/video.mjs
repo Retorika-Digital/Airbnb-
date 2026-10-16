@@ -4,10 +4,13 @@
 //   node disketeboy/tools/video.mjs            → docs/video/disketeboy-en.mp4
 //   node disketeboy/tools/video.mjs es         → docs/video/disketeboy-es.mp4
 //   node disketeboy/tools/video.mjs mesa [es]  → docs/video/disketeboy-mesa-en.mp4 (o -es)
+//   node disketeboy/tools/video.mjs cozy [es]  → docs/video/disketeboy-cozy-en.mp4 (o -es)
 // Videojuegos: importar de Steam (simulado) → lluvia de cajas → pila de la vergüenza →
 // estantería arcoíris → coger una caja y leer la reseña → cartel final.
 // Mesa: importar de BoardGameGeek (simulado) → la Kallax se llena → «¿Qué jugamos esta
 // noche?» → la ruleta elige → la caja sale de la Kallax → cartel final.
+// Cozy: noche de lluvia → entrada de cine → la ventana → apagar la luz y un relámpago →
+// corazones del gato → código Konami (la ola y el logro) → «Mi resumen» → cartel final.
 import { chromium } from 'playwright';
 import { spawn, execFileSync } from 'node:child_process';
 import { mkdirSync, rmSync } from 'node:fs';
@@ -19,10 +22,11 @@ const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const args = process.argv.slice(2);
 const lang = args.includes('es') ? 'es' : 'en';
 const MESA = args.includes('mesa');
+const COZY = args.includes('cozy');
 const W = 1280, H = 720;
 const PORT = 5199;
 const BASE = `http://localhost:${PORT}`;
-const NAME = `disketeboy-${MESA ? 'mesa-' : ''}${lang}`;
+const NAME = `disketeboy-${MESA ? 'mesa-' : COZY ? 'cozy-' : ''}${lang}`;
 const OUT = join(tmpdir(), NAME);
 rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT, { recursive: true });
@@ -118,15 +122,18 @@ const page = await ctx.newPage();
 page.on('pageerror', (e) => console.log('pageerror', e.message));
 // Unos cuantos juegos con reseña antes de empezar (para coger uno al final)
 await page.goto(`${BASE}/?hora=21&lang=${lang}`);
-await page.evaluate(async (mesa) => {
+await page.evaluate(async ({ mesa, cozy }) => {
   const { demoCollection } = await import('./js/demo.js');
   // Unos cuantos con reseña: para coger uno al final y darle la vuelta
   const keep = new Set([367520, 1145360, 413150, 504230, 753640]);
   const boards = new Set(['Carcassonne', 'Catan', 'Wingspan']);
-  window.disketeboy.store.importGames(demoCollection().filter((g) => (mesa ? g.kind === 'mesa' && boards.has(g.title) : keep.has(g.steamAppId))));
+  // Cozy: la demo entera, para que la habitación esté llena de vida
+  const list = cozy ? demoCollection() : demoCollection().filter((g) => (mesa ? g.kind === 'mesa' && boards.has(g.title) : keep.has(g.steamAppId)));
+  window.disketeboy.store.importGames(list);
   window.disketeboy.store.setSettings({ sort: 'color', palette: 'verde', sound: false });
-}, MESA);
-await page.goto(`${BASE}/?hora=${MESA ? 20 : 21}&lang=${lang}`);
+}, { mesa: MESA, cozy: COZY });
+// Sin ?tiempo= ni ?temporada= el vídeo dependería del día en que se grabe
+await page.goto(`${BASE}/?hora=${COZY ? 23 : MESA ? 20 : 21}&lang=${lang}&temporada=ninguna&tiempo=${COZY ? 'lluvia' : 'despejado'}`);
 for (let i = 0; i < 400; i++) {
   await page.evaluate(() => window.__advance?.(50));
   if (await page.evaluate((sel) => !!(window.disketeboy?.room && document.querySelector(sel)), MESA ? '#screen #b-bgg' : '#screen #m-steam')) break;
@@ -143,7 +150,53 @@ async function shoot(seconds, each) {
 }
 const run = (fn, arg) => page.evaluate(fn, arg);
 
-if (!MESA) {
+if (COZY) {
+  // 1) La consola, de noche y lloviendo: SELECT y entrada de cine en la habitación
+  await shoot(0.8);
+  await run(() => window.disketeboy.lower());
+  await shoot(3.4);
+  // 2) La lluvia en la ventana, el despertador y la tele de tubo
+  await run(() => window.disketeboy.room.focusZone('ventana'));
+  await shoot(2.6);
+  // 3) Apagar la luz: quedan la luna y la tele... y cae un relámpago
+  await run(() => window.disketeboy.room.toggleLights());
+  await shoot(1.1);
+  await run(() => window.disketeboy.room.debug.rain()?.flash());
+  await shoot(2.3);
+  // 4) Se enciende la luz y se acaricia al gato: corazones
+  await run(() => window.disketeboy.room.toggleLights());
+  await shoot(0.5);
+  await run(() => window.disketeboy.room.focusZone('gato'));
+  await shoot(1.5);
+  const cat = await run(() => {
+    const { scene, camera } = window.disketeboy.room.debug;
+    const c = scene.getObjectByName('gato');
+    const p = c.getWorldPosition(c.position.clone());
+    p.y += 0.07;
+    p.project(camera);
+    return { x: ((p.x + 1) / 2) * innerWidth, y: ((1 - p.y) / 2) * innerHeight };
+  });
+  await page.mouse.click(cat.x, cat.y);
+  await shoot(2.4);
+  // 5) Se coge la consola y... ↑ ↑ ↓ ↓ ← → ← → B A: la consola baja sola y ¡las cajas hacen la ola!
+  await run(() => window.disketeboy.raise());
+  await shoot(0.8);
+  for (const key of ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a']) {
+    await page.keyboard.press(key);
+    await shoot(0.12);
+  }
+  await shoot(4.2);
+  // 6) «Mi resumen»: la primera tarjeta y la última, con tu personalidad
+  await run(() => window.disketeboy.raise());
+  await shoot(0.7);
+  await run(() => document.getElementById('m-resumen').click());
+  await shoot(1.8);
+  for (let i = 0; i < 9 && !(await page.$('#story-guardar')); i++) {
+    await page.keyboard.press('ArrowRight');
+    await shoot(0.1);
+  }
+  await shoot(2.4);
+} else if (!MESA) {
   // 1) La consola: Importar de Steam y escribir el perfil
   await shoot(0.6);
   await run(() => window.disketeboy.device.go('steam'));
@@ -227,7 +280,7 @@ if (!MESA) {
 }
 // 6) Cartel final
 await page.addStyleTag({ content: `
-  .vid-end { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: #1d1814e6; opacity: 0; }
+  .vid-end { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: #1d1814e6; opacity: 0; }
   .vid-end div { padding: 30px 40px 26px; border-radius: 26px; background: #f3ead8; box-shadow: 0 12px 0 #c9bca4, 0 24px 60px #000a; text-align: center; }
   .vid-end b { display: block; font: 58px/1 "Press Start 2P", monospace; color: #2b2622; }
   .vid-end b span { color: #c8553d; }
@@ -239,7 +292,9 @@ await run((text) => {
   el.className = 'vid-end';
   el.innerHTML = `<div><b>Diskete<span>Boy</span></b><i></i><p>${text}</p></div>`;
   document.body.append(el);
-}, EN ? 'Video games · Board games · Cards<br>Free, no sign-up' : 'Videojuegos · Juegos de mesa · Cartas<br>Gratis y sin registro');
+}, COZY
+  ? (EN ? 'Your game collection, but cozy<br>Free, no sign-up' : 'Tu colección de juegos, pero acogedora<br>Gratis y sin registro')
+  : EN ? 'Video games · Board games · Cards<br>Free, no sign-up' : 'Videojuegos · Juegos de mesa · Cartas<br>Gratis y sin registro');
 await page.evaluate(() => document.fonts.load('58px "Press Start 2P"'));
 await shoot(2.4, (p) => { document.querySelector('.vid-end').style.opacity = String(Math.min(1, p * 3)); });
 console.log(`${frame} fotogramas en ${OUT}`);

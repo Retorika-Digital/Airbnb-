@@ -4,8 +4,8 @@ Lo que se ha ido haciendo mientras dormías, tanda por tanda.
 
 > **Resumen rápido para el café ☕**
 > - **Qué hay**: una consola propia (la DisketeBoy) con **3 disquetes**: videojuegos, juegos de mesa y cartas. Detrás, una **habitación 3D** donde cada juego acaba en su sitio: la pila de la vergüenza, la estantería, el escritorio, la caja de abandonados, la Kallax o las cajitas de mazo.
-> - **Extras**: 25 logros con trofeos en el alféizar, «Mi resumen» para compartir, importar de Steam y de BoardGameGeek, el ticket de la DisketePrinter, el enlace «Visita mi habitación», la ruleta de «¿Qué jugamos esta noche?», 3 temas de habitación y un gato.
-> - **Cómo verlo**: `node disketeboy/server.mjs` y abre http://localhost:5180/?demo=1. Las capturas están en el [README](../README.md), y el **vídeo para Reddit** en [`docs/video/`](video/).
+> - **Extras**: 25 logros con trofeos en el alféizar (dos secretos), «Mi resumen» para compartir, importar de Steam y de BoardGameGeek, el ticket de la DisketePrinter, el enlace «Visita mi habitación», la ruleta de «¿Qué jugamos esta noche?», noches de lluvia con la luz apagada, 3 temas de habitación, 6 carcasas para la consola y un gato que suelta corazones.
+> - **Cómo verlo**: `node disketeboy/server.mjs` y abre http://localhost:5180/?demo=1. Las capturas están en el [README](../README.md), y los **3 vídeos para Reddit** (videojuegos, juegos de mesa y cozy, en inglés y en español) en [`docs/video/`](video/).
 > - **Idiomas**: español e inglés. Sale en el idioma del navegador y se cambia en Ajustes.
 > - **Calidad**: 85 pruebas unitarias y 29 en navegador, todas verdes, y axe-core sin errores de accesibilidad. Además, una revisión independiente del código, con sus arreglos.
 > - **Lo que te toca a ti**: está en [LANZAMIENTO.md](LANZAMIENTO.md), en el apartado «Antes de publicar nada»: dominio, comprobar el nombre, clave de Steam y crear la página de Ko-fi. El botón de donar ya está hecho: solo hay que pegar el enlace en `js/config.js`.
@@ -390,3 +390,28 @@ Pensada para r/CozyGamers, donde lo que más gusta es una habitación acogedora 
 - **Apagar la luz**: toca el **flexo** del escritorio o el botón «🌙 Apagar la luz». Se apagan el flexo, la lámpara del techo y el foco de la estantería, y queda la luz de la luna y el **brillo azul de la tele** de tubo. Con el tema Gamer RGB, la tira LED luce todavía más.
 - **La manita**: al pasar el ratón por el gato, el flexo o los trofeos, el cursor avisa de que se pueden tocar.
 - **Pruebas**: 85 unitarias (antes 84) y 29 en navegador (antes 28). La nueva comprueba la lluvia, el botón y el flexo, y el ajuste de clima.
+
+## Tanda 20: un vídeo «cozy» para r/CozyGamers
+
+- **Tercer vídeo** (`disketeboy-cozy-en.mp4` y `-es`), de noche y lloviendo:
+  1. Se baja la consola y la cámara entra en la habitación como en el cine.
+  2. La ventana con la lluvia, el despertador y la tele de tubo.
+  3. Se apaga la luz: quedan la luna y la tele, y cae un relámpago.
+  4. Vuelve la luz y se acaricia al gato: le salen corazones.
+  5. Se vuelve a coger la consola, se teclea ↑ ↑ ↓ ↓ ← → ← → B A y **las cajas hacen la ola**, con el aviso del logro secreto y confeti.
+  6. «Mi resumen»: la primera tarjeta y la última, con la personalidad de jugador.
+  - Se graba con `node disketeboy/tools/video.mjs cozy` (o `cozy es`). Los otros dos vídeos ahora fijan el clima y la temporada, para que no cambien según el día en que se graben.
+- **Posts**: uno nuevo para r/CozyGamers en [POSTS.md](POSTS.md), y el de r/patientgamers ya cuenta los trofeos y «Mi resumen». El comentario fijado estaba desfasado («ManaBox: aún no»): ahora explica la importación del CSV.
+- **Plan de lanzamiento**: el vídeo cozy, las imágenes nuevas que funcionan solas, los bucles para compartir de «Mi resumen» y los logros secretos, y un aviso: si lanzas antes del 2 de noviembre, la habitación sale con la decoración de Halloween.
+
+## Tanda 21: carcasas de colores para la DisketeBoy
+
+- **Ajustes → Carcasa**, con seis acabados:
+  - *Crema*, la de siempre;
+  - ***Morado atómico***, **translúcido** como las consolas de los 90: se ve la habitación detrás;
+  - *Turquesa*, *Amarillo plátano*, *Rojo* y *Negro mate*.
+  - En cada una cambian a juego el logo, el LED «PILA», los agujeros del altavoz y el asa.
+- **Viaja en el enlace de visita**: quien abre tu habitación ve también tu DisketeBoy con tu carcasa. Al salir de la visita vuelve la suya.
+- Es otra de las ventajas que se pueden ofrecer a los mecenas más adelante; de momento, gratis.
+- **Pruebas**: la de ajustes cambia la carcasa y comprueba que se guarda; la de «Visita mi habitación» (unitaria) comprueba que viaja en el enlace y que una carcasa inventada se ignora.
+

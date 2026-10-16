@@ -660,10 +660,14 @@ try {
     await page.click('#a-gato');
     await page.waitForFunction(() => window.disketeboy.store.getSettings().pet === false);
     eq((await wall()).cat, false, 'sin gato');
+    // Carcasa morada, translúcida
+    await page.click('#a-carcasa');
+    await page.waitForFunction(() => document.getElementById('dkb').dataset.shell === 'morado');
+    expect((await page.getAttribute('#a-carcasa', 'aria-label')).includes('Morado atómico'), 'el ajuste dice la carcasa');
     await page.reload();
     await booted(page);
     const s = await page.evaluate(() => window.disketeboy.store.getSettings());
-    eq(`${s.theme}/${s.pet}`, 'gamer/false', 'se guarda al recargar');
+    eq(`${s.theme}/${s.pet}/${s.shell}`, 'gamer/false/morado', 'se guarda al recargar');
     eq(page.errors.join('\n'), '', 'errores en consola');
     await page.close();
   });

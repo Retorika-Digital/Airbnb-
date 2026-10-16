@@ -564,4 +564,10 @@ export default {
   "Lluvia": "Rain",
   "Despejado": "Clear",
   "🌙 Apagar la luz": "🌙 Lights off",
+  "Carcasa": "Shell",
+  "Morado atómico": "Atomic purple",
+  "Turquesa": "Teal",
+  "Amarillo plátano": "Banana yellow",
+  "Rojo": "Red",
+  "Negro mate": "Matte black",
 };

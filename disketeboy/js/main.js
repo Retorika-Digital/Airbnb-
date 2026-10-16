@@ -116,8 +116,8 @@ const device = createDevice(deviceEl, actions);
 // ------------------------------------------------------------------ visitas
 async function shareVisit() {
   const { encodeRoom, visitUrl, LONG_URL } = await import('./share.js');
-  const { name, theme, pet } = store.getSettings();
-  const url = visitUrl(location.origin + location.pathname, await encodeRoom(store.getGames(), { name, theme, pet }));
+  const { name, theme, pet, shell } = store.getSettings();
+  const url = visitUrl(location.origin + location.pathname, await encodeRoom(store.getGames(), { name, theme, pet, shell }));
   const long = url.length > LONG_URL ? ` ${t('Ojo: tu colección es enorme y el enlace mide {n} mil caracteres; alguna app podría cortarlo.', { n: Math.round(url.length / 1000) })}` : '';
   if (navigator.share && matchMedia('(pointer: coarse)').matches) {
     try {
