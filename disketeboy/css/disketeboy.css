@@ -415,7 +415,7 @@ body.device-down .dkb { transform: translate(-50%, calc(100% - var(--u) * 14)); 
   padding: 0 calc(var(--u) * 2);
   border: 0;
   border-radius: 999px;
-  background: #7c756a;
+  background: #5a544b;
   color: #f4efe4;
   font: 700 calc(var(--u) * 2.2) / 1 var(--font-ui);
   letter-spacing: 0.1em;

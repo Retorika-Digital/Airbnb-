@@ -1352,7 +1352,7 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
     get busy() {
       return tweens.size > 0 || cameraMoving();
     },
-    debug: { scene, camera, renderer, entries, view },
+    debug: { scene, camera, renderer, entries, view, tweens },
     dispose() {
       clearInterval(clock);
       window.removeEventListener('resize', resize);

@@ -82,3 +82,35 @@ Lo que se ha ido haciendo mientras dormías, tanda por tanda.
   - Se descarga o se comparte desde el móvil.
 - **«Compartir»** hace una foto de tu habitación con un pie («26 juegos · 968 h jugadas · 7 en la pila de la vergüenza»), lista para Reddit o WhatsApp.
 - **Arreglo**: si la fuente de terminal no había cargado, el texto del ticket se salía del papel. Ahora espera a la fuente y, si aun así no está, ajusta el tamaño al ancho.
+
+## Tanda 5: pruebas automáticas y accesibilidad
+
+- **32 pruebas unitarias**:
+  - **Colección**: validación, datos corruptos, duplicados al importar, copia de seguridad, límites y colores.
+  - **Reparto de cajas**: cada estado en su zona, que las cajas no se solapen en las baldas, que el resultado sea siempre el mismo, estanterías nuevas y ordenar por nota, color y horas.
+  - **Steam**: formatos de perfil, sin clave, perfil privado, Steam caído, y que `api/cover` no se pueda usar de proxy.
+  - **Ticket**: que todo quepa en 32 columnas.
+- **15 pruebas en un navegador de verdad** (Chromium), con Steam y las fuentes simulados:
+  - **Uso normal**:
+    - Arrancar y meter el disquete.
+    - Añadir un juego y que siga ahí al recargar.
+    - Cambiar estado y nota con la cruceta y escribir la reseña.
+    - Coger una caja con el teclado, girarla y soltarla.
+    - Ordenar la habitación y deshacerlo.
+  - **Steam y DisketePrinter**:
+    - Importar de Steam sin duplicar.
+    - Steam sin clave en el servidor.
+    - El ticket de 384 px y la foto para compartir.
+    - La copia de seguridad.
+  - **A prueba de fallos**:
+    - Título con HTML sin que se ejecute nada (XSS).
+    - Datos corruptos sin romper la consola.
+    - Funcionar sin 3D.
+  - **Para todo el mundo**:
+    - El móvil.
+    - El modo de movimiento reducido.
+- **Accesibilidad**: pasé **axe-core** por el menú, la lista, la ficha, el formulario, Steam, los ajustes, las estadísticas, la pila y la habitación. Encontró 2 problemas y ahora da **0**:
+  - SELECT y START tenían poco contraste (4:1). Ahora pasan de 6:1.
+  - La habitación no estaba dentro de ninguna zona de la página. Ahora todo va dentro de `<main>`.
+- **CI propio** (`.github/workflows/disketeboy.yml`): solo se ejecuta cuando cambia algo de DisketeBoy y guarda las capturas como artefacto.
+- **Arreglo**: con «movimiento reducido» activado en el sistema, las cajas ya no vuelan: se colocan en una décima de segundo y sin retrasos. Hay una prueba que lo comprueba.
