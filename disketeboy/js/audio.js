@@ -125,6 +125,11 @@ export const sfx = {
     tone(1047, 0.48, 0.42, { vol: 0.05, type: 'triangle' });
     tone(1319, 0.48, 0.42, { vol: 0.03, type: 'triangle' });
   },
+  /** Arpegio de «power-up» para el código Konami. */
+  powerup: () => {
+    [392, 523, 659, 784, 1047, 1319, 1568].forEach((f, i) => tone(f, i * 0.045, 0.07, { vol: 0.035 }));
+    tone(2093, 0.33, 0.3, { vol: 0.03, type: 'triangle' });
+  },
   print: () => {
     for (let i = 0; i < 12; i++) noise(i * 0.055, 0.04, 0.045, 4200);
   },

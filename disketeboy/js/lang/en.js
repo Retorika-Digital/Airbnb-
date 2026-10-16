@@ -556,4 +556,7 @@ export default {
   "Arrancando": "Starting up",
   "Buscar…": "Search…",
   "Buscar en la lista": "Search the list",
+  "Código Konami": "Konami Code",
+  "↑ ↑ ↓ ↓ ← → ← → B A": "↑ ↑ ↓ ↓ ← → ← → B A",
+  "↑↑↓↓←→←→BA: ¡30 vidas extra! (bueno, una ola de cajas)": "↑↑↓↓←→←→BA: 30 extra lives! (well, a wave of boxes)",
 };

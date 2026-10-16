@@ -4,7 +4,7 @@ Lo que se ha ido haciendo mientras dormías, tanda por tanda.
 
 > **Resumen rápido para el café ☕**
 > - **Qué hay**: una consola propia (la DisketeBoy) con **3 disquetes**: videojuegos, juegos de mesa y cartas. Detrás, una **habitación 3D** donde cada juego acaba en su sitio: la pila de la vergüenza, la estantería, el escritorio, la caja de abandonados, la Kallax o las cajitas de mazo.
-> - **Extras**: 24 logros con trofeos en el alféizar, «Mi resumen» para compartir, importar de Steam y de BoardGameGeek, el ticket de la DisketePrinter, el enlace «Visita mi habitación», la ruleta de «¿Qué jugamos esta noche?», 3 temas de habitación y un gato.
+> - **Extras**: 25 logros con trofeos en el alféizar, «Mi resumen» para compartir, importar de Steam y de BoardGameGeek, el ticket de la DisketePrinter, el enlace «Visita mi habitación», la ruleta de «¿Qué jugamos esta noche?», 3 temas de habitación y un gato.
 > - **Cómo verlo**: `node disketeboy/server.mjs` y abre http://localhost:5180/?demo=1. Las capturas están en el [README](../README.md), y el **vídeo para Reddit** en [`docs/video/`](video/).
 > - **Idiomas**: español e inglés. Sale en el idioma del navegador y se cambia en Ajustes.
 > - **Calidad**: 84 pruebas unitarias y 28 en navegador, todas verdes, y axe-core sin errores de accesibilidad. Además, una revisión independiente del código, con sus arreglos.
@@ -364,3 +364,13 @@ Con la demo o tras importar Steam salen 50, 200 u 800 juegos, y bajar con la cru
   - Si entras en un juego y vuelves, la búsqueda sigue ahí.
 - **Corregir el título** desde la ficha de cualquier juego, mazo o carpeta, por si Steam lo trae en mayúsculas o te equivocaste al escribirlo. Un título vacío no se guarda. La caja de la habitación se repinta con el título nuevo.
 - **Pruebas**: 28 en navegador (antes 27). La nueva busca en la lista de videojuegos y en la Kallax, corrige un título y comprueba que uno vacío no se guarda.
+
+## Tanda 18: el código Konami y un gato más cariñoso
+
+- **↑ ↑ ↓ ↓ ← → ← → B A**, con el teclado o con la cruceta de la consola: suena un «power-up», la consola se baja sola y **todas las cajas de la habitación hacen la ola**, de un lado a otro. Las de la Kallax saltan menos, porque no tienen sitio encima.
+  - La primera vez desbloquea el **segundo logro secreto**, «Código Konami», con su trofeo de oro.
+  - Aviso: «¡30 vidas extra! (bueno, una ola de cajas)».
+- **Corazones**: al acariciar al gato le salen tres corazones que suben bailando y se desvanecen.
+- **Batería**: si nadie toca nada en un minuto, el polvo, el gato y el despertador se mueven a 6 fotogramas por segundo en vez de 24. Al mover el ratón o tocar la pantalla vuelve a ir fino.
+- **Detalle**: si borras el título en una ficha y sales del campo, vuelve el de antes, en vez de quedarse el campo vacío.
+- **Pruebas**: la de logros ahora también teclea el código Konami y comprueba el logro y el aviso. Con `E2E_ONLY=logros` se ejecutan solo las pruebas que contienen esa palabra, para ir más rápido.

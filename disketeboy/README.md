@@ -54,11 +54,11 @@ Coges una caja, la giras y **en la contraportada está tu reseña**, con tu nota
 
 **En español y en inglés**: sale en el idioma del navegador y se cambia en Ajustes → Idioma (o con `?lang=en` en la dirección). Se traduce todo: la consola, los carteles de la habitación, las portadas, el ticket e incluso las reseñas de la demo.
 
-**Logros y celebraciones**: 24 logros, con un **trofeo de verdad en el alféizar** por cada uno. Salen con un aviso dorado, una fanfarria chiptune y confeti, igual que al terminar un juego, estrenar uno de mesa o ganar con un mazo. Hay uno secreto (pista: el gato).
+**Logros y celebraciones**: 25 logros, con un **trofeo de verdad en el alféizar** por cada uno. Salen con un aviso dorado, una fanfarria chiptune y confeti, igual que al terminar un juego, estrenar uno de mesa o ganar con un mazo. Hay dos secretos (pistas: el gato y ↑ ↑ ↓ ↓ ← → ← → B A, que hace que todas las cajas de la habitación hagan la ola).
 
 **✨ Mi resumen**: tu colección contada en tarjetas animadas, como las historias de las redes, con tu personalidad de jugador al final («El Montañero», «El Completista»…). Además, una **imagen vertical de 1080×1920** para compartir.
 
-**Una habitación con vida**: polvo flotando en la luz, un despertador retro con la hora real, el gato que respira, la tele de tubo que parpadea y una entrada de cine la primera vez que bajas la consola. Se apaga en Ajustes → Ambiente, y con «movimiento reducido» no se mueve nada. En **Halloween** aparecen una calabaza con vela y murciélagos, y en **Navidad**, nieve tras la ventana y luces en la cortina.
+**Una habitación con vida**: polvo flotando en la luz, un despertador retro con la hora real, el gato que respira (y suelta corazones si lo acaricias), la tele de tubo que parpadea y una entrada de cine la primera vez que bajas la consola. Se apaga en Ajustes → Ambiente, y con «movimiento reducido» no se mueve nada. En **Halloween** aparecen una calabaza con vela y murciélagos, y en **Navidad**, nieve tras la ventana y luces en la cortina.
 
 **Tu habitación, a tu gusto**: en Ajustes eliges el tema (*Crema*, *Gamer RGB* con tira LED o *Retro 90*) y si quieres al gato, que duerme en la alfombra y ronronea si lo tocas. El tema y el gato viajan en el enlace de visita. Están pensados como futuras ventajas para mecenas; ahora son gratis para todos.
 
@@ -114,7 +114,7 @@ En Netlify se sirve en `/disketeboy/`, con sus funciones en `netlify/functions/d
 | `js/boards.js` | Juegos de mesa: «¿Qué jugamos esta noche?», préstamos (funciones puras) |
 | `js/cards.js` | Cartas: juegos de cartas, contar la lista de un mazo, récord y estadísticas (funciones puras) |
 | `js/share.js` | «Visita mi habitación»: la colección comprimida en el enlace |
-| `js/logros.js` | Los 24 logros: qué cuenta cada uno y cuándo se consiguió (funciones puras) |
+| `js/logros.js` | Los 25 logros: qué cuenta cada uno y cuándo se consiguió (funciones puras) |
 | `js/trofeos.js` | Las copas 3D de los logros, para el alféizar |
 | `js/resumen.js` / `js/story.js` | «Mi resumen»: los datos (con tests) y las tarjetas animadas con su imagen para compartir |
 | `js/ambiente.js` / `js/fx.js` | Polvo, despertador y gato que respira; confeti de las celebraciones |

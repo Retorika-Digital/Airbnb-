@@ -33,6 +33,7 @@ export function counters(games, ev = {}) {
     cat: ev.gato || 0,
     shares: ev.compartir || 0,
     tickets: ev.ticket || 0,
+    konami: ev.konami || 0,
   };
 }
 
@@ -62,10 +63,11 @@ export const LOGROS = [
   { id: 'anfitrion', tier: 'bronce', icon: '🔗', title: mark('Anfitrión'), text: mark('Comparte tu habitación'), test: (c) => c.shares >= 1 },
   { id: 'ticket', tier: 'bronce', icon: '🧾', title: mark('Pide el ticket'), text: mark('Imprime tu ticket en la DisketePrinter'), test: (c) => c.tickets >= 1 },
   { id: 'amigo-del-gato', tier: 'oro', icon: '🐱', title: mark('Amigo del gato'), text: mark('Acaricia al gato diez veces'), secret: true, test: (c) => c.cat >= 10 },
+  { id: 'konami', tier: 'oro', icon: '🕹️', title: mark('Código Konami'), text: mark('↑ ↑ ↓ ↓ ← → ← → B A'), secret: true, test: (c) => c.konami >= 1 },
 ];
 
 const KEY = 'dkb:logros:v1';
-const EVENTS = ['gato', 'compartir', 'ticket'];
+const EVENTS = ['gato', 'compartir', 'ticket', 'konami'];
 
 /**
  * Lleva la cuenta de los logros conseguidos (y cuándo).

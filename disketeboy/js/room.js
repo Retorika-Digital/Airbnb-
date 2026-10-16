@@ -1098,6 +1098,8 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
   let ambientOn = !REDUCED;
   let ambientTimer = 0;
   let lastAmbient = 0;
+  let lastInput = performance.now();
+  for (const type of ['pointerdown', 'pointermove', 'wheel', 'keydown']) window.addEventListener(type, () => (lastInput = performance.now()), { passive: true });
   function ambientTick() {
     ambientTimer = 0;
     if (!ambientOn || !active) return;
@@ -1113,7 +1115,9 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
       deskClock.update();
       invalidate();
     }
-    ambientTimer = setTimeout(ambientTick, 1000 / (coarse ? 15 : 24));
+    // Si nadie toca nada en un minuto, el ambiente va al ralentí (6 fotogramas por segundo)
+    const idle = performance.now() - lastInput > 60000;
+    ambientTimer = setTimeout(ambientTick, 1000 / (idle ? 6 : coarse ? 15 : 24));
   }
   function startAmbient() {
     lastAmbient = 0;
@@ -1138,6 +1142,60 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
   if (seasonDecor) {
     scene.add(seasonDecor.group);
     seasonDecor.step(0, 0);
+  }
+
+  // ---------------------------------------------------------------- corazones y ola
+  // Al acariciar al gato salen corazones; con el código Konami, las cajas hacen la ola.
+  const heartTex = toTexture(paint(64, 64, (ctx) => {
+    ctx.fillStyle = '#ff5c8a';
+    ctx.strokeStyle = '#fff4f6';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(32, 56);
+    ctx.bezierCurveTo(4, 36, 4, 8, 21, 8);
+    ctx.bezierCurveTo(28, 8, 32, 14, 32, 19);
+    ctx.bezierCurveTo(32, 14, 36, 8, 43, 8);
+    ctx.bezierCurveTo(60, 8, 60, 36, 32, 56);
+    ctx.fill();
+    ctx.stroke();
+  }));
+  const floaters = [];
+  function floatHearts(at, n = 3) {
+    const t0 = performance.now();
+    for (let i = 0; i < n; i++) {
+      const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: heartTex, transparent: true, depthWrite: false, opacity: 0 }));
+      s.scale.set(0.085, 0.085, 1);
+      s.position.copy(at);
+      scene.add(s);
+      floaters.push({ s, t0: t0 + i * 220, x0: at.x + (i - 1) * 0.05, y0: at.y, z0: at.z, phase: i * 2 });
+    }
+    kick();
+  }
+  function stepFloaters(now) {
+    for (let i = floaters.length - 1; i >= 0; i--) {
+      const f = floaters[i];
+      const k = (now - f.t0) / (REDUCED ? 500 : 1500);
+      if (k < 0) continue;
+      if (k >= 1) {
+        scene.remove(f.s);
+        f.s.material.dispose();
+        floaters.splice(i, 1);
+        continue;
+      }
+      f.s.position.set(f.x0 + Math.sin(k * 7 + f.phase) * 0.02, f.y0 + k * 0.26, f.z0);
+      f.s.material.opacity = Math.min(1, k * 6) * (1 - k * k);
+      f.s.scale.setScalar(0.085 * (0.7 + 0.3 * Math.min(1, k * 4)));
+    }
+    return floaters.length > 0;
+  }
+  function wave() {
+    const list = [...entries.values()].filter((e) => e !== inspected && e.mesh.visible && !tweens.has(e.id));
+    list.sort((a, b) => a.mesh.position.x - b.mesh.position.x || a.mesh.position.z - b.mesh.position.z);
+    list.forEach((e, i) => {
+      // En la Kallax apenas hay hueco encima: ahí saltan menos
+      tweenTo(e.id, e.mesh, { pos: e.mesh.position.clone(), dur: 0.5, delay: (i / Math.max(1, list.length)) * 1.6, arc: e.zone === 'kallax' ? 0.025 : 0.09, fn: ease.inOut });
+    });
+    return list.length;
   }
 
   // ---------------------------------------------------------------- trofeos
@@ -1204,11 +1262,12 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
     if (inspected && !tweens.has(inspected.id)) holdInFront();
     const pulsing = stepPulse(now);
     const dimming = stepDim();
-    if (needsRender || tweens.size || moving || pulsing || dimming) {
+    const floating = stepFloaters(now);
+    if (needsRender || tweens.size || moving || pulsing || dimming || floating) {
       renderer.render(scene, camera);
       needsRender = false;
     }
-    if (tweens.size || cameraMoving() || pulsing || dimming) kick();
+    if (tweens.size || cameraMoving() || pulsing || dimming || floating) kick();
     else lastFrame = 0;
   }
 
@@ -1590,6 +1649,7 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
       sfx.meow();
       onNotice(t('Prrr… 🐱 (mejor no despertarlo)'));
       onPet();
+      floatHearts(cat.localToWorld(new THREE.Vector3(0.15, 0.19, 0.07)));
     } else {
       const trophy = trophyAt(ev.clientX, ev.clientY);
       if (trophy) {
@@ -1779,6 +1839,7 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
       return tweens.size > 0 || cameraMoving();
     },
     setTrophies,
+    wave,
     setAmbient(on) {
       ambientOn = !!on && !REDUCED;
       if (ambientOn && active) startAmbient();

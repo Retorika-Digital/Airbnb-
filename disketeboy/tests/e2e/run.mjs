@@ -17,7 +17,10 @@ const AXE = `${REPO}node_modules/axe-core/axe.min.js`;
 
 // --- Mini arnés ---------------------------------------------------------------
 const results = [];
+// E2E_ONLY=texto ejecuta solo las pruebas cuyo nombre lo contiene
+const ONLY = process.env.E2E_ONLY;
 async function check(name, fn) {
+  if (ONLY && !name.includes(ONLY)) return;
   const t0 = Date.now();
   try {
     await fn();
@@ -167,6 +170,7 @@ try {
     await page.keyboard.press('Tab');
     await page.waitForTimeout(200);
     expect(await page.evaluate(() => window.disketeboy.store.getGames().some((g) => g.title === 'Hollow Knight (Voidheart)')), 'un título vacío no se guarda');
+    eq(await page.inputValue('#f-titulo'), 'Hollow Knight (Voidheart)', 'vuelve el título de antes');
     await page.evaluate(() => window.disketeboy.device.go('mesaLista', { filter: 'todos' }));
     await page.fill('#b-buscar', 'aventureros');
     eq(await page.$$eval('#screen .item.game', (els) => els.filter((e) => !e.hidden).length), 1, 'también en la Kallax');
@@ -575,7 +579,7 @@ try {
     expect(count >= 10, `logros con la demo: ${count}`);
     await page.evaluate(() => window.disketeboy.device.go('logros', {}));
     await page.waitForSelector('#screen .logro-row');
-    expect(new RegExp(`${count} de 24 conseguidos`).test(await page.textContent('#screen')), 'cuenta de logros');
+    expect(new RegExp(`${count} de \\d+ conseguidos`).test(await page.textContent('#screen')), 'cuenta de logros');
     expect((await page.textContent('#screen')).includes('Logro secreto'), 'el del gato es secreto');
     await page.evaluate(() => window.disketeboy.lower());
     await idle(page);
@@ -600,6 +604,10 @@ try {
       window.disketeboy.store.updateGame(g.id, { status: 'terminado' });
     });
     await page.waitForFunction(async () => (await import('./js/fx.js')).confettiCount() > 0, null, { timeout: 5000 });
+    // Código Konami con el teclado: ola de cajas, aviso y otro logro secreto
+    for (const key of ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a']) await page.keyboard.press(key);
+    await page.waitForFunction(() => window.disketeboy.logros.list().find((l) => l.id === 'konami').got);
+    expect((await page.textContent('#toast')).includes('30 vidas extra'), 'aviso del código Konami');
     eq(page.errors.join('\n'), '', 'errores en consola');
     await page.close();
   });

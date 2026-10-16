@@ -104,6 +104,7 @@ const actions = {
       onClose: () => device.focus(),
     });
   },
+  onButton: (name) => konamiStep(name),
   printTicket,
   shareVisit,
   leaveVisit,
@@ -377,6 +378,26 @@ document.getElementById('i-editar').addEventListener('click', () => {
 });
 document.getElementById('t-cerrar').addEventListener('click', closeTicket);
 ticketEl.addEventListener('click', (e) => e.target === ticketEl && closeTicket());
+
+// Código Konami: ↑ ↑ ↓ ↓ ← → ← → B A, con el teclado o con la cruceta de la consola
+const KONAMI = ['up', 'up', 'down', 'down', 'left', 'right', 'left', 'right', 'b', 'a'];
+const KONAMI_KEYS = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', b: 'b', B: 'b', a: 'a', A: 'a' };
+let konamiAt = 0;
+function konamiStep(name) {
+  konamiAt = name === KONAMI[konamiAt] ? konamiAt + 1 : name === 'up' ? (konamiAt === 2 ? 2 : 1) : 0;
+  if (konamiAt < KONAMI.length) return;
+  konamiAt = 0;
+  sfx.powerup();
+  device.toast(t('↑↑↓↓←→←→BA: ¡30 vidas extra! (bueno, una ola de cajas)'));
+  logroEvent('konami');
+  if (!room) return;
+  // Baja la consola para que se vea la ola
+  const wasDown = isLowered();
+  release();
+  lower();
+  setTimeout(() => room.wave(), wasDown ? 0 : 550);
+}
+document.addEventListener('keydown', (e) => !e.repeat && KONAMI_KEYS[e.key] && konamiStep(KONAMI_KEYS[e.key]), true);
 
 document.addEventListener('keydown', (e) => {
   if (!ticketEl.hidden) {

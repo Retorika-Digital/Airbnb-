@@ -256,7 +256,7 @@ export function createDevice(root, actions) {
       'label',
       { class: 'item field' },
       h('span', { class: 'item-label', text: label }),
-      h('input', { id, 'data-nav': '', maxlength: '120', value: g.title, autocomplete: 'off', onchange: (e) => e.target.value.trim() && upd({ title: e.target.value }) }),
+      h('input', { id, 'data-nav': '', maxlength: '120', value: g.title, autocomplete: 'off', onchange: (e) => (e.target.value.trim() ? upd({ title: e.target.value }) : (e.target.value = g.title)) }),
     );
   const statRow = (k, v) => h('div', { class: 'stat' }, h('dt', { text: k }), h('dd', { text: v }));
 
@@ -1310,6 +1310,7 @@ export function createDevice(root, actions) {
       void btn.offsetWidth;
       btn.classList.add('is-pressed');
       buttons[btn.dataset.btn]?.();
+      actions.onButton?.(btn.dataset.btn);
     });
   }
 
