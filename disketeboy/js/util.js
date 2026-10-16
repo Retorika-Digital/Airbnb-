@@ -88,6 +88,17 @@ export function titleKey(title) {
     .toLowerCase()
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .trim();
+}
+
+/** La temporada de una fecha para decorar la habitación (o la que se fuerce con ?temporada=…). */
+export function seasonOf(date = new Date(), force = null) {
+  if (force === 'halloween' || force === 'navidad') return force;
+  if (force === 'ninguna') return null;
+  const m = date.getMonth();
+  const d = date.getDate();
+  if ((m === 9 && d >= 15) || (m === 10 && d <= 2)) return 'halloween';
+  if (m === 11 || (m === 0 && d <= 6)) return 'navidad';
+  return null;
 }

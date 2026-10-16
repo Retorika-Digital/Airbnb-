@@ -40,3 +40,15 @@ test('utilidades deterministas', () => {
   assert.equal(inkFor('#ffffff'), '#1d1a16');
   assert.equal(inkFor('#101010'), '#fdf6e3');
 });
+
+test('la habitación se decora sola según la fecha', async () => {
+  const { seasonOf } = await import('../../js/util.js');
+  assert.equal(seasonOf(new Date(2026, 9, 20)), 'halloween');
+  assert.equal(seasonOf(new Date(2026, 10, 1)), 'halloween', 'hasta el día de Todos los Santos');
+  assert.equal(seasonOf(new Date(2026, 10, 10)), null);
+  assert.equal(seasonOf(new Date(2026, 11, 24)), 'navidad');
+  assert.equal(seasonOf(new Date(2027, 0, 6)), 'navidad', 'hasta Reyes');
+  assert.equal(seasonOf(new Date(2027, 0, 7)), null);
+  assert.equal(seasonOf(new Date(2026, 5, 1), 'navidad'), 'navidad', 'se puede forzar para probar');
+  assert.equal(seasonOf(new Date(2026, 9, 31), 'ninguna'), null, 'y quitar');
+});

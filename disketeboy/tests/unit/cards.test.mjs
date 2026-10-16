@@ -103,3 +103,13 @@ test('el CSV de ManaBox (o de cualquier app) llena la carpeta: cartas y valor', 
   assert.deepEqual(parseCardCsv('Card\nSol Ring\nForest\n'), { rows: 2, cards: 2, value: 0, hasPrice: false }, 'sin cantidad: una por fila');
   assert.equal(parseCardCsv('solo cabecera').rows, 0);
 });
+
+test('CSV de verdad: saltos de línea entre comillas, «sep=» y sin precios', async () => {
+  const { parseCardCsv } = await import('../../js/cards.js');
+  const notes = 'Name,Quantity,Price,Notes\n"Bolt",4,1.50,"comprada en\nla tienda"\nSol Ring,1,2.25,\n';
+  assert.deepEqual(parseCardCsv(notes), { rows: 2, cards: 5, value: 8.25, hasPrice: true }, 'una nota con salto de línea no parte la fila');
+  const dragon = 'sep=,\nQuantity,Card Name,Price\n4,Bolt,1.00\n10,Forest,0.10\n';
+  assert.deepEqual(parseCardCsv(dragon), { rows: 2, cards: 14, value: 5, hasPrice: true }, 'la línea «sep=» de Dragon Shield');
+  const noPrices = 'Name,Quantity,Purchase price\nBolt,4,\nSol Ring,1,0\n';
+  assert.equal(parseCardCsv(noPrices).hasPrice, false, 'columna de precio vacía: no se toca el valor de la carpeta');
+});

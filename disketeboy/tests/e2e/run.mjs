@@ -59,7 +59,7 @@ async function newPage(browser, { viewport = { width: 1280, height: 800 }, steam
 }
 
 const shot = async (page, name) => SHOTS && page.screenshot({ path: `${SHOTS}/${name}.png` });
-const booted = (page) => page.waitForFunction(() => window.disketeboy && !['boot'].includes(window.disketeboy.device.screenName) && document.querySelector('#screen [data-nav]'), null, { timeout: 15000 });
+const booted = (page) => page.waitForFunction(() => window.disketeboy && !['boot'].includes(window.disketeboy.device.screenName) && document.querySelector('#screen [data-nav]'), null, { timeout: 30000 });
 const idle = (page) => page.waitForFunction(() => !window.disketeboy.room || !window.disketeboy.room.busy, null, { timeout: 30000 });
 const games = (page) => page.evaluate(() => window.disketeboy.store.getGames());
 
@@ -541,6 +541,75 @@ try {
     await page.close();
   });
 
+  await check('logros: aviso con confeti, trofeos en el alféizar y el gato secreto', async () => {
+    const page = await newPage(browser);
+    await page.goto(`${BASE}/?demo=1`);
+    await booted(page);
+    // El aviso sale nada más cargar la demo y se va solo: basta con que haya salido
+    await page.waitForFunction(() => /logros desbloqueados/.test(document.getElementById('logro').textContent));
+    const count = await page.evaluate(() => window.disketeboy.logros.count());
+    expect(count >= 10, `logros con la demo: ${count}`);
+    await page.evaluate(() => window.disketeboy.device.go('logros', {}));
+    await page.waitForSelector('#screen .logro-row');
+    expect(new RegExp(`${count} de 24 conseguidos`).test(await page.textContent('#screen')), 'cuenta de logros');
+    expect((await page.textContent('#screen')).includes('Logro secreto'), 'el del gato es secreto');
+    await page.evaluate(() => window.disketeboy.lower());
+    await idle(page);
+    eq(await page.evaluate(() => window.disketeboy.room.debug.trophies.size), 8, 'trofeos en el alféizar');
+    // Acariciar al gato diez veces
+    const cat = await page.evaluate(() => {
+      const { scene, camera } = window.disketeboy.room.debug;
+      const c = scene.getObjectByName('gato');
+      const p = c.getWorldPosition(c.position.clone());
+      p.y += 0.07;
+      p.project(camera);
+      return { x: ((p.x + 1) / 2) * innerWidth, y: ((1 - p.y) / 2) * innerHeight };
+    });
+    for (let i = 0; i < 10; i++) {
+      await page.mouse.click(cat.x, cat.y);
+      await page.waitForTimeout(60);
+    }
+    await page.waitForFunction(() => window.disketeboy.logros.list().find((l) => l.id === 'amigo-del-gato').got);
+    // Terminar un juego: confeti (tras un momento, por si solo se pasaba por «Terminado»)
+    await page.evaluate(() => {
+      const g = window.disketeboy.store.getVideoGames().find((x) => x.status === 'jugado');
+      window.disketeboy.store.updateGame(g.id, { status: 'terminado' });
+    });
+    await page.waitForFunction(async () => (await import('./js/fx.js')).confettiCount() > 0, null, { timeout: 5000 });
+    eq(page.errors.join('\n'), '', 'errores en consola');
+    await page.close();
+  });
+
+  await check('«Mi resumen»: tarjetas animadas, personalidad e imagen vertical para compartir', async () => {
+    const page = await newPage(browser);
+    await page.goto(`${BASE}/?demo=1`);
+    await booted(page);
+    await page.click('#m-resumen');
+    await page.waitForSelector('.story-card');
+    expect((await page.textContent('.story-card')).includes('Tu colección en DisketeBoy'), 'primera tarjeta');
+    for (let i = 0; i < 8 && !(await page.$('#story-guardar')); i++) {
+      await page.keyboard.press('ArrowRight');
+      await page.waitForTimeout(250);
+    }
+    await page.waitForSelector('#story-guardar');
+    expect((await page.textContent('.story-card')).includes('Tu personalidad'), 'la última es la personalidad');
+    await axe(page, 'mi resumen');
+    const img = await page.evaluate(async () => {
+      const { buildSummary } = await import('./js/resumen.js');
+      const { renderStoryImage } = await import('./js/story.js');
+      const c = renderStoryImage(buildSummary(window.disketeboy.store.getGames()), 'Laura');
+      return `${c.width}x${c.height}`;
+    });
+    eq(img, '1080x1920', 'imagen para historias');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('.story', { state: 'detached' });
+    await page.evaluate(() => window.disketeboy.device.go('ajustes', {}));
+    await page.click('#a-ambiente');
+    await page.waitForFunction(() => window.disketeboy.store.getSettings().ambient === false);
+    eq(page.errors.join('\n'), '', 'errores en consola');
+    await page.close();
+  });
+
   await check('ajustes: tema de la habitación y el gato que duerme en la alfombra', async () => {
     const page = await newPage(browser);
     await page.goto(`${BASE}/?demo=1`);
@@ -648,7 +717,7 @@ try {
     await page.goto(`${BASE}/?demo=1`);
     await booted(page);
     await axe(page, 'menú');
-    for (const [screen, params] of [['lista', { filter: 'todos' }], ['nuevo', {}], ['steam', {}], ['ajustes', {}], ['stats', {}], ['pila', {}], ['privacidad', {}], ['creditos', {}]]) {
+    for (const [screen, params] of [['lista', { filter: 'todos' }], ['nuevo', {}], ['steam', {}], ['ajustes', {}], ['stats', {}], ['pila', {}], ['privacidad', {}], ['creditos', {}], ['logros', {}]]) {
       await page.evaluate(([s, p]) => window.disketeboy.device.go(s, p), [screen, params]);
       await page.waitForTimeout(150);
       await axe(page, screen);

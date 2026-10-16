@@ -83,23 +83,30 @@ export function parseAmount(raw) {
   return Number.isFinite(n) ? n : null;
 }
 
-/** Separa una línea de CSV respetando las comillas. */
-function csvRow(line, sep) {
-  const out = [];
+/** Lee un CSV entero respetando las comillas (dentro puede haber comas y saltos de línea). */
+function csvRecords(text, sep) {
+  const rows = [];
+  let row = [];
   let cur = '';
   let quoted = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
     if (quoted) {
-      if (ch === '"' && line[i + 1] === '"') (cur += '"'), i++;
+      if (ch === '"' && text[i + 1] === '"') (cur += '"'), i++;
       else if (ch === '"') quoted = false;
       else cur += ch;
     } else if (ch === '"') quoted = true;
-    else if (ch === sep) out.push(cur), (cur = '');
-    else cur += ch;
+    else if (ch === sep) row.push(cur.trim()), (cur = '');
+    else if (ch === '\n' || ch === '\r') {
+      if (ch === '\r' && text[i + 1] === '\n') i++;
+      row.push(cur.trim());
+      rows.push(row);
+      row = [];
+      cur = '';
+    } else cur += ch;
   }
-  out.push(cur);
-  return out.map((x) => x.trim());
+  if (cur || row.length) rows.push([...row, cur.trim()]);
+  return rows.filter((r) => r.some((c) => c));
 }
 
 const QTY = ['quantity', 'qty', 'count', 'amount', 'cantidad', 'copies'];
@@ -110,23 +117,29 @@ const PRICE = ['purchase price', 'price', 'market price', 'value', 'precio', 'pr
  * suma las cartas (columna de cantidad) y su valor (cantidad × precio, si hay precio).
  */
 export function parseCardCsv(text) {
-  const lines = String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/).filter((l) => l.trim());
-  if (lines.length < 2) return { rows: 0, cards: 0, value: 0, hasPrice: false };
-  const sep = (lines[0].match(/;/g) || []).length > (lines[0].match(/,/g) || []).length ? ';' : ',';
-  const head = csvRow(lines[0], sep).map((h) => h.toLowerCase());
-  const qi = head.findIndex((h) => QTY.includes(h));
-  const pi = head.findIndex((h) => PRICE.includes(h));
+  let body = String(text || '').replace(/^\uFEFF/, '');
+  // Algunas apps (Dragon Shield) empiezan con «sep=,» para Excel: manda ese separador
+  const hint = body.match(/^"?sep=(.)"?\r?\n/i);
+  if (hint) body = body.slice(hint[0].length);
+  const firstLine = body.split(/\r?\n/, 1)[0] || '';
+  const sep = hint ? hint[1] : (firstLine.match(/;/g) || []).length > (firstLine.match(/,/g) || []).length ? ';' : ',';
+  const records = csvRecords(body, sep);
+  if (records.length < 2) return { rows: 0, cards: 0, value: 0, hasPrice: false };
+  const head = records[0].map((x) => x.toLowerCase());
+  const qi = head.findIndex((x) => QTY.includes(x));
+  const pi = head.findIndex((x) => PRICE.includes(x));
   let cards = 0;
   let value = 0;
-  let rows = 0;
-  for (const line of lines.slice(1)) {
-    const cells = csvRow(line, sep);
-    if (cells.every((c) => !c)) continue;
+  let priced = 0;
+  for (const cells of records.slice(1)) {
     const qty = qi > -1 ? Math.max(0, Math.round(parseAmount(cells[qi]) ?? 1)) : 1;
     const price = pi > -1 ? parseAmount(cells[pi]) : null;
     cards += qty;
-    if (price !== null && price > 0) value += qty * price;
-    rows++;
+    if (price !== null && price > 0) {
+      value += qty * price;
+      priced++;
+    }
   }
-  return { rows, cards, value: Math.round(value * 100) / 100, hasPrice: pi > -1 };
+  // Sin ningún precio rellenado no tocamos el valor que ya tenía la carpeta
+  return { rows: records.length - 1, cards, value: Math.round(value * 100) / 100, hasPrice: priced > 0 };
 }

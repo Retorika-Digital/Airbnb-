@@ -133,6 +133,7 @@ function cleanSettings(raw) {
     theme: THEMES.includes(s.theme) ? s.theme : 'crema',
     pet: s.pet !== false,
     lang: LANGS.includes(s.lang) ? s.lang : '',
+    ambient: s.ambient !== false,
   };
 }
 
@@ -244,8 +245,29 @@ export function importGames(list) {
   const s = get();
   // Un juego ya está si coincide su id de Steam o de BGG, o su título (en juegos de mesa,
   // aunque la caja sea de otro tamaño; en el resto, en la misma plataforma)
-  const keysOf = (g) => [g.steamAppId && `steam:${g.steamAppId}`, g.bggId && `bgg:${g.bggId}`, `t:${g.kind === 'mesa' ? 'mesa' : g.platform}:${titleKey(g.title)}`].filter(Boolean);
-  const keys = new Set(s.games.flatMap(keysOf));
+  const idOf = (g) => (g.steamAppId ? `steam:${g.steamAppId}` : g.bggId ? `bgg:${g.bggId}` : null);
+  const titleOf = (g) => {
+    const k = titleKey(g.title);
+    return k ? `t:${g.kind === 'mesa' ? 'mesa' : g.platform}:${k}` : null;
+  };
+  const knownIds = new Set();
+  const titles = new Set(); // de todos
+  const idlessTitles = new Set(); // solo de los que no tienen id
+  const remember = (g) => {
+    const id = idOf(g);
+    const title = titleOf(g);
+    if (id) knownIds.add(id);
+    if (title) titles.add(title);
+    if (title && !id) idlessTitles.add(title);
+  };
+  s.games.forEach(remember);
+  // Con id: repetido si ya está ese id, o si hay uno igual apuntado a mano (sin id).
+  // Sin id: repetido si ya hay uno con el mismo título.
+  const isDuplicate = (g) => {
+    const id = idOf(g);
+    const title = titleOf(g);
+    return id ? knownIds.has(id) || (!!title && idlessTitles.has(title)) : !!title && titles.has(title);
+  };
   const ids = [];
   let skipped = 0;
   const base = Date.now();
@@ -260,12 +282,11 @@ export function importGames(list) {
       skipped++;
       continue;
     }
-    const mine = keysOf(g);
-    if (mine.some((k) => keys.has(k))) {
+    if (isDuplicate(g)) {
       skipped++;
       continue;
     }
-    for (const k of mine) keys.add(k);
+    remember(g);
     s.games.push(g);
     ids.push(g.id);
   }

@@ -2,13 +2,17 @@
 // La habitación se carga aparte: si el navegador no puede con WebGL, la
 // consola sigue funcionando igual.
 import * as store from './store.js';
-import { createDevice } from './device.js';
+import { createDevice, h } from './device.js';
 import { demoCollection } from './demo.js';
 import { platform } from './platforms.js';
 import { statusLabel, isBoard } from './store.js';
 import { playersText, minutesText, lentText } from './boards.js';
 import { tcg, recordText, euros, deckCount } from './cards.js';
 import { t, tp, num, setLang, detectLang } from './i18n.js';
+import { createLogros, logrosOf, pickShowcase } from './logros.js';
+import { confetti } from './fx.js';
+import { sfx } from './audio.js';
+import { seasonOf } from './util.js';
 
 const params = new URLSearchParams(location.search);
 setLang(params.get('lang') || store.getSettings().lang || detectLang());
@@ -89,6 +93,17 @@ const actions = {
       return { error: 'sin_conexion' };
     }
   },
+  /** Los logros que se ven: los tuyos, o los de la colección que visitas. */
+  logrosList: () => (logros ? logros.list() : logrosOf(store.getGames())),
+  async openStory() {
+    const { openStory } = await import('./story.js');
+    const name = store.visiting()?.name || store.getSettings().name;
+    openStory(store.getGames(), {
+      name,
+      onShare: (cnv) => shareCanvas(cnv, 'mi-resumen-disketeboy.png', t('Mi resumen de DisketeBoy')),
+      onClose: () => device.focus(),
+    });
+  },
   printTicket,
   shareVisit,
   leaveVisit,
@@ -117,10 +132,12 @@ async function shareVisit() {
     window.prompt(t('Copia este enlace para compartir tu habitación:'), url);
   }
   window.disketeboy.lastVisitUrl = url;
+  logroEvent('compartir');
 }
 
 function leaveVisit() {
-  location.replace(location.pathname);
+  const lang = params.get('lang');
+  location.replace(location.pathname + (lang ? `?lang=${encodeURIComponent(lang)}` : ''));
 }
 
 async function maybeVisit() {
@@ -172,9 +189,13 @@ async function startRoom() {
       onRelease: () => onInspect(null),
       onColors: (batch) => store.setColors(batch),
       onNotice: (text) => device.toast(text),
+      onPet: () => logroEvent('gato'),
+      season: seasonOf(new Date(), params.get('temporada')),
     });
     if (!room) return showFallback();
     room.sync(store.getGames(), store.getSettings(), { type: 'init' });
+    room.setAmbient(store.getSettings().ambient !== false);
+    room.setTrophies(trophyList());
     room.setActive(isLowered());
   } catch (err) {
     console.error(err);
@@ -189,10 +210,92 @@ function showFallback() {
 
 store.subscribe((change) => {
   room?.sync(store.getGames(), store.getSettings(), change);
+  if (change.type === 'settings') room?.setAmbient(store.getSettings().ambient !== false);
+  celebrate(change);
+  checkLogros();
   tidyBtn.setAttribute('aria-pressed', String(store.getSettings().tidy));
   if (change.type === 'remove' && change.ids.includes(inspecting)) onInspect(null);
 });
 tidyBtn.setAttribute('aria-pressed', String(store.getSettings().tidy));
+
+// ------------------------------------------------------------------ logros y celebraciones
+let logros = null;
+const logroEl = document.getElementById('logro');
+let logroTimer = 0;
+let celebrateTimer = 0;
+
+/** Los trofeos del alféizar: los tuyos o, de visita, los de la otra persona. */
+function trophyList() {
+  const list = logros ? logros.list() : logrosOf(store.getGames());
+  return pickShowcase(list).map((l) => ({ id: l.id, tier: l.tier, icon: l.icon, title: t(l.title) }));
+}
+
+function showLogros(nuevos) {
+  const one = nuevos.length === 1;
+  logroEl.replaceChildren(
+    h('span', { class: 'logro-icons', 'aria-hidden': 'true', text: nuevos.slice(0, 4).map((l) => l.icon).join(' ') }),
+    h(
+      'span',
+      { class: 'logro-text' },
+      h('b', { text: one ? t('¡Logro desbloqueado!') : t('¡{n} logros desbloqueados!', { n: nuevos.length }) }),
+      h('span', {
+        text: one
+          ? `${t(nuevos[0].title)} · ${t(nuevos[0].text)}`
+          : nuevos.length > 4
+            ? t('{list} y {n} más', { list: nuevos.slice(0, 3).map((l) => t(l.title)).join(' · '), n: nuevos.length - 3 })
+            : nuevos.map((l) => t(l.title)).join(' · '),
+      }),
+    ),
+  );
+  logroEl.hidden = false;
+  logroEl.classList.remove('is-on');
+  void logroEl.offsetWidth;
+  logroEl.classList.add('is-on');
+  clearTimeout(logroTimer);
+  logroTimer = setTimeout(() => logroEl.classList.remove('is-on'), one ? 4200 : 5600);
+  sfx.fanfare();
+  confetti({ count: one ? 90 : 150 });
+}
+
+function checkLogros() {
+  if (!logros || store.visiting()) {
+    room?.setTrophies(trophyList());
+    return;
+  }
+  const nuevos = logros.check(store.getGames());
+  room?.setTrophies(trophyList());
+  if (nuevos.length) showLogros(nuevos);
+}
+
+/** Algo que no está en la colección (acariciar al gato, compartir, imprimir). */
+function logroEvent(name) {
+  if (!logros || store.visiting()) return;
+  logros.event(name);
+  checkLogros();
+}
+
+/** Terminar un juego, estrenar uno de mesa o ganar con un mazo merece confeti. */
+function celebrate(change) {
+  if (change.type !== 'update' || !change.prev || store.visiting()) return;
+  const prev = change.prev;
+  const g = store.getGame(change.ids[0]);
+  if (!g) return;
+  if (g.kind === 'video' && prev.status !== 'terminado' && g.status === 'terminado') {
+    // Con la cruceta se pasa por «Terminado» de camino a otro estado: esperamos un poco
+    clearTimeout(celebrateTimer);
+    celebrateTimer = setTimeout(() => {
+      if (store.getGame(g.id)?.status !== 'terminado') return;
+      sfx.fanfare();
+      confetti({ count: 110 });
+      device.toast(t('¡«{title}» terminado! A la estantería, con su estrella ★', { title: g.title }));
+    }, 900);
+  } else if (g.kind === 'mesa' && prev.status === 'pendiente' && g.plays > prev.plays) {
+    sfx.fanfare();
+    confetti({ count: 80 });
+  } else if (g.kind === 'mazo' && g.wins > prev.wins) {
+    confetti({ count: 45, power: 0.8 });
+  }
+}
 
 // ------------------------------------------------------------------ ticket y compartir
 async function printTicket() {
@@ -208,6 +311,7 @@ async function printTicket() {
   document.getElementById('t-descargar').focus();
   const { sfx } = await import('./audio.js');
   sfx.print();
+  logroEvent('ticket');
   const shareBtn = document.getElementById('t-compartir');
   shareBtn.hidden = !navigator.canShare;
   shareBtn.onclick = () => shareCanvas(canvasTicket, 'disketeboy-ticket.png', t('Mi colección en DisketeBoy'));
@@ -296,9 +400,12 @@ document.addEventListener('keydown', (e) => {
 
 // ------------------------------------------------------------------ arranque
 // Para las pruebas automáticas y para curiosos desde la consola del navegador.
-window.disketeboy = { store, get room() { return room; }, device, lower, raise, shareVisit };
+window.disketeboy = { store, get room() { return room; }, device, lower, raise, shareVisit, get logros() { return logros; } };
 canvas.tabIndex = 0;
 await maybeVisit();
+// Los logros son tuyos: de visita no se apuntan (se ven los de la otra persona)
+if (!store.visiting()) logros = createLogros();
+checkLogros();
 if (!store.visiting() && params.get('demo') === '1' && !store.getGames().length) store.importGames(demoCollection());
 device.boot();
 startRoom();

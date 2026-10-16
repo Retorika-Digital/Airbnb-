@@ -4,10 +4,10 @@ Lo que se ha ido haciendo mientras dormías, tanda por tanda.
 
 > **Resumen rápido para el café ☕**
 > - **Qué hay**: una consola propia (la DisketeBoy) con **3 disquetes**: videojuegos, juegos de mesa y cartas. Detrás, una **habitación 3D** donde cada juego acaba en su sitio: la pila de la vergüenza, la estantería, el escritorio, la caja de abandonados, la Kallax o las cajitas de mazo.
-> - **Extras**: importar de Steam y de BoardGameGeek, el ticket de la DisketePrinter, el enlace «Visita mi habitación», la ruleta de «¿Qué jugamos esta noche?», 3 temas de habitación y un gato.
+> - **Extras**: 24 logros con trofeos en el alféizar, «Mi resumen» para compartir, importar de Steam y de BoardGameGeek, el ticket de la DisketePrinter, el enlace «Visita mi habitación», la ruleta de «¿Qué jugamos esta noche?», 3 temas de habitación y un gato.
 > - **Cómo verlo**: `node disketeboy/server.mjs` y abre http://localhost:5180/?demo=1. Las capturas están en el [README](../README.md), y el **vídeo para Reddit** en [`docs/video/`](video/).
 > - **Idiomas**: español e inglés. Sale en el idioma del navegador y se cambia en Ajustes.
-> - **Calidad**: 70 pruebas unitarias y 25 en navegador, todas verdes, y axe-core sin errores de accesibilidad.
+> - **Calidad**: 84 pruebas unitarias y 27 en navegador, todas verdes, y axe-core sin errores de accesibilidad. Además, una revisión independiente del código, con sus arreglos.
 > - **Lo que te toca a ti**: está en [LANZAMIENTO.md](LANZAMIENTO.md), en el apartado «Antes de publicar nada»: dominio, comprobar el nombre, clave de Steam y crear la página de Ko-fi. El botón de donar ya está hecho: solo hay que pegar el enlace en `js/config.js`.
 
 ## Tanda 1: la consola DisketeBoy
@@ -312,3 +312,45 @@ Para r/boardgames es el gancho: casi todo el mundo tiene allí su colección apu
   2. «¿Qué jugamos esta noche?»: la ruleta gira y elige Carcassonne. Para que el vídeo salga siempre igual, el azar está fijado.
   3. «¡Sácalo de la Kallax!»: la caja vuela hacia ti, se gira y se lee su reseña con 41 partidas.
   - Se graba con `node disketeboy/tools/video.mjs mesa` (o `mesa es`).
+
+## Tanda 16: logros, celebraciones, «Mi resumen» y una habitación con vida
+
+Me pediste que no me quedara en prototipo y que hubiera detalles y animaciones que enganchen. Esto es lo que más se nota:
+
+- **24 logros**, del «Primer disquete» a la «Montaña de la vergüenza» (25 juegos sin empezar: aquí no se juzga). Hay uno secreto: «Amigo del gato», que se consigue acariciando al gato diez veces.
+  - Al conseguir uno sale un **aviso dorado** con los iconos dando un salto, una **fanfarria chiptune** y **confeti**.
+  - Cada logro es un **trofeo de verdad en el alféizar de la ventana**: copas torneadas de oro, plata o bronce, con una placa con su icono, a contraluz con el cielo. Si tocas uno, te dice cuál es.
+  - **Consola → Logros**: la lista entera, con los conseguidos y los que faltan.
+  - La primera vez se apuntan sin celebrar los que ya tenías: nadie recibe 15 avisos de golpe.
+  - Con la demo salen 13 de golpe: un aviso con «¡13 logros desbloqueados!» y una lluvia de confeti.
+- **Celebraciones**: confeti y fanfarria al **terminar un juego** («¡Terminado! A la estantería, con su estrella ★»), al **estrenar un juego de mesa** y al **ganar con un mazo**. Si solo pasas por «Terminado» con la cruceta de camino a otro estado, no salta.
+- **«Mi resumen»**: tarjetas a pantalla completa, como las historias de las redes, con barritas de progreso, números que cuentan solos y colores para cada una:
+  - tu colección;
+  - tus horas;
+  - tu pila;
+  - tu podio;
+  - la mesa y las cartas;
+  - al final, **tu personalidad**: El Completista, El Montañero, El Arqueólogo, El Duelista, El Crítico…
+  - **«Compartir mi resumen»** crea una **imagen vertical de 1080×1920**, lista para Instagram, TikTok o WhatsApp.
+- **La habitación tiene vida** (Ajustes → Ambiente, que se puede apagar):
+  - **motas de polvo** flotando en la luz de la ventana;
+  - un **despertador digital** retro en el escritorio, con la hora real y los dos puntos parpadeando;
+  - el gato **respira** y sus «zzz» suben y se desvanecen;
+  - la tele de tubo **parpadea** un poco.
+  - Solo se anima con la habitación a la vista y la pestaña abierta, a 24 fotogramas por segundo (15 en el móvil). Con «movimiento reducido» no se mueve nada.
+- **Entrada de cine**: la primera vez que bajas la consola, la cámara entra deslizándose en la habitación.
+- **Decoración de temporada, sola**:
+  - **Halloween** (del 15 de octubre al 2 de noviembre): una **calabaza tallada** en el escritorio, con la cara encendida y una vela que parpadea, y tres **murciélagos** aleteando ante la ventana. Justo a tiempo para lanzar a finales de octubre.
+  - **Navidad** (de diciembre a Reyes): **nieve cayendo** tras la ventana y una **tira de luces** de colores en la barra de la cortina.
+  - Para probarla fuera de fecha: `?temporada=halloween`, `?temporada=navidad` o `?temporada=ninguna`.
+- **Contraste**: el rojo de los botones principales es un pelín más oscuro, para pasar la norma de accesibilidad (4,78 : 1).
+- **Revisión independiente** del código de esta noche, y sus arreglos:
+  - Importar un CSV **sin precios** ya no deja la carpeta a 0 €.
+  - Entiende la línea `sep=,` del CSV de Dragon Shield y las notas con saltos de línea.
+  - Cargar la demo en el otro idioma ya no la duplica.
+  - Dos juegos distintos de BGG con el mismo nombre ya no se toman por duplicados. Los títulos en otros alfabetos («カタン») también se comparan bien.
+  - El servidor de BGG nunca pasa de los 8,5 s que permite Netlify; si BGG va lento, pide volver a intentarlo.
+  - Al salir de una visita se mantiene el idioma.
+  - Los mazos y carpetas de la habitación se repintan cuando cambian sus cifras.
+- **Algo que he aprendido esta noche**: el confeti dejaba su lienzo a pantalla completa puesto para siempre, y eso ralentizaba el navegador de pruebas y tapaba los botones para el lector de pantalla. Ahora el lienzo solo existe mientras caen papelitos.
+- **Pruebas**: 84 unitarias (antes 70) y 27 en navegador (antes 25), todas verdes. Se prueban los logros (incluido el gato secreto), «Mi resumen», el confeti, el ambiente, las temporadas y cada arreglo de la revisión.

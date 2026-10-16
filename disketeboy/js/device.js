@@ -69,6 +69,8 @@ export function h(tag, props = {}, ...kids) {
 
 const stars = (score) => (score === null ? t('Sin nota') : `${'★'.repeat(Math.round(score / 2))}${'☆'.repeat(5 - Math.round(score / 2))} ${score}/10`);
 const metaLine = (g) => [platform(g.platform).short, g.score === null ? null : `★${g.score}`, t(STATUS_LABEL[g.status])].filter(Boolean).join(' · ');
+/** El nombre del final de una URL de perfil, sin «?…» ni «#…». */
+const shortName = (value) => value.replace(/[?#].*$/, '').replace(/\/+$/, '').split('/').pop();
 const cycle = (list, value, dir) => list[(list.indexOf(value) + dir + list.length) % list.length];
 
 export function createDevice(root, actions) {
@@ -216,6 +218,10 @@ export function createDevice(root, actions) {
   }
 
   const p = (text, cls) => h('p', { class: cls || 'note', text });
+  const logrosMeta = () => {
+    const list = actions.logrosList?.() || [];
+    return list.length ? `${list.filter((l) => l.got).length}/${list.length}` : '';
+  };
   const statRow = (k, v) => h('div', { class: 'stat' }, h('dt', { text: k }), h('dd', { text: v }));
 
   // ---------------------------------------------------------------- pantallas
@@ -228,7 +234,7 @@ export function createDevice(root, actions) {
         h('div', { class: 'boot-bar' }, h('span')),
         h('p', { class: 'boot-tip', text: t('Pulsa A para empezar') }),
       );
-      el.dataset.title = 'Arrancando';
+      el.dataset.title = t('Arrancando');
       return el;
     },
 
@@ -264,6 +270,8 @@ export function createDevice(root, actions) {
             item(t('Su pila de la vergüenza'), () => go('pila'), { meta: String(st.by.pendiente), id: 'm-pila' }),
             item(t('Ver su habitación'), () => actions.lower(), { id: 'm-habitacion' }),
             item(t('Estadísticas'), () => go('stats'), { id: 'm-stats' }),
+            item(t('✨ Su resumen'), () => actions.openStory(), { id: 'm-resumen' }),
+            item(t('Sus logros'), () => go('logros'), { meta: logrosMeta(), id: 'm-logros' }),
             item(t('Imprimir su ticket'), () => actions.printTicket(), { id: 'm-ticket' }),
             item(t('Ajustes'), () => go('ajustes'), { id: 'm-ajustes' }),
             item(t('Cambiar de disquete'), ejectDisk, { id: 'm-expulsar' }),
@@ -283,6 +291,8 @@ export function createDevice(root, actions) {
           item(t('Pila de la vergüenza'), () => go('pila'), { meta: String(st.by.pendiente), id: 'm-pila' }),
           item(t('Ver mi habitación'), () => actions.lower(), { id: 'm-habitacion' }),
           item(t('Estadísticas'), () => go('stats'), { id: 'm-stats' }),
+          item(t('✨ Mi resumen'), () => actions.openStory(), { id: 'm-resumen' }),
+          item(t('Logros'), () => go('logros'), { meta: logrosMeta(), id: 'm-logros' }),
           item(t('Imprimir ticket'), () => actions.printTicket(), { id: 'm-ticket' }),
           store.getGames().length ? item(t('Compartir mi habitación'), () => actions.shareVisit(), { id: 'm-compartir' }) : null,
           item(t('Ajustes'), () => go('ajustes'), { id: 'm-ajustes' }),
@@ -452,7 +462,7 @@ export function createDevice(root, actions) {
         if (res.error) {
           sfx.error();
           status.replaceChildren(
-            p(STEAM_ERROR[res.error] ? t(STEAM_ERROR[res.error], { name: value.replace(/\/+$/, '').split('/').pop() }) : res.message || t('No he podido leer tu biblioteca.')),
+            p(STEAM_ERROR[res.error] ? t(STEAM_ERROR[res.error], { name: shortName(value) }) : res.message || t('No he podido leer tu biblioteca.')),
             res.error === 'sin_clave' ? h('div', { class: 'list' }, item(t('Cargar la colección de demo'), loadDemo, { id: 's-demo' })) : null,
           );
           focusAt(navs().length - 1);
@@ -503,6 +513,26 @@ export function createDevice(root, actions) {
       );
     },
 
+    logros() {
+      const list = actions.logrosList?.() || [];
+      const got = list.filter((l) => l.got).length;
+      return view(
+        store.visiting() ? t('Sus logros') : t('Logros'),
+        p(t('{got} de {total} conseguidos', { got, total: list.length }), 'sub'),
+        h(
+          'div',
+          { class: 'list' },
+          list.map((l) => {
+            const hidden = l.secret && !l.got;
+            const title = hidden ? t('Logro secreto') : t(l.title);
+            const text = hidden ? t('¿Quién sabe? Explora la habitación…') : t(l.text);
+            return item(`${hidden ? '❔' : l.icon} ${title}`, () => toast(text), { meta: l.got ? '✓' : '', cls: `logro-row ${l.got ? 'got' : 'locked'}` });
+          }),
+          item(t('Volver'), back),
+        ),
+      );
+    },
+
     stats() {
       const st = store.stats();
       const pct = st.total ? Math.round((st.by.terminado / st.total) * 100) : 0;
@@ -545,6 +575,8 @@ export function createDevice(root, actions) {
           item(t('Préstamos'), () => go('prestamos'), { meta: String(bs.lent.length), id: 'b-prestamos' }),
           item(visit ? t('Ver su Kallax en 3D') : t('Ver mi Kallax en 3D'), () => actions.showZone('kallax'), { id: 'b-kallax' }),
           item(t('Estadísticas'), () => go('mesaStats'), { id: 'b-stats' }),
+          item(visit ? t('✨ Su resumen') : t('✨ Mi resumen'), () => actions.openStory(), { id: 'b-resumen' }),
+          item(visit ? t('Sus logros') : t('Logros'), () => go('logros'), { meta: logrosMeta(), id: 'b-logros' }),
           item(visit ? t('Cambiar de disquete') : t('Expulsar disquete'), ejectDisk, { id: 'm-expulsar' }),
           visit ? item(t('Crear mi propia habitación'), () => actions.leaveVisit(), { cls: 'primary', id: 'm-salir' }) : null,
         ),
@@ -671,7 +703,7 @@ export function createDevice(root, actions) {
         const res = await actions.bggLookup(value);
         if (res.error) {
           sfx.error();
-          status.replaceChildren(p(BGG_ERROR[res.error] ? t(BGG_ERROR[res.error], { name: value.replace(/\/+$/, '').split('/').pop() }) : res.message || t('No he podido leer tu colección.')));
+          status.replaceChildren(p(BGG_ERROR[res.error] ? t(BGG_ERROR[res.error], { name: shortName(value) }) : res.message || t('No he podido leer tu colección.')));
           focusAt(navs().length - 1);
           return;
         }
@@ -785,6 +817,8 @@ export function createDevice(root, actions) {
           visit ? null : item(t('Nueva carpeta'), () => go('carpetaNueva'), { id: 'c-nueva-carpeta' }),
           item(t('Ver los mazos en 3D'), () => actions.showZone('mazos'), { id: 'c-ver' }),
           item(t('Estadísticas'), () => go('cartasStats'), { id: 'c-stats' }),
+          item(visit ? t('✨ Su resumen') : t('✨ Mi resumen'), () => actions.openStory(), { id: 'c-resumen' }),
+          item(visit ? t('Sus logros') : t('Logros'), () => go('logros'), { meta: logrosMeta(), id: 'c-logros' }),
           item(visit ? t('Cambiar de disquete') : t('Expulsar disquete'), ejectDisk, { id: 'm-expulsar' }),
           visit ? item(t('Crear mi propia habitación'), () => actions.leaveVisit(), { cls: 'primary', id: 'm-salir' }) : null,
         ),
@@ -1004,6 +1038,7 @@ export function createDevice(root, actions) {
         stepper(t('Sonido'), s.sound ? t('Sí') : t('No'), () => store.setSettings({ sound: !s.sound }), { id: 'a-sonido' }),
         stepper(t('Habitación'), t(THEME_LABEL[s.theme]), (dir) => store.setSettings({ theme: cycle(THEMES, s.theme, dir) }), { id: 'a-tema' }),
         stepper(t('Gato'), s.pet ? t('Sí, durmiendo') : t('No'), () => store.setSettings({ pet: !s.pet }), { id: 'a-gato' }),
+        stepper(t('Ambiente'), s.ambient !== false ? t('Sí') : t('No'), () => store.setSettings({ ambient: s.ambient === false }), { id: 'a-ambiente' }),
       ];
       if (store.visiting()) return view(t('Ajustes'), h('div', { class: 'list' }, ...looks, item(t('Volver'), back)));
       const nameInput = h('input', {
@@ -1143,7 +1178,7 @@ export function createDevice(root, actions) {
   }
 
   function loadDemo() {
-    const { added } = store.importGames(demoCollection());
+    const { added } = store.importGames(demoCollection(store.getGames()));
     toast(added ? t('Demo cargada: {n} juegos han caído en tu habitación', { n: added }) : t('La demo ya estaba cargada'));
     if (!root.dataset.disk) root.dataset.disk = 'videojuegos';
     history.length = 0;

@@ -54,6 +54,12 @@ Coges una caja, la giras y **en la contraportada está tu reseña**, con tu nota
 
 **En español y en inglés**: sale en el idioma del navegador y se cambia en Ajustes → Idioma (o con `?lang=en` en la dirección). Se traduce todo: la consola, los carteles de la habitación, las portadas, el ticket e incluso las reseñas de la demo.
 
+**Logros y celebraciones**: 24 logros, con un **trofeo de verdad en el alféizar** por cada uno. Salen con un aviso dorado, una fanfarria chiptune y confeti, igual que al terminar un juego, estrenar uno de mesa o ganar con un mazo. Hay uno secreto (pista: el gato).
+
+**✨ Mi resumen**: tu colección contada en tarjetas animadas, como las historias de las redes, con tu personalidad de jugador al final («El Montañero», «El Completista»…). Además, una **imagen vertical de 1080×1920** para compartir.
+
+**Una habitación con vida**: polvo flotando en la luz, un despertador retro con la hora real, el gato que respira, la tele de tubo que parpadea y una entrada de cine la primera vez que bajas la consola. Se apaga en Ajustes → Ambiente, y con «movimiento reducido» no se mueve nada. En **Halloween** aparecen una calabaza con vela y murciélagos, y en **Navidad**, nieve tras la ventana y luces en la cortina.
+
 **Tu habitación, a tu gusto**: en Ajustes eliges el tema (*Crema*, *Gamer RGB* con tira LED o *Retro 90*) y si quieres al gato, que duerme en la alfombra y ronronea si lo tocas. El tema y el gato viajan en el enlace de visita. Están pensados como futuras ventajas para mecenas; ahora son gratis para todos.
 
 > Prototipo en desarrollo. Está en esta carpeta para no mezclarlo con retorika Home; cuando guste, se pasa a su propio repositorio.
@@ -74,6 +80,7 @@ BGG_TOKEN=xxxx node disketeboy/server.mjs
 | Probar otra hora (día, tarde, noche) | añade `&hora=12`, `&hora=20` o `&hora=23` |
 | Solo la consola, sin 3D | añade `&sin3d=1` |
 | En inglés | añade `&lang=en` |
+| Decoración de temporada | `&temporada=halloween`, `navidad` o `ninguna` |
 
 En Netlify se sirve en `/disketeboy/`, con sus funciones en `netlify/functions/disketeboy-*.mjs`.
 
@@ -106,6 +113,10 @@ En Netlify se sirve en `/disketeboy/`, con sus funciones en `netlify/functions/d
 | `js/boards.js` | Juegos de mesa: «¿Qué jugamos esta noche?», préstamos (funciones puras) |
 | `js/cards.js` | Cartas: juegos de cartas, contar la lista de un mazo, récord y estadísticas (funciones puras) |
 | `js/share.js` | «Visita mi habitación»: la colección comprimida en el enlace |
+| `js/logros.js` | Los 24 logros: qué cuenta cada uno y cuándo se consiguió (funciones puras) |
+| `js/trofeos.js` | Las copas 3D de los logros, para el alféizar |
+| `js/resumen.js` / `js/story.js` | «Mi resumen»: los datos (con tests) y las tarjetas animadas con su imagen para compartir |
+| `js/ambiente.js` / `js/fx.js` | Polvo, despertador y gato que respira; confeti de las celebraciones |
 | `js/config.js` | Lo que se cambia a mano antes de publicar: el enlace de donaciones |
 | `js/i18n.js` | Idiomas: `t('texto en español')` lo traduce con el diccionario |
 | `js/lang/en.js` | El diccionario inglés (una prueba vigila que no falte ni sobre nada) |
@@ -118,8 +129,8 @@ En Netlify se sirve en `/disketeboy/`, con sus funciones en `netlify/functions/d
 
 ```bash
 npm ci                                        # en la raíz: Playwright y axe-core
-node --test disketeboy/tests/unit/*.test.mjs  # 70 pruebas unitarias
-node disketeboy/tests/e2e/run.mjs             # 25 pruebas en Chromium (E2E_SHOTS=1 guarda capturas)
+node --test disketeboy/tests/unit/*.test.mjs  # 84 pruebas unitarias
+node disketeboy/tests/e2e/run.mjs             # 27 pruebas en Chromium (E2E_SHOTS=1 guarda capturas)
 ```
 
 En GitHub se ejecutan solas con `.github/workflows/disketeboy.yml` cada vez que cambia algo en `disketeboy/`.

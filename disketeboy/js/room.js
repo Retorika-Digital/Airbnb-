@@ -10,6 +10,9 @@ import { sfx } from './audio.js';
 import { rng, hexToHsl, hslToHex } from './util.js';
 import { isBoard } from './store.js';
 import { t } from './i18n.js';
+import { createDust, createDeskClock, animateCat } from './ambiente.js';
+import { makeTrophy } from './trofeos.js';
+import { createHalloween, createChristmas } from './temporada.js';
 
 const REDUCED = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ease = {
@@ -277,7 +280,7 @@ function posterPaint(game, image) {
 }
 
 // ------------------------------------------------------------------ la habitación
-export function createRoom(canvas, { hour = null, onInspect = () => {}, onRelease = () => {}, onColors = () => {}, onNotice = () => {} } = {}) {
+export function createRoom(canvas, { hour = null, onInspect = () => {}, onRelease = () => {}, onColors = () => {}, onNotice = () => {}, onPet = () => {}, season = null } = {}) {
   let renderer;
   try {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true, powerPreference: 'low-power' });
@@ -343,11 +346,14 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
   };
   const dirFor = (yaw, pitch) => new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
   let lastFrame = 0;
+  let introUntil = 0;
+  let introDone = false;
   /** Suaviza la cámara según el tiempo real (igual de rápida a 20 que a 120 fps). */
   function updateCamera(now = 0, instant = false) {
     const dt = lastFrame ? Math.min(0.1, (now - lastFrame) / 1000) : 1 / 60;
     lastFrame = now;
-    const k = instant || REDUCED ? 1 : 1 - Math.exp(-dt * 11);
+    // Durante la entrada de cine la cámara se desliza despacio; luego responde rápido
+    const k = instant || REDUCED ? 1 : 1 - Math.exp(-dt * (now < introUntil ? 1.9 : 11));
     view.yaw += (view.tYaw - view.yaw) * k;
     view.pitch += (view.tPitch - view.pitch) * k;
     view.dolly += (view.tDolly - view.dolly) * k;
@@ -859,6 +865,7 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
     zzz.scale.set(0.15, 0.15, 1);
     zzz.position.set(0.2, 0.27, 0.07);
     cat.add(zzz);
+    cat.userData = { body, tail, zzz, bodyY: body.scale.y, zzzY: zzz.position.y };
   }
   cat.position.set(0.12, 0.004, -0.62);
   cat.rotation.y = -1.1;
@@ -1075,6 +1082,110 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
     return left > 0;
   }
 
+  // ---------------------------------------------------------------- vida ambiental
+  // Polvo en la luz, el despertador, el gato que respira y la tele que parpadea.
+  // Solo con la habitación a la vista (consola bajada), la pestaña visible y sin
+  // «movimiento reducido»; y a pocos fotogramas por segundo, que la batería importa.
+  const dust = createDust({ min: new THREE.Vector3(0.15, 0.85, -1.8), max: new THREE.Vector3(2.05, 2.2, -0.75), count: 70 });
+  scene.add(dust.points);
+  const deskClock = createDeskClock();
+  deskClock.group.position.set(DESK.x - 0.53, DESK.top, DESK.z + 0.13);
+  deskClock.group.rotation.y = 0.38;
+  deskClock.group.scale.setScalar(1.4);
+  scene.add(deskClock.group);
+  deskClock.update();
+  const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+  let ambientOn = !REDUCED;
+  let ambientTimer = 0;
+  let lastAmbient = 0;
+  function ambientTick() {
+    ambientTimer = 0;
+    if (!ambientOn || !active) return;
+    if (!document.hidden) {
+      const now = performance.now();
+      const dt = lastAmbient ? Math.min(0.2, (now - lastAmbient) / 1000) : 0.05;
+      lastAmbient = now;
+      const secs = now / 1000;
+      dust.step(secs, dt);
+      if (cat.visible) animateCat(cat, secs);
+      seasonDecor?.step(secs, dt);
+      crtMat.color.setScalar(0.94 + Math.random() * 0.06);
+      deskClock.update();
+      invalidate();
+    }
+    ambientTimer = setTimeout(ambientTick, 1000 / (coarse ? 15 : 24));
+  }
+  function startAmbient() {
+    lastAmbient = 0;
+    if (!ambientTimer && ambientOn) ambientTimer = setTimeout(ambientTick, 0);
+  }
+
+  // ---------------------------------------------------------------- temporada
+  // Halloween: calabaza con vela en el escritorio y murciélagos ante la ventana.
+  // Navidad: nieve tras el cristal y luces de colores en la barra de la cortina.
+  let seasonDecor = null;
+  if (season === 'halloween') {
+    seasonDecor = createHalloween({
+      pumpkinAt: { pos: new THREE.Vector3(DESK.x + 0.5, DESK.top, DESK.z + 0.2), yaw: -0.75 },
+      batsAt: [new THREE.Vector3(win.x - 0.34, 1.84, ROOM.minZ + 0.2), new THREE.Vector3(win.x + 0.06, 1.93, ROOM.minZ + 0.22), new THREE.Vector3(win.x + 0.38, 1.8, ROOM.minZ + 0.2)],
+    });
+  } else if (season === 'navidad') {
+    seasonDecor = createChristmas({
+      window: { x: win.x, y: win.y, w: win.w - 0.08, h: win.h - 0.08, z: ROOM.minZ },
+      rod: { x0: win.x - 0.6, x1: win.x + 0.6, y: win.y + win.h / 2 + 0.12, z: ROOM.minZ + 0.12 },
+    });
+  }
+  if (seasonDecor) {
+    scene.add(seasonDecor.group);
+    seasonDecor.step(0, 0);
+  }
+
+  // ---------------------------------------------------------------- trofeos
+  // Los logros conseguidos, en el alféizar de la ventana (los mejores, hasta 8).
+  const SILL = { y: 1.62 - 0.43 - 0.035 + 0.015, z: ROOM.minZ + 0.07, x0: DESK.x - 0.41, step: 0.117 };
+  const trophyGroup = new THREE.Group();
+  scene.add(trophyGroup);
+  const trophies = new Map();
+  let trophiesReady = false;
+  function setTrophies(list) {
+    const want = new Set(list.map((l) => l.id));
+    for (const [id, obj] of trophies) {
+      if (want.has(id)) continue;
+      trophyGroup.remove(obj);
+      trophies.delete(id);
+    }
+    list.forEach((l, i) => {
+      let obj = trophies.get(l.id);
+      const x = SILL.x0 + i * SILL.step;
+      if (!obj) {
+        obj = makeTrophy(l);
+        obj.userData.title = l.title;
+        obj.position.set(x, SILL.y, SILL.z);
+        obj.rotation.y = 0.28;
+        trophyGroup.add(obj);
+        trophies.set(l.id, obj);
+        if (trophiesReady) {
+          // Uno nuevo: aparece con un saltito
+          const size = obj.scale.x;
+          obj.scale.setScalar(0.001);
+          tweenTo(`trofeo:${l.id}`, obj, { scale: size, dur: 0.9, delay: 0.25, fn: ease.back });
+        }
+      } else obj.position.x = x;
+    });
+    trophiesReady = true;
+    invalidate();
+  }
+  function trophyAt(x, y) {
+    if (!trophies.size) return null;
+    const rect = canvas.getBoundingClientRect();
+    ndc.set(((x - rect.left) / rect.width) * 2 - 1, -((y - rect.top) / rect.height) * 2 + 1);
+    raycaster.setFromCamera(ndc, camera);
+    const hit = raycaster.intersectObject(trophyGroup, true)[0];
+    let o = hit?.object;
+    while (o && o.parent !== trophyGroup) o = o.parent;
+    return o || null;
+  }
+
   // ---------------------------------------------------------------- bucle de dibujo
   let needsRender = true;
   let raf = 0;
@@ -1106,8 +1217,9 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
   let shownBookcases = 1;
   const sameLook = (a, b) =>
     a.title === b.title && a.platform === b.platform && a.status === b.status && a.color === b.color && a.steamAppId === b.steamAppId &&
-    a.minPlayers === b.minPlayers && a.maxPlayers === b.maxPlayers && a.minutes === b.minutes && a.lentTo === b.lentTo;
-  const sameBack = (a, b) => sameLook(a, b) && a.score === b.score && a.review === b.review && a.hours === b.hours && a.plays === b.plays && a.lentAt === b.lentAt;
+    a.minPlayers === b.minPlayers && a.maxPlayers === b.maxPlayers && a.minutes === b.minutes && a.lentTo === b.lentTo &&
+    a.tcg === b.tcg && a.format === b.format && a.wins === b.wins && a.losses === b.losses && a.cards === b.cards;
+  const sameBack = (a, b) => sameLook(a, b) && a.score === b.score && a.review === b.review && a.hours === b.hours && a.plays === b.plays && a.lentAt === b.lentAt && a.value === b.value && a.list === b.list;
 
   function sync(games, settings, change = {}) {
     settingsCache = settings;
@@ -1477,6 +1589,13 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
     else if (catHit(ev.clientX, ev.clientY)) {
       sfx.meow();
       onNotice(t('Prrr… 🐱 (mejor no despertarlo)'));
+      onPet();
+    } else {
+      const trophy = trophyAt(ev.clientX, ev.clientY);
+      if (trophy) {
+        sfx.select();
+        onNotice(`🏆 ${trophy.userData.title}`);
+      }
     }
   };
   canvas.addEventListener('pointerup', endPointer);
@@ -1628,6 +1747,15 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
     },
     setActive(on) {
       active = !!on;
+      if (active && !introDone && !REDUCED) {
+        // Entrada de cine la primera vez que bajas la consola
+        introDone = true;
+        view.yaw = -0.32;
+        view.pitch = 0.3;
+        view.dolly = -0.8;
+        introUntil = performance.now() + 2600;
+      }
+      if (active) startAmbient();
       if (!active) {
         hover(null);
         hideTip();
@@ -1650,9 +1778,15 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
     get busy() {
       return tweens.size > 0 || cameraMoving();
     },
-    debug: { scene, camera, renderer, entries, view, tweens },
+    setTrophies,
+    setAmbient(on) {
+      ambientOn = !!on && !REDUCED;
+      if (ambientOn && active) startAmbient();
+    },
+    debug: { scene, camera, renderer, entries, view, tweens, trophies },
     dispose() {
       clearInterval(clock);
+      clearTimeout(ambientTimer);
       window.removeEventListener('resize', resize);
       tip.remove();
       renderer.dispose();

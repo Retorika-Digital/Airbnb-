@@ -2,6 +2,7 @@
 // Los de Steam traen su portada real; los retro llevan una portada generada.
 // Los textos se traducen al cargar la demo (con el idioma de quien la carga).
 import { t, mark } from './i18n.js';
+import { titleKey } from './util.js';
 
 export const DEMO_GAMES = [
   { title: 'Hollow Knight', platform: 'pc', steamAppId: 367520, status: 'terminado', score: 10, hours: 62, review: mark('Precioso, difícil y con la mejor música. El Palacio Blanco casi me cuesta un mando.') },
@@ -63,11 +64,17 @@ export const DEMO_CARDS = [
   { kind: 'carpeta', title: mark('Yu-Gi-Oh! de 2004'), tcg: 'yugioh', cards: 300, value: 60, status: 'completa', review: mark('Encontrada en casa de mis padres. Huele a recreo.') },
 ];
 
-/** Toda la demo, con los títulos, reseñas y formatos en el idioma actual. */
-export const demoCollection = () =>
-  [...DEMO_GAMES, ...DEMO_BOARDS, ...DEMO_CARDS].map((g) => ({
+/**
+ * Toda la demo, con los títulos, reseñas y formatos en el idioma actual. Si se pasa la
+ * colección, deja fuera lo que ya está (en español o traducido), para no duplicar al
+ * volver a cargarla en otro idioma.
+ */
+export const demoCollection = (existing = []) => {
+  const have = new Set(existing.map((g) => titleKey(g.title)));
+  return [...DEMO_GAMES, ...DEMO_BOARDS, ...DEMO_CARDS].filter((g) => !have.has(titleKey(g.title)) && !have.has(titleKey(t(g.title)))).map((g) => ({
     ...g,
     title: t(g.title),
     ...(g.review ? { review: t(g.review) } : {}),
     ...(g.format ? { format: t(g.format) } : {}),
   }));
+};

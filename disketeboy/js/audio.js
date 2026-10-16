@@ -117,6 +117,14 @@ export const sfx = {
     osc.start(t);
     osc.stop(t + 0.55);
   },
+  /** Fanfarria corta para los logros y las celebraciones. */
+  fanfare: () => {
+    [523, 659, 784].forEach((f, i) => tone(f, i * 0.08, 0.1, { vol: 0.045 }));
+    tone(1047, 0.24, 0.16, { vol: 0.05 });
+    tone(784, 0.4, 0.08, { vol: 0.04 });
+    tone(1047, 0.48, 0.42, { vol: 0.05, type: 'triangle' });
+    tone(1319, 0.48, 0.42, { vol: 0.03, type: 'triangle' });
+  },
   print: () => {
     for (let i = 0; i < 12; i++) noise(i * 0.055, 0.04, 0.045, 4200);
   },

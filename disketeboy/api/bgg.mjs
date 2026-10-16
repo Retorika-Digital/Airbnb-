@@ -30,7 +30,10 @@ const decode = (s) =>
     }
     return ENTITIES[e.toLowerCase()] ?? m;
   });
-const attr = (tag, name) => tag.match(new RegExp(`\\b${name}="([^"]*)"`))?.[1];
+const attr = (tag, name) => {
+  const m = tag.match(new RegExp(`\\b${name}=(?:"([^"]*)"|'([^']*)')`));
+  return m ? (m[1] ?? m[2]) : undefined;
+};
 const num = (v) => (v !== undefined && v !== '' && Number.isFinite(Number(v)) ? Number(v) : null);
 
 /** Convierte el XML de una colección de BGG en una lista sencilla (o en un error). */
@@ -47,7 +50,7 @@ export function parseCollection(xml) {
     const name = decode(body.match(/<name\b[^>]*>([\s\S]*?)<\/name>/)?.[1]).trim();
     if (!id || !name) continue;
     const stats = body.match(/<stats\b([^>]*)>/)?.[1] || '';
-    const rating = num(body.match(/<rating\b[^>]*\bvalue="([^"]*)"/)?.[1]);
+    const rating = num(attr(body.match(/<rating\b([^>]*)>/)?.[1] || '', 'value'));
     games.push({
       id,
       name: name.slice(0, 120),
@@ -68,20 +71,29 @@ const json = (status, body) =>
   });
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// En Netlify la función entera tiene 10 s: nos damos 8,5 para todo
+const BUDGET = 8500;
 
-export default async function bgg(req, { fetchImpl = fetch, token = process.env.BGG_TOKEN, wait = sleep } = {}) {
+export default async function bgg(req, { fetchImpl = fetch, token = process.env.BGG_TOKEN, wait = sleep, now = () => Date.now(), budget = BUDGET } = {}) {
   const user = parseBggInput(new URL(req.url).searchParams.get('user'));
   if (!user) return json(400, { error: 'usuario', message: 'Eso no parece un usuario de BoardGameGeek.' });
   const url = new URL(API);
   for (const [k, v] of Object.entries({ username: user, own: '1', subtype: 'boardgame', excludesubtype: 'boardgameexpansion', stats: '1' })) url.searchParams.set(k, v);
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const deadline = now() + budget;
+  const queued = () => json(503, { error: 'bgg_en_cola', message: 'BoardGameGeek está preparando tu colección. Vuelve a intentarlo en unos segundos.' });
   try {
     // BGG prepara la colección en segundo plano: 202 significa «vuelve en un momento»
     for (const pause of [1200, 2000, 2800, 0]) {
-      // Plazos cortos: en Netlify la función entera tiene 10 s
-      const res = await fetchImpl(url, { headers, signal: AbortSignal.timeout(3500) });
+      const left = deadline - now();
+      if (left < 400) return queued();
+      // El plazo cubre también la lectura del XML: es lo que queda del presupuesto
+      const signal = AbortSignal.timeout(left);
+      const res = await fetchImpl(url, { headers, signal });
       if (res.status === 202) {
-        if (pause) await wait(pause);
+        const rest = deadline - now();
+        if (!pause || rest < pause + 800) return queued();
+        await wait(pause);
         continue;
       }
       if (res.status === 401 || res.status === 403) return json(501, { error: 'bgg_clave', message: 'BoardGameGeek pide una clave para usar su API y este servidor aún no la tiene.' });
@@ -93,8 +105,10 @@ export default async function bgg(req, { fetchImpl = fetch, token = process.env.
       out.games.sort((a, b) => a.name.localeCompare(b.name));
       return json(200, { user, games: out.games });
     }
-    return json(503, { error: 'bgg_en_cola', message: 'BoardGameGeek está preparando tu colección. Vuelve a intentarlo en unos segundos.' });
+    return queued();
   } catch (err) {
+    // Si se acaba el tiempo, lo más probable es que BGG aún esté preparando la colección
+    if (err?.name === 'TimeoutError' || err?.name === 'AbortError') return queued();
     return json(502, { error: 'bgg_red', message: 'BoardGameGeek no responde ahora mismo. Inténtalo en un rato.', detail: String(err.message || err) });
   }
 }

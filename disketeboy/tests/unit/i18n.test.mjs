@@ -74,3 +74,13 @@ test('traduce, rellena las llaves y vuelve al español', () => {
   assert.equal(t('Habitación de {name}', { name: 'Laura' }), 'Habitación de Laura');
   assert.equal(euros(1234.5), '1234,5 €');
 });
+
+test('volver a cargar la demo en el otro idioma no la duplica', async () => {
+  const { demoCollection } = await import('../../js/demo.js');
+  setLang('es');
+  const spanish = demoCollection();
+  setLang('en');
+  assert.equal(demoCollection(spanish).length, 0, 'ya está toda, aunque fuera en español');
+  assert.ok(demoCollection([]).some((g) => g.title === 'Pokémon Red'), 'sin colección, sale entera y traducida');
+  setLang('es');
+});

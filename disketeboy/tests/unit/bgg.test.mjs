@@ -96,3 +96,36 @@ test('importar dos veces la colección de BGG no duplica nada (ni con otra caja)
   assert.equal(store.importGames([{ kind: 'mesa', title: 'Catan', platform: 'mesa-s' }]).added, 0, 'mismo título, otra caja');
   assert.equal(store.getBoards().find((g) => g.title === 'CATAN').bggId, 13);
 });
+
+test('BGG lento: el presupuesto de 8,5 s nunca se pasa y se avisa de que vuelva a intentarlo', async () => {
+  let clock = 0;
+  let calls = 0;
+  const fetchImpl = async () => {
+    calls++;
+    clock += 3000; // cada respuesta 202 tarda 3 s
+    return xmlResponse('', 202);
+  };
+  const res = await bgg(reqFor('Aldie'), { fetchImpl, wait: async (ms) => (clock += ms), now: () => clock, token: '' });
+  assert.equal(res.status, 503);
+  assert.equal((await res.json()).error, 'bgg_en_cola');
+  assert.ok(clock <= 8500, `se ha pasado del presupuesto: ${clock} ms`);
+  assert.ok(calls <= 2, `demasiados intentos: ${calls}`);
+  const timeout = await bgg(reqFor('Aldie'), { fetchImpl: async () => { throw Object.assign(new Error('lento'), { name: 'TimeoutError' }); }, wait: async () => {}, token: '' });
+  assert.deepEqual([timeout.status, (await timeout.json()).error], [503, 'bgg_en_cola'], 'si se acaba el tiempo, «vuelve en unos segundos»');
+});
+
+test('atributos con comillas simples también valen', () => {
+  const { games } = parseCollection("<items><item objectid='7'><name>Azul</name><stats minplayers='2' maxplayers='4' playingtime='45'><rating value='8'/></stats><numplays>3</numplays></item></items>");
+  assert.deepEqual(games, [{ id: 7, name: 'Azul', minPlayers: 2, maxPlayers: 4, minutes: 45, plays: 3, rating: 8 }]);
+});
+
+test('duplicados: mandan los ids; el título solo cuenta si a uno le falta', () => {
+  const a = { kind: 'mesa', title: 'Catan', bggId: 1 };
+  const b = { kind: 'mesa', title: 'Catan', bggId: 2 };
+  assert.equal(store.importGames([a, b]).added, 2, 'dos juegos distintos de BGG con el mismo nombre');
+  assert.equal(store.importGames([{ kind: 'mesa', title: 'catan' }]).added, 0, 'apuntado a mano: ya lo tienes');
+  assert.equal(store.importGames([{ kind: 'mesa', title: 'Azul' }]).added, 1);
+  assert.equal(store.importGames([{ kind: 'mesa', title: 'AZUL', bggId: 230802 }]).added, 0, 'con id, pero ya estaba apuntado a mano');
+  assert.equal(store.importGames(['カタン', 'Каркассон', 'ドミニオン'].map((title, i) => ({ kind: 'mesa', title, bggId: 100 + i }))).added, 3, 'títulos en otros alfabetos');
+  assert.equal(store.importGames([{ kind: 'mesa', title: 'カタン' }]).added, 0, 'y también se reconocen');
+});
