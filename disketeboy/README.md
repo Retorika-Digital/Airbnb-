@@ -6,7 +6,7 @@
   <img src="docs/video/disketeboy-es.gif" width="100%" alt="Vídeo: se importa una biblioteca de Steam, llueven cajas en la habitación, se forma la pila de la vergüenza, todo vuela a la estantería por colores y detrás de una caja aparece la reseña">
 </p>
 
-▶️ Vídeo de 25 s para Reddit: [en inglés](docs/video/disketeboy-en.mp4) · [en español](docs/video/disketeboy-es.mp4). Se vuelve a grabar con `node disketeboy/tools/video.mjs` (o `… es`).
+▶️ Vídeos para Reddit: **videojuegos** ([inglés](docs/video/disketeboy-en.mp4) · [español](docs/video/disketeboy-es.mp4)) y **juegos de mesa** ([inglés](docs/video/disketeboy-mesa-en.mp4) · [español](docs/video/disketeboy-mesa-es.mp4)). Se vuelven a grabar con `node disketeboy/tools/video.mjs [mesa] [es]`.
 
 <p>
   <img src="docs/capturas/estanteria-800.jpg" width="100%" alt="800 juegos en las estanterías, ordenados por color como un arcoíris, con la pila de la vergüenza en la alfombra">

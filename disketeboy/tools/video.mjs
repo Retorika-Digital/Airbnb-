@@ -3,8 +3,11 @@
 // el navegador dibuje lento. Arranca su propio servidor y, si hay ffmpeg, saca el MP4.
 //   node disketeboy/tools/video.mjs            → docs/video/disketeboy-en.mp4
 //   node disketeboy/tools/video.mjs es         → docs/video/disketeboy-es.mp4
-// Guion: importar de Steam (simulado) → lluvia de cajas → pila de la vergüenza →
+//   node disketeboy/tools/video.mjs mesa [es]  → docs/video/disketeboy-mesa-en.mp4 (o -es)
+// Videojuegos: importar de Steam (simulado) → lluvia de cajas → pila de la vergüenza →
 // estantería arcoíris → coger una caja y leer la reseña → cartel final.
+// Mesa: importar de BoardGameGeek (simulado) → la Kallax se llena → «¿Qué jugamos esta
+// noche?» → la ruleta elige → la caja sale de la Kallax → cartel final.
 import { chromium } from 'playwright';
 import { spawn, execFileSync } from 'node:child_process';
 import { mkdirSync, rmSync } from 'node:fs';
@@ -13,11 +16,14 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
-const lang = process.argv[2] === 'es' ? 'es' : 'en';
+const args = process.argv.slice(2);
+const lang = args.includes('es') ? 'es' : 'en';
+const MESA = args.includes('mesa');
 const W = 1280, H = 720;
 const PORT = 5199;
 const BASE = `http://localhost:${PORT}`;
-const OUT = join(tmpdir(), `disketeboy-video-${lang}`);
+const NAME = `disketeboy-${MESA ? 'mesa-' : ''}${lang}`;
+const OUT = join(tmpdir(), NAME);
 rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT, { recursive: true });
 const FPS = 30;
@@ -52,10 +58,23 @@ const STEAM = {
   }),
 };
 
+// Colección de BoardGameGeek de mentira: [nombre, mín., máx., minutos, partidas, nota]
+const BOARDS = [
+  ['Azul', 2, 4, 45, 18, 8], ['7 Wonders Duel', 2, 2, 30, 25, 9], ['Splendor', 2, 4, 30, 14, 7], ['Pandemic', 2, 4, 45, 9, 8],
+  ['Codenames', 2, 8, 15, 40, 8], ['King of Tokyo', 2, 6, 30, 22, 7], ['Patchwork', 2, 2, 30, 12, 8], ['Root', 2, 4, 90, 4, 9],
+  ['Spirit Island', 1, 4, 120, 6, 9], ['Everdell', 1, 4, 80, 7, 8], ['Cascadia', 1, 4, 45, 11, 8], ['Scythe', 1, 5, 115, 3, 8],
+  ['The Crew', 2, 5, 20, 30, 9], ['Jaipur', 2, 2, 30, 16, 7], ['Sushi Go!', 2, 5, 15, 21, 7], ['Dominion', 2, 4, 30, 10, 7],
+  ['Agricola', 1, 4, 120, 2, 8], ['Concordia', 2, 5, 100, 5, 8], ['Heat: Pedal to the Metal', 1, 6, 60, 8, 9], ['Cartographers', 1, 100, 45, 6, 7],
+  ['Kingdomino', 2, 4, 15, 19, 7], ['Hanabi', 2, 5, 25, 13, 7], ['Mysterium', 2, 7, 42, 5, 7], ['Blood Rage', 2, 4, 90, 3, 8],
+  ['Ark Nova', 1, 4, 150, 0, null], ['Frosthaven', 1, 4, 120, 0, null], ['Twilight Imperium', 3, 6, 480, 0, null], ['Sky Team', 2, 2, 20, 0, null],
+];
+const BGG = { user: 'meeple_mike', games: BOARDS.map(([name, minPlayers, maxPlayers, minutes, plays, rating], i) => ({ id: 100 + i, name, minPlayers, maxPlayers, minutes, plays, rating })) };
+
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1, locale: EN ? 'en-US' : 'es-ES' });
 await ctx.route(/steamstatic|api\/cover/, (r) => r.abort());
 await ctx.route(/\/api\/steam/, (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify(STEAM) }));
+await ctx.route(/\/api\/bgg/, (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify(BGG) }));
 await ctx.addInitScript(() => {
   let now = 0;
   const t0 = Date.now();
@@ -99,16 +118,18 @@ const page = await ctx.newPage();
 page.on('pageerror', (e) => console.log('pageerror', e.message));
 // Unos cuantos juegos con reseña antes de empezar (para coger uno al final)
 await page.goto(`${BASE}/?hora=21&lang=${lang}`);
-await page.evaluate(async () => {
+await page.evaluate(async (mesa) => {
   const { demoCollection } = await import('./js/demo.js');
+  // Unos cuantos con reseña: para coger uno al final y darle la vuelta
   const keep = new Set([367520, 1145360, 413150, 504230, 753640]);
-  window.disketeboy.store.importGames(demoCollection().filter((g) => keep.has(g.steamAppId)));
+  const boards = new Set(['Carcassonne', 'Catan', 'Wingspan']);
+  window.disketeboy.store.importGames(demoCollection().filter((g) => (mesa ? g.kind === 'mesa' && boards.has(g.title) : keep.has(g.steamAppId))));
   window.disketeboy.store.setSettings({ sort: 'color', palette: 'verde', sound: false });
-});
-await page.goto(`${BASE}/?hora=21&lang=${lang}`);
+}, MESA);
+await page.goto(`${BASE}/?hora=${MESA ? 20 : 21}&lang=${lang}`);
 for (let i = 0; i < 400; i++) {
   await page.evaluate(() => window.__advance?.(50));
-  if (await page.evaluate(() => !!(window.disketeboy?.room && document.querySelector('#screen #m-steam')))) break;
+  if (await page.evaluate((sel) => !!(window.disketeboy?.room && document.querySelector(sel)), MESA ? '#screen #b-bgg' : '#screen #m-steam')) break;
 }
 await page.evaluate(() => document.fonts.ready);
 let frame = 0;
@@ -122,45 +143,88 @@ async function shoot(seconds, each) {
 }
 const run = (fn, arg) => page.evaluate(fn, arg);
 
-// 1) La consola: Importar de Steam y escribir el perfil
-await shoot(0.6);
-await run(() => window.disketeboy.device.go('steam'));
-await shoot(0.4);
-await shoot(1.3, (p) => {
-  const input = document.getElementById('s-perfil');
-  input.value = 'steamcommunity.com/id/backlog'.slice(0, Math.ceil(p * 30));
-});
-await run(() => document.getElementById('s-buscar').click());
-await shoot(0.4);
-await page.waitForSelector('#s-importar');
-await shoot(1.6);
-// 2) ¡Lluvia de cajas!
-await run(() => document.getElementById('s-importar').click());
-await shoot(5.2);
-// 3) La pila de la vergüenza
-await run(() => window.disketeboy.room.focusZone('pila'));
-await shoot(3.4);
-// 4) Ordenar: todo a la estantería, por colores
-await run(() => {
-  window.disketeboy.store.setSettings({ tidy: true });
-  window.disketeboy.room.focusZone('estanteria');
-});
-await shoot(4.2);
-await run(() => window.disketeboy.store.setSettings({ tidy: false }));
-await shoot(1.4);
-// 5) Coger una caja y darle la vuelta: detrás está tu reseña
-const id = await run(() => window.disketeboy.store.getGames().find((g) => g.steamAppId === 367520).id);
-await run((gid) => window.disketeboy.room.inspect(gid), id);
-await shoot(1.5);
-await run(() => window.disketeboy.room.flip());
-// Zoom suave para que la reseña se lea: la caja está a 0,75 m de la cámara
-await shoot(2.8, (p) => {
-  const { camera } = window.disketeboy.room.debug;
-  const k = Math.min(1, p * 2.2);
-  camera.fov = 50 - 16 * (k * k * (3 - 2 * k));
-  camera.updateProjectionMatrix();
-  window.disketeboy.room.invalidate();
-});
+if (!MESA) {
+  // 1) La consola: Importar de Steam y escribir el perfil
+  await shoot(0.6);
+  await run(() => window.disketeboy.device.go('steam'));
+  await shoot(0.4);
+  await shoot(1.3, (p) => {
+    const input = document.getElementById('s-perfil');
+    input.value = 'steamcommunity.com/id/backlog'.slice(0, Math.ceil(p * 30));
+  });
+  await run(() => document.getElementById('s-buscar').click());
+  await shoot(0.4);
+  await page.waitForSelector('#s-importar');
+  await shoot(1.6);
+  // 2) ¡Lluvia de cajas!
+  await run(() => document.getElementById('s-importar').click());
+  await shoot(5.2);
+  // 3) La pila de la vergüenza
+  await run(() => window.disketeboy.room.focusZone('pila'));
+  await shoot(3.4);
+  // 4) Ordenar: todo a la estantería, por colores
+  await run(() => {
+    window.disketeboy.store.setSettings({ tidy: true });
+    window.disketeboy.room.focusZone('estanteria');
+  });
+  await shoot(4.2);
+  await run(() => window.disketeboy.store.setSettings({ tidy: false }));
+  await shoot(1.4);
+  // 5) Coger una caja y darle la vuelta: detrás está tu reseña
+  const id = await run(() => window.disketeboy.store.getGames().find((g) => g.steamAppId === 367520).id);
+  await run((gid) => window.disketeboy.room.inspect(gid), id);
+  await shoot(1.5);
+  await run(() => window.disketeboy.room.flip());
+  // Zoom suave para que la reseña se lea: la caja está a 0,75 m de la cámara
+  await shoot(2.8, (p) => {
+    const { camera } = window.disketeboy.room.debug;
+    const k = Math.min(1, p * 2.2);
+    camera.fov = 50 - 16 * (k * k * (3 - 2 * k));
+    camera.updateProjectionMatrix();
+    window.disketeboy.room.invalidate();
+  });
+} else {
+  // 1) El disquete azul: Importar de BoardGameGeek
+  await shoot(0.6);
+  await run(() => window.disketeboy.device.go('bgg'));
+  await shoot(0.4);
+  await shoot(1.3, (p) => {
+    document.getElementById('g-usuario').value = 'meeple_mike'.slice(0, Math.ceil(p * 11));
+  });
+  await run(() => document.getElementById('g-buscar').click());
+  await shoot(0.4);
+  await page.waitForSelector('#g-importar');
+  await shoot(1.6);
+  // 2) La Kallax se llena (los que no tienen partidas, encima y con su plástico)
+  await run(() => document.getElementById('g-importar').click());
+  await shoot(5.0);
+  // 3) ¿Qué jugamos esta noche? La ruleta elige (con azar fijo, para que el vídeo sea siempre igual)
+  await run(() => window.disketeboy.raise());
+  await shoot(0.8);
+  await run(() => window.disketeboy.device.go('queJugamos'));
+  await shoot(1.4);
+  await run(async () => {
+    const { whatToPlay } = await import('./js/boards.js');
+    const list = whatToPlay(window.disketeboy.store.getBoards(), { players: 4, minutes: 60 });
+    const i = Math.max(0, list.findIndex((g) => g.title === 'Carcassonne'));
+    window.__random = Math.random;
+    Math.random = () => (i + 0.5) / list.length;
+    document.getElementById('q-ruleta').click();
+  });
+  await shoot(4.2);
+  await run(() => (Math.random = window.__random));
+  // 4) ¡Sácalo de la Kallax! y darle la vuelta
+  await run(() => document.getElementById('r-sacar').click());
+  await shoot(2.2);
+  await run(() => window.disketeboy.room.flip());
+  await shoot(2.6, (p) => {
+    const { camera } = window.disketeboy.room.debug;
+    const k = Math.min(1, p * 2.2);
+    camera.fov = 50 - 16 * (k * k * (3 - 2 * k));
+    camera.updateProjectionMatrix();
+    window.disketeboy.room.invalidate();
+  });
+}
 // 6) Cartel final
 await page.addStyleTag({ content: `
   .vid-end { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: #1d1814e6; opacity: 0; }
@@ -182,7 +246,7 @@ console.log(`${frame} fotogramas en ${OUT}`);
 await browser.close();
 server.kill();
 try {
-  const mp4 = `${ROOT}docs/video/disketeboy-${lang}.mp4`;
+  const mp4 = `${ROOT}docs/video/${NAME}.mp4`;
   execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-framerate', String(FPS), '-i', join(OUT, 'f%05d.jpg'), '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '23', '-preset', 'slow', '-movflags', '+faststart', mp4]);
   console.log(`Vídeo: ${mp4}`);
 } catch {

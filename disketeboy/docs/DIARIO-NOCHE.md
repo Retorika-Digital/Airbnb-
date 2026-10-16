@@ -307,3 +307,8 @@ Para r/boardgames es el gancho: casi todo el mundo tiene allí su colección apu
   - Leer CSV de distintas apps y formatos de precio.
   - Importar un CSV a una carpeta de verdad en el navegador.
   - Que el manifiesto y los iconos estén y respondan.
+- **Segundo vídeo, para r/boardgames** (`disketeboy-mesa-en.mp4` y `-es`, 23 s):
+  1. Se importa una colección de BoardGameGeek (simulada) y la Kallax se llena; lo que no tiene partidas queda encima con su plástico.
+  2. «¿Qué jugamos esta noche?»: la ruleta gira y elige Carcassonne. Para que el vídeo salga siempre igual, el azar está fijado.
+  3. «¡Sácalo de la Kallax!»: la caja vuela hacia ti, se gira y se lee su reseña con 41 partidas.
+  - Se graba con `node disketeboy/tools/video.mjs mesa` (o `mesa es`).

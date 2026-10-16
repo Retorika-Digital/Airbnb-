@@ -32,6 +32,8 @@ Borradores para el lanzamiento (ver [LANZAMIENTO.md](LANZAMIENTO.md)). Cambia `T
 
 ## r/patientgamers · r/gamecollecting · r/CozyGamers
 
+*Sube con el post el vídeo `docs/video/disketeboy-en.mp4`.*
+
 **Title:** My backlog, but physical: unplayed games pile up on my bedroom floor until I deal with them
 
 > I always wanted to *see* my backlog instead of reading a list, so I made a little free web toy: **DisketeBoy**.
@@ -53,6 +55,8 @@ Borradores para el lanzamiento (ver [LANZAMIENTO.md](LANZAMIENTO.md)). Cambia `T
 ---
 
 ## r/boardgames (mira antes sus normas de autopromoción)
+
+*Sube con el post el vídeo `docs/video/disketeboy-mesa-en.mp4`.*
 
 **Title:** I made a free tool for board gamers: your games in a virtual Kallax, plus a roulette that picks tonight's game
 
