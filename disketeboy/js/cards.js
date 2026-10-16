@@ -1,5 +1,6 @@
 // Cartas: juegos de cartas coleccionables, mazos y carpetas (funciones puras).
 // Los nombres de los juegos solo se usan para identificarlos: sin logos ni arte.
+import { t, mark, locale, getLang } from './i18n.js';
 
 export const TCGS = [
   { id: 'mtg', name: 'Magic: The Gathering', short: 'MTG', color: '#4a3a7a' },
@@ -11,15 +12,15 @@ export const TCGS = [
   { id: 'swu', name: 'Star Wars Unlimited', short: 'SWU', color: '#1f3a5a' },
   { id: 'riftbound', name: 'Riftbound', short: 'RFT', color: '#1f6a6a' },
   { id: 'digimon', name: 'Digimon', short: 'DGM', color: '#2a6aa8' },
-  { id: 'otro', name: 'Otro', short: 'TCG', color: '#4a4a52' },
+  { id: 'otro', name: mark('Otro'), short: 'TCG', color: '#4a4a52' },
 ];
-export const TCG_IDS = TCGS.map((t) => t.id);
-export const tcg = (id) => TCGS.find((t) => t.id === id) || TCGS.at(-1);
+export const TCG_IDS = TCGS.map((x) => x.id);
+export const tcg = (id) => TCGS.find((x) => x.id === id) || TCGS.at(-1);
 
 export const DECK_STATUSES = ['montado', 'construccion', 'desmontado'];
-export const DECK_STATUS_LABEL = { montado: 'Montado', construccion: 'En construcción', desmontado: 'Desmontado' };
+export const DECK_STATUS_LABEL = { montado: mark('Montado'), construccion: mark('En construcción'), desmontado: mark('Desmontado') };
 export const BINDER_STATUSES = ['progreso', 'completa', 'buscando'];
-export const BINDER_STATUS_LABEL = { progreso: 'En progreso', completa: 'Completa', buscando: 'Buscando cartas' };
+export const BINDER_STATUS_LABEL = { progreso: mark('En progreso'), completa: mark('Completa'), buscando: mark('Buscando cartas') };
 
 /**
  * Cuenta las cartas de una lista de mazo: «4 Lightning Bolt», «4x Rayo» o «Sol Ring».
@@ -44,10 +45,13 @@ export function winRate(g) {
 
 export const recordText = (g) => {
   const wr = winRate(g);
-  return wr === null ? 'Sin partidas' : `${g.wins}V · ${g.losses}D (${wr}%)`;
+  return wr === null ? t('Sin partidas') : t('{w}V · {l}D ({pct}%)', { w: g.wins, l: g.losses, pct: wr });
 };
 
-export const euros = (n) => `${Number(n || 0).toLocaleString('es-ES', { maximumFractionDigits: 2 })} €`;
+export const euros = (n) => {
+  const v = Number(n || 0).toLocaleString(locale(), { maximumFractionDigits: 2 });
+  return getLang() === 'en' ? `€${v}` : `${v} €`;
+};
 
 export function cardsStats(items) {
   const decks = items.filter((g) => g.kind === 'mazo');

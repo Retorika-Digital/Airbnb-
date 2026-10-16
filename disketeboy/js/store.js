@@ -4,6 +4,7 @@
 import { PLATFORM_IDS, BOARD_IDS } from './platforms.js';
 import { uid, clamp, titleKey } from './util.js';
 import { TCG_IDS, DECK_STATUSES, DECK_STATUS_LABEL, BINDER_STATUSES, BINDER_STATUS_LABEL } from './cards.js';
+import { t, mark, LANGS } from './i18n.js';
 
 const KEY = 'dkb:v1';
 
@@ -17,18 +18,19 @@ const KINDS = ['video', 'mesa', 'mazo', 'carpeta'];
 const STATUS_BY_KIND = { video: STATUSES, mesa: BOARD_STATUSES, mazo: DECK_STATUSES, carpeta: BINDER_STATUSES };
 const DEFAULT_STATUS = { video: 'pendiente', mesa: 'jugado', mazo: 'montado', carpeta: 'progreso' };
 export const STATUS_LABEL = {
-  pendiente: 'Pendiente',
-  jugando: 'Jugando',
-  jugado: 'Jugado',
-  terminado: 'Terminado',
-  abandonado: 'Abandonado',
-  favorito: 'Favorito',
+  pendiente: mark('Pendiente'),
+  jugando: mark('Jugando'),
+  jugado: mark('Jugado'),
+  terminado: mark('Terminado'),
+  abandonado: mark('Abandonado'),
+  favorito: mark('Favorito'),
 };
-export const BOARD_STATUS_LABEL = { pendiente: 'Sin estrenar', jugado: 'Jugado', favorito: 'Favorito' };
+export const BOARD_STATUS_LABEL = { pendiente: mark('Sin estrenar'), jugado: mark('Jugado'), favorito: mark('Favorito') };
 export const isBoard = (g) => g?.kind === 'mesa';
 export const isCard = (g) => g?.kind === 'mazo' || g?.kind === 'carpeta';
 const LABELS = { video: STATUS_LABEL, mesa: BOARD_STATUS_LABEL, mazo: DECK_STATUS_LABEL, carpeta: BINDER_STATUS_LABEL };
-export const statusLabel = (g) => (LABELS[g.kind] || STATUS_LABEL)[g.status];
+/** El estado de un juego, ya traducido. */
+export const statusLabel = (g) => t((LABELS[g.kind] || STATUS_LABEL)[g.status]);
 export const PALETTES = ['verde', 'ambar', 'hielo', 'gris'];
 export const SORTS = ['plataforma', 'nota', 'color', 'az', 'horas'];
 export const THEMES = ['crema', 'gamer', 'retro'];
@@ -55,8 +57,8 @@ function cleanUrl(value) {
 }
 
 function validDate(value) {
-  const t = Date.parse(value);
-  return Number.isFinite(t) ? new Date(t).toISOString() : null;
+  const ms = Date.parse(value);
+  return Number.isFinite(ms) ? new Date(ms).toISOString() : null;
 }
 
 /** Deja un juego en un estado válido, o devuelve null si no se puede salvar. */
@@ -128,6 +130,7 @@ function cleanSettings(raw) {
     name: cleanText(s.name, 30).replace(/\s+/g, ' '),
     theme: THEMES.includes(s.theme) ? s.theme : 'crema',
     pet: s.pet !== false,
+    lang: LANGS.includes(s.lang) ? s.lang : '',
   };
 }
 
@@ -201,10 +204,10 @@ export const getSettings = () => get().settings;
 
 export function addGame(input) {
   const s = get();
-  if (s.games.length >= LIMITS.games) throw new Error(`La colección está llena (máximo ${LIMITS.games} juegos)`);
+  if (s.games.length >= LIMITS.games) throw new Error(t('La colección está llena (máximo {n} juegos)', { n: LIMITS.games }));
   const now = new Date().toISOString();
   const game = cleanGame({ ...input, id: uid(), addedAt: now, updatedAt: now });
-  if (!game) throw new Error('El juego necesita un título');
+  if (!game) throw new Error(t('El juego necesita un título'));
   s.games.push(game);
   save({ type: 'add', ids: [game.id] });
   return game;
@@ -304,9 +307,9 @@ export function importBackup(text) {
   try {
     raw = JSON.parse(text);
   } catch {
-    throw new Error('El archivo no es una copia de DisketeBoy');
+    throw new Error(t('El archivo no es una copia de DisketeBoy'));
   }
-  if (!raw || raw.app !== 'DisketeBoy' || !Array.isArray(raw.games)) throw new Error('El archivo no es una copia de DisketeBoy');
+  if (!raw || raw.app !== 'DisketeBoy' || !Array.isArray(raw.games)) throw new Error(t('El archivo no es una copia de DisketeBoy'));
   state = normalize(raw);
   save({ type: 'reset' });
   return state.games.length;

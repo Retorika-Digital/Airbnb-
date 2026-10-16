@@ -575,3 +575,7 @@ body.device-down .toast.is-on { transform: translate(-50%, 0); }
 /* Disquete verde de cartas */
 .dkb[data-disk='cartas'] { --disk: var(--verde); }
 .dkb[data-disk='cartas'] .floppy-label::before { content: 'CARTAS'; }
+/* Etiquetas de los disquetes en inglés */
+html:lang(en) .dkb[data-disk='videojuegos'] .floppy-label::before { content: 'VIDEO GAMES'; }
+html:lang(en) .dkb[data-disk='mesa'] .floppy-label::before { content: 'BOARD GAMES'; }
+html:lang(en) .dkb[data-disk='cartas'] .floppy-label::before { content: 'CARDS'; }

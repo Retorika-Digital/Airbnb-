@@ -44,8 +44,8 @@ const STEAM_GAMES = {
   ],
 };
 
-async function newPage(browser, { viewport = { width: 1280, height: 800 }, steam = null, reducedMotion = 'no-preference' } = {}) {
-  const ctx = await browser.newContext({ viewport, locale: 'es-ES', reducedMotion });
+async function newPage(browser, { viewport = { width: 1280, height: 800 }, steam = null, reducedMotion = 'no-preference', locale = 'es-ES' } = {}) {
+  const ctx = await browser.newContext({ viewport, locale, reducedMotion });
   await ctx.route(/fonts\.(googleapis|gstatic)/, (r) => r.fulfill({ body: '' }));
   await ctx.route(/steamstatic\.com/, (r) => r.fulfill({ contentType: 'image/svg+xml', body: COVER, headers: { 'Access-Control-Allow-Origin': '*' } }));
   if (steam) await ctx.route(/\/api\/steam/, (r) => r.fulfill(steam));
@@ -498,6 +498,34 @@ try {
     await booted(page);
     const s = await page.evaluate(() => window.disketeboy.store.getSettings());
     eq(`${s.theme}/${s.pet}`, 'gamer/false', 'se guarda al recargar');
+    eq(page.errors.join('\n'), '', 'errores en consola');
+    await page.close();
+  });
+
+  await check('inglés: un navegador en inglés lo ve todo en inglés, y se cambia en Ajustes', async () => {
+    const page = await newPage(browser, { locale: 'en-US' });
+    await page.goto(`${BASE}/?demo=1`);
+    await booted(page);
+    eq(await page.evaluate(() => document.documentElement.lang), 'en', 'idioma de la página');
+    const menu = await page.textContent('#screen');
+    expect(menu.includes('My collection') && menu.includes('Pile of shame'), `menú en inglés: ${menu.slice(0, 120)}`);
+    eq((await page.textContent('#r-ordenar')).trim(), '🧹 Tidy up room', 'botones de la habitación');
+    eq(await page.getAttribute('[data-btn="a"]', 'aria-label'), 'A, confirm', 'etiquetas para lector de pantalla');
+    const hk = await page.evaluate(() => window.disketeboy.store.getGames().find((g) => g.title === 'Pokémon Red'));
+    expect(hk && hk.review.startsWith('Link cable'), 'la demo llega traducida');
+    await page.click('#m-ticket');
+    await page.waitForFunction(() => document.getElementById('ticket-img').naturalWidth > 0);
+    eq(await page.getAttribute('#ticket-img', 'alt'), 'Receipt summing up your collection', 'texto del ticket');
+    await page.keyboard.press('Escape');
+    await page.evaluate(() => window.disketeboy.device.go('ajustes', {}));
+    await page.waitForSelector('#a-idioma');
+    await axe(page, 'ajustes en inglés');
+    await page.click('#a-idioma');
+    await page.waitForURL(/lang=es/);
+    await booted(page);
+    eq(await page.evaluate(() => document.documentElement.lang), 'es', 'vuelta al español');
+    expect((await page.textContent('#screen')).includes('Mi colección'), 'menú en español');
+    eq(await page.evaluate(() => window.disketeboy.store.getSettings().lang), 'es', 'se recuerda');
     eq(page.errors.join('\n'), '', 'errores en consola');
     await page.close();
   });

@@ -1,6 +1,7 @@
 // Plataformas y el formato de caja de cada una, con sus medidas reales en metros
 // (ancho × alto × grosor). Así una estantería con juegos de N64, PS1 y Switch
 // se ve tan variada como una de verdad.
+import { mark } from './i18n.js';
 
 export const BOXES = {
   dvd: { w: 0.135, h: 0.19, d: 0.014 },
@@ -25,10 +26,10 @@ export const BOXES = {
 
 // Tamaños de caja de juego de mesa (se eligen al añadirlo).
 export const BOARD_SIZES = [
-  { id: 'mesa-s', name: 'Pequeña (de cartas)' },
-  { id: 'mesa-m', name: 'Mediana' },
-  { id: 'mesa-l', name: 'Estándar' },
-  { id: 'mesa-xl', name: 'Enorme' },
+  { id: 'mesa-s', name: mark('Pequeña (de cartas)') },
+  { id: 'mesa-m', name: mark('Mediana') },
+  { id: 'mesa-l', name: mark('Estándar') },
+  { id: 'mesa-xl', name: mark('Enorme') },
 ];
 
 // band: color de la franja superior de la portada (genérica, sin logos).
@@ -61,21 +62,21 @@ export const PLATFORMS = [
   { id: 'md', name: 'Mega Drive', short: 'MD', box: 'estuche', band: '#151515' },
   { id: 'dc', name: 'Dreamcast', short: 'DC', box: 'jewel', band: '#e8e8e8' },
   { id: 'saturn', name: 'Saturn', short: 'SAT', box: 'jewel', band: '#2b2b2b' },
-  { id: 'otra', name: 'Otra', short: '???', box: 'dvd', band: '#5a5246' },
+  { id: 'otra', name: mark('Otra'), short: '???', box: 'dvd', band: '#5a5246' },
 ];
 
 // "Plataformas" internas de los juegos de mesa: no salen en los formularios de videojuegos.
 const BOARD_PLATFORMS = [
-  { id: 'mesa-s', name: 'Juego de mesa', short: 'MESA', box: 'mesaS', band: '#2f5d62', board: true },
-  { id: 'mesa-m', name: 'Juego de mesa', short: 'MESA', box: 'mesaM', band: '#2f5d62', board: true },
-  { id: 'mesa-l', name: 'Juego de mesa', short: 'MESA', box: 'mesaL', band: '#2f5d62', board: true },
-  { id: 'mesa-xl', name: 'Juego de mesa', short: 'MESA', box: 'mesaXL', band: '#2f5d62', board: true },
+  { id: 'mesa-s', name: mark('Juego de mesa'), short: 'MESA', box: 'mesaS', band: '#2f5d62', board: true },
+  { id: 'mesa-m', name: mark('Juego de mesa'), short: 'MESA', box: 'mesaM', band: '#2f5d62', board: true },
+  { id: 'mesa-l', name: mark('Juego de mesa'), short: 'MESA', box: 'mesaL', band: '#2f5d62', board: true },
+  { id: 'mesa-xl', name: mark('Juego de mesa'), short: 'MESA', box: 'mesaXL', band: '#2f5d62', board: true },
 ];
 
 // Y las de las cartas: la cajita de un mazo y la carpeta de la colección.
 const CARD_PLATFORMS = [
-  { id: 'deckbox', name: 'Mazo', short: 'MAZO', box: 'deckbox', band: '#231e1a' },
-  { id: 'binder', name: 'Carpeta de cartas', short: 'CARP', box: 'binder', band: '#231e1a' },
+  { id: 'deckbox', name: mark('Mazo'), short: 'MAZO', box: 'deckbox', band: '#231e1a' },
+  { id: 'binder', name: mark('Carpeta de cartas'), short: 'CARP', box: 'binder', band: '#231e1a' },
 ];
 
 export const PLATFORM_IDS = PLATFORMS.map((p) => p.id);

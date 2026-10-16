@@ -9,12 +9,15 @@
   <!-- Vista previa de los enlaces. Al publicar, pon og:image con la dirección completa (https://tu-dominio/og.jpg). -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="DisketeBoy">
-  <meta property="og:title" content="DisketeBoy · tu colección en tu habitación 3D">
-  <meta property="og:description" content="Videojuegos, juegos de mesa y cartas en una consola retro, y tu habitación 3D llenándose de cajas. Gratis y sin registro.">
+  <!-- En inglés primero, que es el público de los subreddits grandes; la descripción lleva los dos idiomas. -->
+  <meta property="og:title" content="DisketeBoy · your game collection in a cozy 3D room">
+  <meta property="og:description" content="Video games, board games and card decks on a retro console, and a 3D room that fills up with boxes. Free, no sign-up. · Videojuegos, juegos de mesa y cartas en una habitación 3D. Gratis y sin registro.">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="es_ES">
   <meta property="og:image" content="og.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Una habitación 3D con estanterías llenas de juegos ordenados por colores, una pila de juegos en la alfombra y un gato durmiendo">
+  <meta property="og:image:alt" content="A 3D room with shelves full of games sorted by color, a pile of games on the rug and a sleeping cat">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='3' width='26' height='26' rx='3' fill='%23c8553d'/%3E%3Crect x='9' y='3' width='14' height='9' fill='%23d9d4cc'/%3E%3Crect x='17' y='4.5' width='3.5' height='6' fill='%23555'/%3E%3Crect x='8' y='17' width='16' height='12' rx='1' fill='%23fbf6ea'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,29 +31,29 @@
 <main class="app">
   <canvas id="room" role="img" aria-label="Tu habitación en 3D, con tus juegos en la estantería, en el escritorio y en la pila de la vergüenza"></canvas>
   <div id="room-fallback" class="room-fallback" hidden>
-    <p>Tu navegador no puede dibujar la habitación en 3D, pero la DisketeBoy funciona igual.</p>
+    <p data-i18n>Tu navegador no puede dibujar la habitación en 3D, pero la DisketeBoy funciona igual.</p>
   </div>
 
   <div id="visit-banner" class="visit-banner" hidden>
-    <span>👀 Estás de visita en la habitación de <b id="visit-name">alguien</b></span>
-    <button type="button" class="chip chip-main" id="visit-leave">Crear la mía</button>
+    <span id="visit-text">👀 Estás de visita en la habitación de <b id="visit-name">alguien</b></span>
+    <button type="button" class="chip chip-main" id="visit-leave" data-i18n>Crear la mía</button>
   </div>
 
   <nav id="room-ui" class="room-ui" aria-label="Habitación">
-    <button type="button" class="chip chip-main" id="r-subir">🎮 Coger la DisketeBoy</button>
-    <button type="button" class="chip" id="r-ordenar" aria-pressed="false">🧹 Ordenar habitación</button>
-    <button type="button" class="chip" id="r-compartir">📸 Compartir</button>
-    <p class="room-help" id="room-help">Arrastra para mirar · Toca una caja · ←/→ para recorrerlas</p>
+    <button type="button" class="chip chip-main" id="r-subir" data-i18n>🎮 Coger la DisketeBoy</button>
+    <button type="button" class="chip" id="r-ordenar" aria-pressed="false" data-i18n>🧹 Ordenar habitación</button>
+    <button type="button" class="chip" id="r-compartir" data-i18n>📸 Compartir</button>
+    <p class="room-help" id="room-help" data-i18n>Arrastra para mirar · Toca una caja · ←/→ para recorrerlas</p>
   </nav>
 
   <section id="dkb" class="dkb" aria-label="Consola DisketeBoy">
     <div class="dkb-slot" aria-hidden="true">
       <div class="floppy"><span class="floppy-label"></span></div>
     </div>
-    <div class="dkb-led" aria-hidden="true"><i></i>PILA</div>
+    <div class="dkb-led" aria-hidden="true"><i></i><span data-i18n>PILA</span></div>
     <div class="dkb-bezel">
       <div id="screen" class="screen" role="region" aria-label="Pantalla de la DisketeBoy"></div>
-      <div class="dkb-bezel-text" aria-hidden="true">DISKETE · SYSTEM · 4 TONOS</div>
+      <div class="dkb-bezel-text" aria-hidden="true" data-i18n>DISKETE · SYSTEM · 4 TONOS</div>
     </div>
     <div class="dkb-brand" aria-hidden="true">Diskete<span>Boy</span></div>
     <div class="dkb-controls">
@@ -79,9 +82,9 @@
       <p class="inspect-title" id="inspect-title"></p>
       <p class="inspect-meta" id="inspect-meta"></p>
       <div class="inspect-actions">
-        <button type="button" class="chip" id="i-girar">🔄 Girar caja</button>
-        <button type="button" class="chip" id="i-editar">✏️ Editar</button>
-        <button type="button" class="chip" id="i-cerrar">✕ Dejar en su sitio</button>
+        <button type="button" class="chip" id="i-girar" data-i18n>🔄 Girar caja</button>
+        <button type="button" class="chip" id="i-editar" data-i18n>✏️ Editar</button>
+        <button type="button" class="chip" id="i-cerrar" data-i18n>✕ Dejar en su sitio</button>
       </div>
     </div>
   </div>
@@ -91,16 +94,16 @@
       <h2 id="ticket-title">DisketePrinter</h2>
       <div class="ticket-paper"><img id="ticket-img" alt=""></div>
       <div class="sheet-actions">
-        <button type="button" class="chip chip-main" id="t-descargar">⬇️ Descargar</button>
-        <button type="button" class="chip" id="t-compartir" hidden>📤 Compartir</button>
-        <button type="button" class="chip" id="t-cerrar">Cerrar</button>
+        <button type="button" class="chip chip-main" id="t-descargar" data-i18n>⬇️ Descargar</button>
+        <button type="button" class="chip" id="t-compartir" hidden data-i18n>📤 Compartir</button>
+        <button type="button" class="chip" id="t-cerrar" data-i18n>Cerrar</button>
       </div>
-      <p class="sheet-donate" id="t-donar" hidden><a target="_blank" rel="noopener">¿Te gusta DisketeBoy? ☕ Invítame a un café</a></p>
+      <p class="sheet-donate" id="t-donar" hidden><a target="_blank" rel="noopener" data-i18n>¿Te gusta DisketeBoy? ☕ Invítame a un café</a></p>
     </div>
   </div>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </main>
-  <noscript><p class="noscript">DisketeBoy necesita JavaScript para funcionar.</p></noscript>
+  <noscript><p class="noscript">DisketeBoy necesita JavaScript para funcionar. · DisketeBoy needs JavaScript to work.</p></noscript>
 </body>
 </html>

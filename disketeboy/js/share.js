@@ -2,6 +2,7 @@
 // (después de la #, que nunca llega a ningún servidor). Sin cuentas ni base de
 // datos: quien abre el enlace ve tu habitación en modo visita, sin tocar la suya.
 import { ALL_STATUSES, THEMES, cleanGame } from './store.js';
+import { t } from './i18n.js';
 
 const REVIEW_MAX = 140;
 export const LONG_URL = 8000;
@@ -54,9 +55,9 @@ export async function decodeRoom(text) {
     const bytes = await pipe(fromBase64Url(String(text || '')), new DecompressionStream('deflate-raw'));
     data = JSON.parse(new TextDecoder().decode(bytes));
   } catch {
-    throw new Error('Este enlace de visita está roto o incompleto');
+    throw new Error(t('Este enlace de visita está roto o incompleto'));
   }
-  if (!data || data.v !== 1 || !Array.isArray(data.g)) throw new Error('Este enlace de visita está roto o incompleto');
+  if (!data || data.v !== 1 || !Array.isArray(data.g)) throw new Error(t('Este enlace de visita está roto o incompleto'));
   const games = data.g
     .slice(0, 2000)
     .map((r, i) =>

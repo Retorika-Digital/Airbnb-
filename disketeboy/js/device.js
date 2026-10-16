@@ -5,30 +5,39 @@ import * as store from './store.js';
 import { STATUSES, STATUS_LABEL, PALETTES, SORTS, THEMES, BOARD_STATUSES, BOARD_STATUS_LABEL, isBoard, statusLabel } from './store.js';
 import { PLATFORMS, BOARD_SIZES, platform } from './platforms.js';
 import { mapSteamGames } from './steam.js';
-import { DEMO_GAMES, DEMO_BOARDS, DEMO_CARDS } from './demo.js';
+import { demoCollection } from './demo.js';
 import { TCGS, TCG_IDS, tcg, DECK_STATUSES, DECK_STATUS_LABEL, BINDER_STATUSES, BINDER_STATUS_LABEL, deckCount, recordText, euros, cardsStats } from './cards.js';
 import { sfx, setSound } from './audio.js';
 import { whatToPlay, playersText, minutesText, lentText, boardStats, pickOne, TIME_OPTIONS } from './boards.js';
 import { clamp } from './util.js';
 import { donateUrl } from './config.js';
+import { t, tp, mark, num, LANGS, LANG_NAME, getLang } from './i18n.js';
 
-const PALETTE_LABEL = { verde: 'Verde clásico', ambar: 'Ámbar', hielo: 'Hielo', gris: 'Gris' };
-const SORT_LABEL = { plataforma: 'Plataforma', nota: 'Nota', color: 'Color', az: 'A-Z', horas: 'Horas' };
-const THEME_LABEL = { crema: 'Crema', gamer: 'Gamer RGB', retro: 'Retro 90' };
+const PALETTE_LABEL = { verde: mark('Verde clásico'), ambar: mark('Ámbar'), hielo: mark('Hielo'), gris: mark('Gris') };
+const SORT_LABEL = { plataforma: mark('Plataforma'), nota: mark('Nota'), color: mark('Color'), az: 'A-Z', horas: mark('Horas') };
+const THEME_LABEL = { crema: mark('Crema'), gamer: 'Gamer RGB', retro: 'Retro 90' };
 const ZONE_TEXT = {
-  pendiente: 'tu pila de la vergüenza',
-  jugando: 'tu escritorio',
-  jugado: 'tu estantería',
-  terminado: 'tu estantería',
-  abandonado: 'la caja de abandonados',
+  pendiente: mark('tu pila de la vergüenza'),
+  jugando: mark('tu escritorio'),
+  jugado: mark('tu estantería'),
+  terminado: mark('tu estantería'),
+  abandonado: mark('la caja de abandonados'),
 };
-const MONTHS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const STEAM_ERROR = {
+  perfil: mark('Eso no parece un perfil de Steam. Prueba con la URL de tu perfil.'),
+  sin_clave: mark('Este servidor aún no tiene clave de Steam, así que no puedo leer tu biblioteca. Mientras tanto, ¿cargo la colección de demo?'),
+  no_encontrado: mark('No encuentro ningún perfil llamado «{name}».'),
+  privado: mark('Tu perfil o tu lista de juegos es privada. En Steam: Perfil → Editar perfil → Privacidad → «Detalles del juego: público».'),
+  red: mark('Steam no responde ahora mismo. Inténtalo en un rato.'),
+  sin_conexion: mark('No hay conexión con el servidor. ¿Estás sin internet?'),
+};
+const MONTHS = [mark('enero'), mark('febrero'), mark('marzo'), mark('abril'), mark('mayo'), mark('junio'), mark('julio'), mark('agosto'), mark('septiembre'), mark('octubre'), mark('noviembre'), mark('diciembre')];
 const FILTERS = ['todos', ...STATUSES];
 const SCORES = [null, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 const REDUCED = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-const sizeName = (id) => BOARD_SIZES.find((s) => s.id === id)?.name || 'Estándar';
+const sizeName = (id) => t(BOARD_SIZES.find((s) => s.id === id)?.name || 'Estándar');
 const boardMeta = (g) =>
-  [g.minPlayers === g.maxPlayers ? `${g.minPlayers} jug` : `${g.minPlayers}-${g.maxPlayers} jug`, `${g.minutes}'`, g.score === null ? null : `★${g.score}`, g.plays ? `${g.plays} part.` : 'sin estrenar', g.lentTo ? 'PRESTADO' : null]
+  [g.minPlayers === g.maxPlayers ? t('{n} jug', { n: g.minPlayers }) : t('{min}-{max} jug', { min: g.minPlayers, max: g.maxPlayers }), `${g.minutes}'`, g.score === null ? null : `★${g.score}`, g.plays ? tp(g.plays, '1 part.', '{n} part.') : t('sin estrenar'), g.lentTo ? t('PRESTADO') : null]
     .filter(Boolean)
     .join(' · ');
 
@@ -49,8 +58,8 @@ export function h(tag, props = {}, ...kids) {
   return el;
 }
 
-const stars = (score) => (score === null ? 'Sin nota' : `${'★'.repeat(Math.round(score / 2))}${'☆'.repeat(5 - Math.round(score / 2))} ${score}/10`);
-const metaLine = (g) => [platform(g.platform).short, g.score === null ? null : `★${g.score}`, STATUS_LABEL[g.status]].filter(Boolean).join(' · ');
+const stars = (score) => (score === null ? t('Sin nota') : `${'★'.repeat(Math.round(score / 2))}${'☆'.repeat(5 - Math.round(score / 2))} ${score}/10`);
+const metaLine = (g) => [platform(g.platform).short, g.score === null ? null : `★${g.score}`, t(STATUS_LABEL[g.status])].filter(Boolean).join(' · ');
 const cycle = (list, value, dir) => list[(list.indexOf(value) + dir + list.length) % list.length];
 
 export function createDevice(root, actions) {
@@ -117,7 +126,7 @@ export function createDevice(root, actions) {
     const view = SCREENS[current.name] || SCREENS.menu;
     const content = view(current.params || {});
     screen.replaceChildren(content);
-    screen.setAttribute('aria-label', `Pantalla de la DisketeBoy: ${content.dataset.title || ''}`);
+    screen.setAttribute('aria-label', t('Pantalla de la DisketeBoy: {title}', { title: content.dataset.title || '' }));
     root.dataset.screen = current.name;
     if (focus !== null) requestAnimationFrame(() => focusAt(focus));
   }
@@ -173,7 +182,7 @@ export function createDevice(root, actions) {
         'data-nav': '',
         id,
         'aria-disabled': disabled ? 'true' : null,
-        onclick: disabled ? () => (sfx.error(), toast('Próximamente')) : onClick,
+        onclick: disabled ? () => (sfx.error(), toast(t('Próximamente'))) : onClick,
       },
       h('span', { class: 'item-label', text: label }),
       meta ? h('span', { class: 'item-meta', text: meta }) : null,
@@ -183,7 +192,7 @@ export function createDevice(root, actions) {
   function stepper(label, text, onStep, { id } = {}) {
     const el = h(
       'button',
-      { type: 'button', class: 'item stepper', 'data-nav': '', id, 'aria-label': `${label}: ${text}. Cambia con las flechas izquierda y derecha.`, onclick: () => onStep(1) },
+      { type: 'button', class: 'item stepper', 'data-nav': '', id, 'aria-label': t('{label}: {value}. Cambia con las flechas izquierda y derecha.', { label, value: text }), onclick: () => onStep(1) },
       h('span', { class: 'item-label', text: label }),
       h(
         'span',
@@ -208,7 +217,7 @@ export function createDevice(root, actions) {
         { class: 'view boot' },
         h('div', { class: 'boot-logo', text: 'DisketeBoy' }),
         h('div', { class: 'boot-bar' }, h('span')),
-        h('p', { class: 'boot-tip', text: 'Pulsa A para empezar' }),
+        h('p', { class: 'boot-tip', text: t('Pulsa A para empezar') }),
       );
       el.dataset.title = 'Arrancando';
       return el;
@@ -218,13 +227,13 @@ export function createDevice(root, actions) {
       const n = store.getVideoGames().length;
       const b = store.getBoards().length;
       return view(
-        'Inserta un disquete',
+        t('Inserta un disquete'),
         h(
           'div',
           { class: 'list' },
-          item('Videojuegos', () => insertDisk('videojuegos'), { meta: `${n} juego${n === 1 ? '' : 's'}`, cls: 'disk disk-rojo', id: 'd-video' }),
-          item('Juegos de mesa', () => insertDisk('mesa'), { meta: `${b} juego${b === 1 ? '' : 's'}`, cls: 'disk disk-azul', id: 'd-mesa' }),
-          item('Cartas', () => insertDisk('cartas'), { meta: `${store.getCards().length} mazos y carpetas`, cls: 'disk disk-verde', id: 'd-cartas' }),
+          item(t('Videojuegos'), () => insertDisk('videojuegos'), { meta: tp(n, '1 juego', '{n} juegos'), cls: 'disk disk-rojo', id: 'd-video' }),
+          item(t('Juegos de mesa'), () => insertDisk('mesa'), { meta: tp(b, '1 juego', '{n} juegos'), cls: 'disk disk-azul', id: 'd-mesa' }),
+          item(t('Cartas'), () => insertDisk('cartas'), { meta: t('{n} mazos y carpetas', { n: store.getCards().length }), cls: 'disk disk-verde', id: 'd-cartas' }),
         ),
       );
     },
@@ -237,38 +246,38 @@ export function createDevice(root, actions) {
       const visit = store.visiting();
       if (visit) {
         return view(
-          visit.name ? `Habitación de ${visit.name}` : 'De visita',
-          p('Estás de visita: puedes mirarlo todo, pero no tocar nada.'),
+          visit.name ? t('Habitación de {name}', { name: visit.name }) : t('De visita'),
+          p(t('Estás de visita: puedes mirarlo todo, pero no tocar nada.')),
           h(
             'div',
             { class: 'list' },
-            item('Su colección', () => go('lista', { filter: 'todos' }), { meta: String(st.total), id: 'm-coleccion' }),
-            item('Su pila de la vergüenza', () => go('pila'), { meta: String(st.by.pendiente), id: 'm-pila' }),
-            item('Ver su habitación', () => actions.lower(), { id: 'm-habitacion' }),
-            item('Estadísticas', () => go('stats'), { id: 'm-stats' }),
-            item('Imprimir su ticket', () => actions.printTicket(), { id: 'm-ticket' }),
-            item('Ajustes', () => go('ajustes'), { id: 'm-ajustes' }),
-            item('Cambiar de disquete', ejectDisk, { id: 'm-expulsar' }),
-            item('Crear mi propia habitación', () => actions.leaveVisit(), { cls: 'primary', id: 'm-salir' }),
+            item(t('Su colección'), () => go('lista', { filter: 'todos' }), { meta: String(st.total), id: 'm-coleccion' }),
+            item(t('Su pila de la vergüenza'), () => go('pila'), { meta: String(st.by.pendiente), id: 'm-pila' }),
+            item(t('Ver su habitación'), () => actions.lower(), { id: 'm-habitacion' }),
+            item(t('Estadísticas'), () => go('stats'), { id: 'm-stats' }),
+            item(t('Imprimir su ticket'), () => actions.printTicket(), { id: 'm-ticket' }),
+            item(t('Ajustes'), () => go('ajustes'), { id: 'm-ajustes' }),
+            item(t('Cambiar de disquete'), ejectDisk, { id: 'm-expulsar' }),
+            item(t('Crear mi propia habitación'), () => actions.leaveVisit(), { cls: 'primary', id: 'm-salir' }),
           ),
         );
       }
       return view(
-        'Videojuegos',
+        t('Videojuegos'),
         h(
           'div',
           { class: 'list' },
-          store.getGames().length ? null : item('Habitación vacía: ¿cargo la demo?', loadDemo, { cls: 'hint', id: 'demo-hint' }),
-          item('Mi colección', () => go('lista', { filter: 'todos' }), { meta: String(st.total), id: 'm-coleccion' }),
-          item('Añadir juego', () => go('nuevo'), { id: 'm-nuevo' }),
-          item('Importar de Steam', () => go('steam'), { id: 'm-steam' }),
-          item('Pila de la vergüenza', () => go('pila'), { meta: String(st.by.pendiente), id: 'm-pila' }),
-          item('Ver mi habitación', () => actions.lower(), { id: 'm-habitacion' }),
-          item('Estadísticas', () => go('stats'), { id: 'm-stats' }),
-          item('Imprimir ticket', () => actions.printTicket(), { id: 'm-ticket' }),
-          store.getGames().length ? item('Compartir mi habitación', () => actions.shareVisit(), { id: 'm-compartir' }) : null,
-          item('Ajustes', () => go('ajustes'), { id: 'm-ajustes' }),
-          item('Expulsar disquete', ejectDisk, { id: 'm-expulsar' }),
+          store.getGames().length ? null : item(t('Habitación vacía: ¿cargo la demo?'), loadDemo, { cls: 'hint', id: 'demo-hint' }),
+          item(t('Mi colección'), () => go('lista', { filter: 'todos' }), { meta: String(st.total), id: 'm-coleccion' }),
+          item(t('Añadir juego'), () => go('nuevo'), { id: 'm-nuevo' }),
+          item(t('Importar de Steam'), () => go('steam'), { id: 'm-steam' }),
+          item(t('Pila de la vergüenza'), () => go('pila'), { meta: String(st.by.pendiente), id: 'm-pila' }),
+          item(t('Ver mi habitación'), () => actions.lower(), { id: 'm-habitacion' }),
+          item(t('Estadísticas'), () => go('stats'), { id: 'm-stats' }),
+          item(t('Imprimir ticket'), () => actions.printTicket(), { id: 'm-ticket' }),
+          store.getGames().length ? item(t('Compartir mi habitación'), () => actions.shareVisit(), { id: 'm-compartir' }) : null,
+          item(t('Ajustes'), () => go('ajustes'), { id: 'm-ajustes' }),
+          item(t('Expulsar disquete'), ejectDisk, { id: 'm-expulsar' }),
         ),
       );
     },
@@ -277,37 +286,37 @@ export function createDevice(root, actions) {
       const settings = store.getSettings();
       const all = store.getVideoGames();
       const games = sortForList(filter === 'todos' ? all : all.filter((g) => g.status === filter), settings.sort);
-      const label = filter === 'todos' ? 'Todos' : STATUS_LABEL[filter];
+      const label = filter === 'todos' ? t('Todos') : t(STATUS_LABEL[filter]);
       const setFilter = (dir) => {
         current.params = { filter: cycle(FILTERS, filter, dir) };
         render(0);
       };
       return view(
-        'Mi colección',
+        t('Mi colección'),
         h(
           'div',
           { class: 'list' },
-          stepper('Ver', `${label} (${games.length})`, setFilter, { id: 'filtro' }),
+          stepper(t('Ver'), `${label} (${games.length})`, setFilter, { id: 'filtro' }),
           games.length
             ? games.map((g) => item(g.title, () => go('ficha', { id: g.id }), { meta: metaLine(g), cls: 'game' }))
-            : item('Nada por aquí. Añadir un juego', () => go('nuevo')),
+            : item(t('Nada por aquí. Añadir un juego'), () => go('nuevo')),
         ),
       );
     },
 
     ficha({ id }) {
       const g = store.getGame(id);
-      if (!g) return view('Juego borrado', p('Este juego ya no está en tu colección.'), h('div', { class: 'list' }, item('Volver', back)));
+      if (!g) return view(t('Juego borrado'), p(t('Este juego ya no está en tu colección.')), h('div', { class: 'list' }, item(t('Volver'), back)));
       if (isBoard(g)) return SCREENS.mesaFicha({ id });
       if (g.kind === 'mazo') return SCREENS.mazoFicha({ id });
       if (g.kind === 'carpeta') return SCREENS.carpetaFicha({ id });
       if (store.visiting()) {
         return view(
           g.title,
-          p(platform(g.platform).name, 'sub'),
-          h('dl', { class: 'stats' }, statRow('Estado', STATUS_LABEL[g.status]), statRow('Nota', g.score === null ? 'Sin nota' : `${g.score}/10`), statRow('Horas', String(g.hours))),
-          p(g.review ? `“${g.review}”` : 'Sin reseña.', 'note quote'),
-          h('div', { class: 'list' }, item('Ver en la habitación', () => actions.showInRoom(id), { id: 'f-ver' }), item('Volver', back)),
+          p(t(platform(g.platform).name), 'sub'),
+          h('dl', { class: 'stats' }, statRow(t('Estado'), t(STATUS_LABEL[g.status])), statRow(t('Nota'), g.score === null ? t('Sin nota') : `${g.score}/10`), statRow(t('Horas'), String(g.hours))),
+          p(g.review ? `“${g.review}”` : t('Sin reseña.'), 'note quote'),
+          h('div', { class: 'list' }, item(t('Ver en la habitación'), () => actions.showInRoom(id), { id: 'f-ver' }), item(t('Volver'), back)),
         );
       }
       const upd = (patch) => {
@@ -328,17 +337,17 @@ export function createDevice(root, actions) {
       });
       return view(
         g.title,
-        p(platform(g.platform).name, 'sub'),
+        p(t(platform(g.platform).name), 'sub'),
         h(
           'div',
           { class: 'list' },
-          stepper('Estado', STATUS_LABEL[g.status], (dir) => upd({ status: cycle(STATUSES, g.status, dir) }), { id: 'f-estado' }),
-          stepper('Nota', stars(g.score), (dir) => upd({ score: cycle(scores, g.score, dir) }), { id: 'f-nota' }),
-          stepper('Plataforma', platform(g.platform).short, (dir) => upd({ platform: cycle(PLATFORMS.map((x) => x.id), g.platform, dir) }), { id: 'f-plataforma' }),
-          h('label', { class: 'item field' }, h('span', { class: 'item-label', text: 'Horas' }), hours),
-          item(g.review ? `“${g.review.slice(0, 70)}${g.review.length > 70 ? '…' : ''}”` : 'Escribir reseña…', () => go('resena', { id }), { meta: 'Reseña', cls: 'review', id: 'f-resena' }),
-          item('Ver en la habitación', () => actions.showInRoom(id), { id: 'f-ver' }),
-          item('Borrar de la colección', () => go('confirmar', { text: `¿Borrar «${g.title}» de tu colección?`, yes: 'Sí, borrar', action: 'borrar', id }), { cls: 'danger', id: 'f-borrar' }),
+          stepper(t('Estado'), t(STATUS_LABEL[g.status]), (dir) => upd({ status: cycle(STATUSES, g.status, dir) }), { id: 'f-estado' }),
+          stepper(t('Nota'), stars(g.score), (dir) => upd({ score: cycle(scores, g.score, dir) }), { id: 'f-nota' }),
+          stepper(t('Plataforma'), platform(g.platform).short, (dir) => upd({ platform: cycle(PLATFORMS.map((x) => x.id), g.platform, dir) }), { id: 'f-plataforma' }),
+          h('label', { class: 'item field' }, h('span', { class: 'item-label', text: t('Horas') }), hours),
+          item(g.review ? `“${g.review.slice(0, 70)}${g.review.length > 70 ? '…' : ''}”` : t('Escribir reseña…'), () => go('resena', { id }), { meta: t('Reseña'), cls: 'review', id: 'f-resena' }),
+          item(t('Ver en la habitación'), () => actions.showInRoom(id), { id: 'f-ver' }),
+          item(t('Borrar de la colección'), () => go('confirmar', { text: t('¿Borrar «{title}» de tu colección?', { title: g.title }), yes: t('Sí, borrar'), action: 'borrar', id }), { cls: 'danger', id: 'f-borrar' }),
         ),
       );
     },
@@ -352,24 +361,24 @@ export function createDevice(root, actions) {
         maxlength: String(store.LIMITS.review),
         rows: '6',
         'data-nav': '',
-        'aria-label': `Reseña de ${g.title}`,
+        'aria-label': t('Reseña de {title}', { title: g.title }),
         oninput: (e) => (counter.textContent = `${e.target.value.length}/${store.LIMITS.review}`),
       });
       area.value = g.review;
       return view(
-        'Tu reseña',
+        t('Tu reseña'),
         p(g.title, 'sub'),
         area,
         counter,
         h(
           'div',
           { class: 'list' },
-          item('Guardar reseña', () => {
+          item(t('Guardar reseña'), () => {
             store.updateGame(id, { review: area.value });
-            toast('Reseña guardada: búscala en la contraportada de la caja');
+            toast(t('Reseña guardada: búscala en la contraportada de la caja'));
             back();
           }, { id: 'r-guardar' }),
-          item('Cancelar', back),
+          item(t('Cancelar'), back),
         ),
       );
     },
@@ -378,64 +387,64 @@ export function createDevice(root, actions) {
       const form = h(
         'form',
         { class: 'form', autocomplete: 'off', onsubmit: (e) => (e.preventDefault(), addFromForm(form)) },
-        h('label', {}, 'Título', h('input', { name: 'title', id: 'n-titulo', required: true, maxlength: '120', 'data-nav': '', placeholder: 'Ej.: Chrono Trigger' })),
-        h('label', {}, 'Plataforma', h('select', { name: 'platform', id: 'n-plataforma', 'data-nav': '' }, PLATFORMS.map((pl) => h('option', { value: pl.id, selected: pl.id === lastPlatform, text: pl.name })))),
-        h('label', {}, 'Estado', h('select', { name: 'status', id: 'n-estado', 'data-nav': '' }, STATUSES.map((st) => h('option', { value: st, selected: st === 'jugado', text: STATUS_LABEL[st] })))),
-        h('label', {}, 'Nota', h('select', { name: 'score', id: 'n-nota', 'data-nav': '' }, h('option', { value: '', text: 'Sin nota' }), Array.from({ length: 11 }, (_, i) => h('option', { value: String(10 - i), text: `${10 - i}/10` })))),
-        h('label', {}, 'Horas', h('input', { name: 'hours', id: 'n-horas', type: 'number', min: '0', max: '99999', step: '0.5', inputmode: 'decimal', 'data-nav': '', placeholder: '0' })),
-        h('button', { type: 'submit', class: 'item primary', id: 'n-anadir', 'data-nav': '' }, h('span', { class: 'item-label', text: 'Añadir a mi colección' })),
+        h('label', {}, t('Título'), h('input', { name: 'title', id: 'n-titulo', required: true, maxlength: '120', 'data-nav': '', placeholder: t('Ej.: Chrono Trigger') })),
+        h('label', {}, t('Plataforma'), h('select', { name: 'platform', id: 'n-plataforma', 'data-nav': '' }, PLATFORMS.map((pl) => h('option', { value: pl.id, selected: pl.id === lastPlatform, text: t(pl.name) })))),
+        h('label', {}, t('Estado'), h('select', { name: 'status', id: 'n-estado', 'data-nav': '' }, STATUSES.map((st) => h('option', { value: st, selected: st === 'jugado', text: t(STATUS_LABEL[st]) })))),
+        h('label', {}, t('Nota'), h('select', { name: 'score', id: 'n-nota', 'data-nav': '' }, h('option', { value: '', text: t('Sin nota') }), Array.from({ length: 11 }, (_, i) => h('option', { value: String(10 - i), text: `${10 - i}/10` })))),
+        h('label', {}, t('Horas'), h('input', { name: 'hours', id: 'n-horas', type: 'number', min: '0', max: '99999', step: '0.5', inputmode: 'decimal', 'data-nav': '', placeholder: '0' })),
+        h('button', { type: 'submit', class: 'item primary', id: 'n-anadir', 'data-nav': '' }, h('span', { class: 'item-label', text: t('Añadir a mi colección') })),
       );
-      return view('Añadir juego', form);
+      return view(t('Añadir juego'), form);
     },
 
     nuevoOk({ id }) {
       const g = store.getGame(id);
       const where = !g
-        ? 'tu habitación'
+        ? t('tu habitación')
         : isBoard(g)
           ? g.status === 'pendiente'
-            ? 'encima de tu Kallax, aún con su plástico'
-            : 'tu Kallax'
+            ? t('encima de tu Kallax, aún con su plástico')
+            : t('tu Kallax')
           : g.kind === 'mazo'
-            ? 'tu mesa, delante de la tele'
+            ? t('tu mesa, delante de la tele')
             : g.kind === 'carpeta'
-              ? 'los cubos de abajo de tu Kallax'
-              : ZONE_TEXT[g.status];
+              ? t('los cubos de abajo de tu Kallax')
+              : t(ZONE_TEXT[g.status]);
       return view(
-        '¡Plof!',
-        p(g ? `«${g.title}» acaba de caer en ${where}.` : 'Añadido.', 'big'),
+        t('¡Plof!'),
+        p(g ? t('«{title}» acaba de caer en {where}.', { title: g.title, where }) : t('Añadido.'), 'big'),
         h(
           'div',
           { class: 'list' },
-          item('Añadir otro', () => {
+          item(t('Añadir otro'), () => {
             current = { name: !g ? 'nuevo' : isBoard(g) ? 'mesaNuevo' : g.kind === 'mazo' ? 'mazoNuevo' : g.kind === 'carpeta' ? 'carpetaNueva' : 'nuevo', params: {} };
             render(0);
           }, { id: 'ok-otro' }),
-          g ? item('Verlo en la habitación', () => actions.showInRoom(id), { id: 'ok-ver' }) : null,
-          item('Volver al menú', home),
+          g ? item(t('Verlo en la habitación'), () => actions.showInRoom(id), { id: 'ok-ver' }) : null,
+          item(t('Volver al menú'), home),
         ),
       );
     },
 
     steam() {
-      const input = h('input', { id: 's-perfil', 'data-nav': '', placeholder: 'steamcommunity.com/id/tunombre', 'aria-label': 'Tu perfil de Steam', autocomplete: 'off' });
+      const input = h('input', { id: 's-perfil', 'data-nav': '', placeholder: t('steamcommunity.com/id/tunombre'), 'aria-label': t('Tu perfil de Steam'), autocomplete: 'off' });
       const status = h('div', { class: 'steam-status', role: 'status' });
       const form = h(
         'form',
         { class: 'form', onsubmit: (e) => (e.preventDefault(), lookup()) },
         input,
-        h('button', { type: 'submit', class: 'item primary', 'data-nav': '', id: 's-buscar' }, h('span', { class: 'item-label', text: 'Buscar mis juegos' })),
+        h('button', { type: 'submit', class: 'item primary', 'data-nav': '', id: 's-buscar' }, h('span', { class: 'item-label', text: t('Buscar mis juegos') })),
       );
       async function lookup() {
         const value = input.value.trim();
         if (!value) return (sfx.error(), input.focus());
-        status.replaceChildren(p('Conectando con Steam…'));
+        status.replaceChildren(p(t('Conectando con Steam…')));
         const res = await actions.steamLookup(value);
         if (res.error) {
           sfx.error();
           status.replaceChildren(
-            p(res.message || 'No he podido leer tu biblioteca.'),
-            res.error === 'sin_clave' ? h('div', { class: 'list' }, item('Cargar la colección de demo', loadDemo, { id: 's-demo' })) : null,
+            p(STEAM_ERROR[res.error] ? t(STEAM_ERROR[res.error], { name: value.replace(/\/+$/, '').split('/').pop() }) : res.message || t('No he podido leer tu biblioteca.')),
+            res.error === 'sin_clave' ? h('div', { class: 'list' }, item(t('Cargar la colección de demo'), loadDemo, { id: 's-demo' })) : null,
           );
           focusAt(navs().length - 1);
           return;
@@ -443,13 +452,13 @@ export function createDevice(root, actions) {
         const mapped = mapSteamGames(res.games);
         const pending = mapped.filter((g) => g.status === 'pendiente').length;
         status.replaceChildren(
-          p(`He encontrado ${mapped.length} juegos. ${pending} nunca los has abierto: irán a tu pila de la vergüenza.`),
+          p(t('He encontrado {n} juegos. {pending} nunca los has abierto: irán a tu pila de la vergüenza.', { n: mapped.length, pending })),
           h(
             'div',
             { class: 'list' },
-            item(`Importar ${mapped.length} juegos`, () => {
+            item(t('Importar {n} juegos', { n: mapped.length }), () => {
               const { added, skipped } = store.importGames(mapped);
-              toast(`¡Lluvia de cajas! ${added} juegos nuevos${skipped ? `, ${skipped} ya los tenías` : ''}.`);
+              toast(skipped ? t('¡Lluvia de cajas! {added} juegos nuevos, {skipped} ya los tenías.', { added, skipped }) : t('¡Lluvia de cajas! {added} juegos nuevos.', { added }));
               home();
               if (added) actions.lower();
             }, { cls: 'primary', id: 's-importar' }),
@@ -459,8 +468,8 @@ export function createDevice(root, actions) {
         focusAt(navs().length - 1);
       }
       return view(
-        'Importar de Steam',
-        p('Pega tu perfil: la URL, tu nombre personalizado o tu SteamID. Tu perfil y tus juegos tienen que ser públicos.'),
+        t('Importar de Steam'),
+        p(t('Pega tu perfil: la URL, tu nombre personalizado o tu SteamID. Tu perfil y tus juegos tienen que ser públicos.')),
         form,
         status,
       );
@@ -470,16 +479,16 @@ export function createDevice(root, actions) {
       const pending = store.getVideoGames().filter((g) => g.status === 'pendiente');
       const f = store.pileForecast(pending.length);
       const text = pending.length
-        ? `A un juego al mes, la terminarías en ${MONTHS[f.month]} de ${f.year}.`
-        : 'No tienes nada pendiente. ¿Seguro? 👀';
+        ? t('A un juego al mes, la terminarías en {month} de {year}.', { month: t(MONTHS[f.month]), year: f.year })
+        : t('No tienes nada pendiente. ¿Seguro? 👀');
       return view(
-        'Pila de la vergüenza',
+        t('Pila de la vergüenza'),
         h('div', { class: 'big-number', text: String(pending.length) }),
         p(text),
         h(
           'div',
           { class: 'list' },
-          item('Ver la pila en mi habitación', () => actions.showZone('pila'), { id: 'p-ver' }),
+          item(t('Ver la pila en mi habitación'), () => actions.showZone('pila'), { id: 'p-ver' }),
           sortForList(pending, 'az').map((g) => item(g.title, () => go('ficha', { id: g.id }), { meta: metaLine(g), cls: 'game' })),
         ),
       );
@@ -490,21 +499,21 @@ export function createDevice(root, actions) {
       const pct = st.total ? Math.round((st.by.terminado / st.total) * 100) : 0;
       const row = statRow;
       return view(
-        'Estadísticas',
+        t('Estadísticas'),
         h(
           'dl',
           { class: 'stats' },
-          row('Juegos', String(st.total)),
-          row('Plataformas', String(st.platforms)),
-          row('Horas jugadas', String(st.hours)),
-          row('Nota media', st.avgScore === null ? '—' : String(st.avgScore)),
-          row('Terminados', `${st.by.terminado} (${pct}%)`),
-          row('En la pila', String(st.by.pendiente)),
-          row('Abandonados', String(st.by.abandonado)),
+          row(t('Juegos'), String(st.total)),
+          row(t('Plataformas'), String(st.platforms)),
+          row(t('Horas jugadas'), String(st.hours)),
+          row(t('Nota media'), st.avgScore === null ? '—' : String(st.avgScore)),
+          row(t('Terminados'), `${st.by.terminado} (${pct}%)`),
+          row(t('En la pila'), String(st.by.pendiente)),
+          row(t('Abandonados'), String(st.by.abandonado)),
         ),
-        st.top.length ? p(`Tu podio: ${st.top.map((g) => g.title).join(' · ')}`) : null,
-        st.mostPlayed.length ? p(`Más horas: ${st.mostPlayed[0].title} (${Math.round(st.mostPlayed[0].hours)} h)`) : null,
-        h('div', { class: 'list' }, item('Imprimir ticket', () => actions.printTicket(), { id: 'st-ticket' }), item('Volver', back)),
+        st.top.length ? p(t('Tu podio: {list}', { list: st.top.map((g) => g.title).join(' · ') })) : null,
+        st.mostPlayed.length ? p(t('Más horas: {title} ({hours} h)', { title: st.mostPlayed[0].title, hours: Math.round(st.mostPlayed[0].hours) })) : null,
+        h('div', { class: 'list' }, item(t('Imprimir ticket'), () => actions.printTicket(), { id: 'st-ticket' }), item(t('Volver'), back)),
       );
     },
 
@@ -514,20 +523,20 @@ export function createDevice(root, actions) {
       const bs = boardStats(boards);
       const visit = store.visiting();
       return view(
-        visit ? 'Sus juegos de mesa' : 'Juegos de mesa',
+        visit ? t('Sus juegos de mesa') : t('Juegos de mesa'),
         h(
           'div',
           { class: 'list' },
-          !boards.length && !visit ? item('Kallax vacía: ¿cargo la demo?', loadDemo, { cls: 'hint', id: 'demo-hint-mesa' }) : null,
-          item(visit ? 'Su Kallax' : 'Mi Kallax', () => go('mesaLista', { filter: 'todos' }), { meta: String(bs.total), id: 'b-coleccion' }),
-          visit ? null : item('Añadir juego de mesa', () => go('mesaNuevo'), { id: 'b-nuevo' }),
-          item('¿Qué jugamos esta noche?', () => go('queJugamos'), { id: 'b-quejugamos' }),
-          item('Sin estrenar', () => go('mesaLista', { filter: 'pendiente' }), { meta: String(bs.unplayed), id: 'b-sinestrenar' }),
-          item('Préstamos', () => go('prestamos'), { meta: String(bs.lent.length), id: 'b-prestamos' }),
-          item(visit ? 'Ver su Kallax en 3D' : 'Ver mi Kallax en 3D', () => actions.showZone('kallax'), { id: 'b-kallax' }),
-          item('Estadísticas', () => go('mesaStats'), { id: 'b-stats' }),
-          item(visit ? 'Cambiar de disquete' : 'Expulsar disquete', ejectDisk, { id: 'm-expulsar' }),
-          visit ? item('Crear mi propia habitación', () => actions.leaveVisit(), { cls: 'primary', id: 'm-salir' }) : null,
+          !boards.length && !visit ? item(t('Kallax vacía: ¿cargo la demo?'), loadDemo, { cls: 'hint', id: 'demo-hint-mesa' }) : null,
+          item(visit ? t('Su Kallax') : t('Mi Kallax'), () => go('mesaLista', { filter: 'todos' }), { meta: String(bs.total), id: 'b-coleccion' }),
+          visit ? null : item(t('Añadir juego de mesa'), () => go('mesaNuevo'), { id: 'b-nuevo' }),
+          item(t('¿Qué jugamos esta noche?'), () => go('queJugamos'), { id: 'b-quejugamos' }),
+          item(t('Sin estrenar'), () => go('mesaLista', { filter: 'pendiente' }), { meta: String(bs.unplayed), id: 'b-sinestrenar' }),
+          item(t('Préstamos'), () => go('prestamos'), { meta: String(bs.lent.length), id: 'b-prestamos' }),
+          item(visit ? t('Ver su Kallax en 3D') : t('Ver mi Kallax en 3D'), () => actions.showZone('kallax'), { id: 'b-kallax' }),
+          item(t('Estadísticas'), () => go('mesaStats'), { id: 'b-stats' }),
+          item(visit ? t('Cambiar de disquete') : t('Expulsar disquete'), ejectDisk, { id: 'm-expulsar' }),
+          visit ? item(t('Crear mi propia habitación'), () => actions.leaveVisit(), { cls: 'primary', id: 'm-salir' }) : null,
         ),
       );
     },
@@ -536,44 +545,44 @@ export function createDevice(root, actions) {
       const all = store.getBoards();
       const list = (filter === 'todos' ? all : all.filter((g) => g.status === filter)).sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
       const filters = ['todos', ...BOARD_STATUSES];
-      const label = filter === 'todos' ? 'Todos' : BOARD_STATUS_LABEL[filter];
+      const label = filter === 'todos' ? t('Todos') : t(BOARD_STATUS_LABEL[filter]);
       return view(
-        'Juegos de mesa',
+        t('Juegos de mesa'),
         h(
           'div',
           { class: 'list' },
-          stepper('Ver', `${label} (${list.length})`, (dir) => {
+          stepper(t('Ver'), `${label} (${list.length})`, (dir) => {
             current.params = { filter: cycle(filters, filter, dir) };
             render(0);
           }, { id: 'b-filtro' }),
           list.length
             ? list.map((g) => item(g.title, () => go('ficha', { id: g.id }), { meta: boardMeta(g), cls: 'game' }))
             : store.visiting()
-              ? p('Nada por aquí.')
-              : item('Nada por aquí. Añadir uno', () => go('mesaNuevo')),
+              ? p(t('Nada por aquí.'))
+              : item(t('Nada por aquí. Añadir uno'), () => go('mesaNuevo')),
         ),
       );
     },
 
     mesaFicha({ id }) {
       const g = store.getGame(id);
-      if (!g) return view('Juego borrado', p('Este juego ya no está en tu colección.'), h('div', { class: 'list' }, item('Volver', back)));
+      if (!g) return view(t('Juego borrado'), p(t('Este juego ya no está en tu colección.')), h('div', { class: 'list' }, item(t('Volver'), back)));
       const sub = p(`${playersText(g)} · ${minutesText(g.minutes)}`, 'sub');
       if (store.visiting()) {
         return view(
           g.title,
           sub,
-          h('dl', { class: 'stats' }, statRow('Estado', statusLabel(g)), statRow('Nota', g.score === null ? 'Sin nota' : `${g.score}/10`), statRow('Partidas', String(g.plays))),
+          h('dl', { class: 'stats' }, statRow(t('Estado'), statusLabel(g)), statRow(t('Nota'), g.score === null ? t('Sin nota') : `${g.score}/10`), statRow(t('Partidas'), String(g.plays))),
           g.lentTo ? p(lentText(g)) : null,
-          p(g.review ? `“${g.review}”` : 'Sin reseña.', 'note quote'),
-          h('div', { class: 'list' }, item('Ver en la habitación', () => actions.showInRoom(id), { id: 'f-ver' }), item('Volver', back)),
+          p(g.review ? `“${g.review}”` : t('Sin reseña.'), 'note quote'),
+          h('div', { class: 'list' }, item(t('Ver en la habitación'), () => actions.showInRoom(id), { id: 'f-ver' }), item(t('Volver'), back)),
         );
       }
       const upd = (patch) => {
         store.updateGame(id, patch);
         sfx.save();
       };
-      const num = (idf, label, value, min, max, key) =>
+      const field = (idf, label, value, min, max, key) =>
         h(
           'label',
           { class: 'item field' },
@@ -584,7 +593,7 @@ export function createDevice(root, actions) {
         id: 'bf-prestado',
         maxlength: '40',
         'data-nav': '',
-        placeholder: 'Nadie: está en casa',
+        placeholder: t('Nadie: está en casa'),
         autocomplete: 'off',
         value: g.lentTo,
         onchange: (e) => upd({ lentTo: e.target.value, lentAt: e.target.value.trim() ? new Date().toISOString() : null }),
@@ -596,22 +605,22 @@ export function createDevice(root, actions) {
         h(
           'div',
           { class: 'list' },
-          item(g.status === 'pendiente' ? '¡Lo hemos estrenado!' : `¡Hemos jugado! (${g.plays})`, () => {
+          item(g.status === 'pendiente' ? t('¡Lo hemos estrenado!') : t('¡Hemos jugado! ({n})', { n: g.plays }), () => {
             const fresh = g.status === 'pendiente';
             store.logPlay(id);
             sfx.select();
-            toast(fresh ? `¡${g.title} estrenado! Fuera plástico.` : `Partida apuntada: ya van ${g.plays + 1}`);
+            toast(fresh ? t('¡{title} estrenado! Fuera plástico.', { title: g.title }) : t('Partida apuntada: ya van {n}', { n: g.plays + 1 }));
           }, { cls: 'primary', id: 'bf-jugado' }),
-          stepper('Estado', BOARD_STATUS_LABEL[g.status], (dir) => upd({ status: cycle(BOARD_STATUSES, g.status, dir) }), { id: 'bf-estado' }),
-          stepper('Nota', stars(g.score), (dir) => upd({ score: cycle(SCORES, g.score, dir) }), { id: 'bf-nota' }),
-          num('bf-min', 'Jugadores mín.', g.minPlayers, '1', '20', 'minPlayers'),
-          num('bf-max', 'Jugadores máx.', g.maxPlayers, '1', '99', 'maxPlayers'),
-          num('bf-minutos', 'Minutos', g.minutes, '5', '1000', 'minutes'),
-          stepper('Caja', sizeName(g.platform), (dir) => upd({ platform: cycle(BOARD_SIZES.map((x) => x.id), g.platform, dir) }), { id: 'bf-caja' }),
-          h('label', { class: 'item field' }, h('span', { class: 'item-label', text: 'Prestado a' }), lent),
-          item(g.review ? `“${g.review.slice(0, 70)}${g.review.length > 70 ? '…' : ''}”` : 'Escribir reseña…', () => go('resena', { id }), { meta: 'Reseña', cls: 'review', id: 'bf-resena' }),
-          item('Ver en la habitación', () => actions.showInRoom(id), { id: 'bf-ver' }),
-          item('Borrar de la colección', () => go('confirmar', { text: `¿Borrar «${g.title}» de tu colección?`, yes: 'Sí, borrar', action: 'borrar', id }), { cls: 'danger', id: 'bf-borrar' }),
+          stepper(t('Estado'), t(BOARD_STATUS_LABEL[g.status]), (dir) => upd({ status: cycle(BOARD_STATUSES, g.status, dir) }), { id: 'bf-estado' }),
+          stepper(t('Nota'), stars(g.score), (dir) => upd({ score: cycle(SCORES, g.score, dir) }), { id: 'bf-nota' }),
+          field('bf-min', t('Jugadores mín.'), g.minPlayers, '1', '20', 'minPlayers'),
+          field('bf-max', t('Jugadores máx.'), g.maxPlayers, '1', '99', 'maxPlayers'),
+          field('bf-minutos', t('Minutos'), g.minutes, '5', '1000', 'minutes'),
+          stepper(t('Caja'), sizeName(g.platform), (dir) => upd({ platform: cycle(BOARD_SIZES.map((x) => x.id), g.platform, dir) }), { id: 'bf-caja' }),
+          h('label', { class: 'item field' }, h('span', { class: 'item-label', text: t('Prestado a') }), lent),
+          item(g.review ? `“${g.review.slice(0, 70)}${g.review.length > 70 ? '…' : ''}”` : t('Escribir reseña…'), () => go('resena', { id }), { meta: t('Reseña'), cls: 'review', id: 'bf-resena' }),
+          item(t('Ver en la habitación'), () => actions.showInRoom(id), { id: 'bf-ver' }),
+          item(t('Borrar de la colección'), () => go('confirmar', { text: t('¿Borrar «{title}» de tu colección?', { title: g.title }), yes: t('Sí, borrar'), action: 'borrar', id }), { cls: 'danger', id: 'bf-borrar' }),
         ),
       );
     },
@@ -620,35 +629,35 @@ export function createDevice(root, actions) {
       const form = h(
         'form',
         { class: 'form', autocomplete: 'off', onsubmit: (e) => (e.preventDefault(), addFromForm(form, { kind: 'mesa' })) },
-        h('label', {}, 'Título', h('input', { name: 'title', id: 'bn-titulo', required: true, maxlength: '120', 'data-nav': '', placeholder: 'Ej.: Catan' })),
+        h('label', {}, t('Título'), h('input', { name: 'title', id: 'bn-titulo', required: true, maxlength: '120', 'data-nav': '', placeholder: t('Ej.: Catan') })),
         h(
           'div',
           { class: 'row2' },
-          h('label', {}, 'Jugadores mín.', h('input', { name: 'minPlayers', id: 'bn-min', type: 'number', min: '1', max: '20', value: '2', inputmode: 'numeric', 'data-nav': '' })),
-          h('label', {}, 'Máx.', h('input', { name: 'maxPlayers', id: 'bn-max', type: 'number', min: '1', max: '99', value: '4', inputmode: 'numeric', 'data-nav': '' })),
+          h('label', {}, t('Jugadores mín.'), h('input', { name: 'minPlayers', id: 'bn-min', type: 'number', min: '1', max: '20', value: '2', inputmode: 'numeric', 'data-nav': '' })),
+          h('label', {}, t('Máx.'), h('input', { name: 'maxPlayers', id: 'bn-max', type: 'number', min: '1', max: '99', value: '4', inputmode: 'numeric', 'data-nav': '' })),
         ),
-        h('label', {}, 'Duración en minutos', h('input', { name: 'minutes', id: 'bn-minutos', type: 'number', min: '5', max: '1000', step: '5', value: '45', inputmode: 'numeric', 'data-nav': '' })),
-        h('label', {}, 'Tamaño de la caja', h('select', { name: 'platform', id: 'bn-caja', 'data-nav': '' }, BOARD_SIZES.map((x) => h('option', { value: x.id, selected: x.id === 'mesa-l', text: x.name })))),
-        h('label', {}, 'Estado', h('select', { name: 'status', id: 'bn-estado', 'data-nav': '' }, BOARD_STATUSES.map((st) => h('option', { value: st, selected: st === 'jugado', text: BOARD_STATUS_LABEL[st] })))),
-        h('label', {}, 'Nota', h('select', { name: 'score', id: 'bn-nota', 'data-nav': '' }, h('option', { value: '', text: 'Sin nota' }), Array.from({ length: 11 }, (_, i) => h('option', { value: String(10 - i), text: `${10 - i}/10` })))),
-        h('button', { type: 'submit', class: 'item primary', id: 'bn-anadir', 'data-nav': '' }, h('span', { class: 'item-label', text: 'Añadir a mi Kallax' })),
+        h('label', {}, t('Duración en minutos'), h('input', { name: 'minutes', id: 'bn-minutos', type: 'number', min: '5', max: '1000', step: '5', value: '45', inputmode: 'numeric', 'data-nav': '' })),
+        h('label', {}, t('Tamaño de la caja'), h('select', { name: 'platform', id: 'bn-caja', 'data-nav': '' }, BOARD_SIZES.map((x) => h('option', { value: x.id, selected: x.id === 'mesa-l', text: t(x.name) })))),
+        h('label', {}, t('Estado'), h('select', { name: 'status', id: 'bn-estado', 'data-nav': '' }, BOARD_STATUSES.map((st) => h('option', { value: st, selected: st === 'jugado', text: t(BOARD_STATUS_LABEL[st]) })))),
+        h('label', {}, t('Nota'), h('select', { name: 'score', id: 'bn-nota', 'data-nav': '' }, h('option', { value: '', text: t('Sin nota') }), Array.from({ length: 11 }, (_, i) => h('option', { value: String(10 - i), text: `${10 - i}/10` })))),
+        h('button', { type: 'submit', class: 'item primary', id: 'bn-anadir', 'data-nav': '' }, h('span', { class: 'item-label', text: t('Añadir a mi Kallax') })),
       );
-      return view('Añadir juego de mesa', form);
+      return view(t('Añadir juego de mesa'), form);
     },
 
     queJugamos() {
       const matches = whatToPlay(store.getBoards(), night);
       const keep = () => render(Math.max(0, focusIndex()));
       return view(
-        '¿Qué jugamos?',
+        t('¿Qué jugamos?'),
         h(
           'div',
           { class: 'list' },
-          stepper('Somos', String(night.players), (dir) => ((night.players = clamp(night.players + dir, 1, 12)), keep()), { id: 'q-jugadores' }),
-          stepper('Tiempo', night.minutes ? `hasta ${minutesText(night.minutes)}` : 'Sin prisa', (dir) => ((night.minutes = cycle(TIME_OPTIONS, night.minutes, dir)), keep()), { id: 'q-tiempo' }),
+          stepper(t('Somos'), String(night.players), (dir) => ((night.players = clamp(night.players + dir, 1, 12)), keep()), { id: 'q-jugadores' }),
+          stepper(t('Tiempo'), night.minutes ? t('hasta {time}', { time: minutesText(night.minutes) }) : t('Sin prisa'), (dir) => ((night.minutes = cycle(TIME_OPTIONS, night.minutes, dir)), keep()), { id: 'q-tiempo' }),
           matches.length
-            ? item(`¡Que elija la DisketeBoy! (${matches.length})`, () => go('ruleta', { ids: matches.map((g) => g.id) }), { cls: 'primary', id: 'q-ruleta' })
-            : p('Nada encaja esta noche… ¿Más tiempo, menos gente o un juego nuevo?'),
+            ? item(t('¡Que elija la DisketeBoy! ({n})', { n: matches.length }), () => go('ruleta', { ids: matches.map((g) => g.id) }), { cls: 'primary', id: 'q-ruleta' })
+            : p(t('Nada encaja esta noche… ¿Más tiempo, menos gente o un juego nuevo?')),
           matches.slice(0, 15).map((g) => item(g.title, () => go('ficha', { id: g.id }), { meta: boardMeta(g), cls: 'game' })),
         ),
       );
@@ -659,23 +668,23 @@ export function createDevice(root, actions) {
       if (pick && store.getGame(pick)) {
         const g = store.getGame(pick);
         return view(
-          '¡Esta noche toca…',
+          t('¡Esta noche toca…'),
           h('div', { class: 'big-pick', text: g.title }),
-          p(`${playersText(g)} · ${minutesText(g.minutes)}${g.status === 'pendiente' ? ' · ¡y por fin lo estrenáis!' : ''}`, 'sub'),
+          p(`${playersText(g)} · ${minutesText(g.minutes)}${g.status === 'pendiente' ? t(' · ¡y por fin lo estrenáis!') : ''}`, 'sub'),
           h(
             'div',
             { class: 'list' },
-            item('¡Sácalo de la Kallax!', () => actions.showInRoom(g.id), { cls: 'primary', id: 'r-sacar' }),
-            item('Otra vez', () => {
+            item(t('¡Sácalo de la Kallax!'), () => actions.showInRoom(g.id), { cls: 'primary', id: 'r-sacar' }),
+            item(t('Otra vez'), () => {
               current.params = { ids };
               render(0);
             }, { id: 'r-otra' }),
-            item('Volver', back),
+            item(t('Volver'), back),
           ),
         );
       }
       const label = h('div', { class: 'big-pick rolling', text: '…' });
-      const el = view('Girando la ruleta…', label, p(`Entre ${games.length} juegos`, 'sub'));
+      const el = view(t('Girando la ruleta…'), label, p(t('Entre {n} juegos', { n: games.length }), 'sub'));
       setTimeout(() => spin(games, label), 0);
       return el;
     },
@@ -683,19 +692,19 @@ export function createDevice(root, actions) {
     prestamos() {
       const lent = store.getBoards().filter((g) => g.lentTo).sort((a, b) => (a.lentAt || '').localeCompare(b.lentAt || ''));
       return view(
-        'Préstamos',
-        p(lent.length ? 'Lo que no está en casa, y quién lo tiene:' : 'Todo está en casa. ¡Bien!'),
-        h('div', { class: 'list' }, lent.map((g) => item(g.title, () => go('ficha', { id: g.id }), { meta: lentText(g), cls: 'game' })), item('Volver', back)),
+        t('Préstamos'),
+        p(lent.length ? t('Lo que no está en casa, y quién lo tiene:') : t('Todo está en casa. ¡Bien!')),
+        h('div', { class: 'list' }, lent.map((g) => item(g.title, () => go('ficha', { id: g.id }), { meta: lentText(g), cls: 'game' })), item(t('Volver'), back)),
       );
     },
 
     mesaStats() {
       const bs = boardStats(store.getBoards());
       return view(
-        'Estadísticas',
-        h('dl', { class: 'stats' }, statRow('Juegos de mesa', String(bs.total)), statRow('Partidas', String(bs.plays)), statRow('Sin estrenar', String(bs.unplayed)), statRow('Prestados', String(bs.lent.length))),
-        bs.mostPlayed ? p(`El más jugado: ${bs.mostPlayed.title} (${bs.mostPlayed.plays} partidas)`) : null,
-        h('div', { class: 'list' }, item('Volver', back)),
+        t('Estadísticas'),
+        h('dl', { class: 'stats' }, statRow(t('Juegos de mesa'), String(bs.total)), statRow(t('Partidas'), String(bs.plays)), statRow(t('Sin estrenar'), String(bs.unplayed)), statRow(t('Prestados'), String(bs.lent.length))),
+        bs.mostPlayed ? p(t('El más jugado: {title} ({n} partidas)', { title: bs.mostPlayed.title, n: bs.mostPlayed.plays })) : null,
+        h('div', { class: 'list' }, item(t('Volver'), back)),
       );
     },
 
@@ -705,58 +714,58 @@ export function createDevice(root, actions) {
       const cs = cardsStats(items);
       const visit = store.visiting();
       return view(
-        visit ? 'Sus cartas' : 'Cartas',
+        visit ? t('Sus cartas') : t('Cartas'),
         h(
           'div',
           { class: 'list' },
-          !items.length && !visit ? item('Sin cartas: ¿cargo la demo?', loadDemo, { cls: 'hint', id: 'demo-hint-cartas' }) : null,
-          item(visit ? 'Sus mazos' : 'Mis mazos', () => go('cartasLista', { kind: 'mazo' }), { meta: String(cs.decks), id: 'c-mazos' }),
-          visit ? null : item('Nuevo mazo', () => go('mazoNuevo'), { id: 'c-nuevo-mazo' }),
-          item(visit ? 'Sus carpetas' : 'Mis carpetas', () => go('cartasLista', { kind: 'carpeta' }), { meta: String(cs.binders), id: 'c-carpetas' }),
-          visit ? null : item('Nueva carpeta', () => go('carpetaNueva'), { id: 'c-nueva-carpeta' }),
-          item('Ver los mazos en 3D', () => actions.showZone('mazos'), { id: 'c-ver' }),
-          item('Estadísticas', () => go('cartasStats'), { id: 'c-stats' }),
-          item(visit ? 'Cambiar de disquete' : 'Expulsar disquete', ejectDisk, { id: 'm-expulsar' }),
-          visit ? item('Crear mi propia habitación', () => actions.leaveVisit(), { cls: 'primary', id: 'm-salir' }) : null,
+          !items.length && !visit ? item(t('Sin cartas: ¿cargo la demo?'), loadDemo, { cls: 'hint', id: 'demo-hint-cartas' }) : null,
+          item(visit ? t('Sus mazos') : t('Mis mazos'), () => go('cartasLista', { kind: 'mazo' }), { meta: String(cs.decks), id: 'c-mazos' }),
+          visit ? null : item(t('Nuevo mazo'), () => go('mazoNuevo'), { id: 'c-nuevo-mazo' }),
+          item(visit ? t('Sus carpetas') : t('Mis carpetas'), () => go('cartasLista', { kind: 'carpeta' }), { meta: String(cs.binders), id: 'c-carpetas' }),
+          visit ? null : item(t('Nueva carpeta'), () => go('carpetaNueva'), { id: 'c-nueva-carpeta' }),
+          item(t('Ver los mazos en 3D'), () => actions.showZone('mazos'), { id: 'c-ver' }),
+          item(t('Estadísticas'), () => go('cartasStats'), { id: 'c-stats' }),
+          item(visit ? t('Cambiar de disquete') : t('Expulsar disquete'), ejectDisk, { id: 'm-expulsar' }),
+          visit ? item(t('Crear mi propia habitación'), () => actions.leaveVisit(), { cls: 'primary', id: 'm-salir' }) : null,
         ),
       );
     },
 
     cartasLista({ kind = 'mazo' }) {
       const list = store.getCards().filter((g) => g.kind === kind).sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
-      const meta = (g) => (kind === 'mazo' ? [tcg(g.tcg).short, g.format, recordText(g)] : [tcg(g.tcg).short, `${g.cards} cartas`, euros(g.value)]).filter(Boolean).join(' · ');
+      const meta = (g) => (kind === 'mazo' ? [tcg(g.tcg).short, g.format, recordText(g)] : [tcg(g.tcg).short, tp(g.cards, '1 carta', '{n} cartas', { n: num(g.cards) }), euros(g.value)]).filter(Boolean).join(' · ');
       return view(
-        kind === 'mazo' ? 'Mazos' : 'Carpetas',
+        kind === 'mazo' ? t('Mazos') : t('Carpetas'),
         h(
           'div',
           { class: 'list' },
           list.length
             ? list.map((g) => item(g.title, () => go('ficha', { id: g.id }), { meta: meta(g), cls: 'game' }))
             : store.visiting()
-              ? p('Nada por aquí.')
-              : item(kind === 'mazo' ? 'Aún no hay mazos. Crear uno' : 'Aún no hay carpetas. Crear una', () => go(kind === 'mazo' ? 'mazoNuevo' : 'carpetaNueva')),
+              ? p(t('Nada por aquí.'))
+              : item(kind === 'mazo' ? t('Aún no hay mazos. Crear uno') : t('Aún no hay carpetas. Crear una'), () => go(kind === 'mazo' ? 'mazoNuevo' : 'carpetaNueva')),
         ),
       );
     },
 
     mazoFicha({ id }) {
       const g = store.getGame(id);
-      if (!g) return view('Mazo borrado', p('Este mazo ya no está en tu colección.'), h('div', { class: 'list' }, item('Volver', back)));
-      const sub = p([tcg(g.tcg).name, g.format].filter(Boolean).join(' · '), 'sub');
+      if (!g) return view(t('Mazo borrado'), p(t('Este mazo ya no está en tu colección.')), h('div', { class: 'list' }, item(t('Volver'), back)));
+      const sub = p([t(tcg(g.tcg).name), g.format].filter(Boolean).join(' · '), 'sub');
       if (store.visiting()) {
         return view(
           g.title,
           sub,
-          h('dl', { class: 'stats' }, statRow('Estado', statusLabel(g)), statRow('Récord', recordText(g)), statRow('Cartas', String(deckCount(g.list)))),
-          p(g.review ? `“${g.review}”` : 'Sin notas.', 'note quote'),
-          h('div', { class: 'list' }, item('Ver en la habitación', () => actions.showInRoom(id), { id: 'f-ver' }), item('Volver', back)),
+          h('dl', { class: 'stats' }, statRow(t('Estado'), statusLabel(g)), statRow(t('Récord'), recordText(g)), statRow(t('Cartas'), String(deckCount(g.list)))),
+          p(g.review ? `“${g.review}”` : t('Sin notas.'), 'note quote'),
+          h('div', { class: 'list' }, item(t('Ver en la habitación'), () => actions.showInRoom(id), { id: 'f-ver' }), item(t('Volver'), back)),
         );
       }
       const upd = (patch) => {
         store.updateGame(id, patch);
         sfx.save();
       };
-      const format = h('input', { id: 'cf-formato', maxlength: '40', 'data-nav': '', placeholder: 'Commander, Estándar…', autocomplete: 'off', value: g.format, onchange: (e) => upd({ format: e.target.value }) });
+      const format = h('input', { id: 'cf-formato', maxlength: '40', 'data-nav': '', placeholder: t('Commander, Estándar…'), autocomplete: 'off', value: g.format, onchange: (e) => upd({ format: e.target.value }) });
       return view(
         g.title,
         sub,
@@ -764,24 +773,24 @@ export function createDevice(root, actions) {
         h(
           'div',
           { class: 'list' },
-          item('¡He ganado!', () => {
+          item(t('¡He ganado!'), () => {
             store.logResult(id, true);
             sfx.select();
-            toast(`¡Victoria con ${g.title}! ${g.wins + 1}V · ${g.losses}D`);
+            toast(t('¡Victoria con {title}! {w}V · {l}D', { title: g.title, w: g.wins + 1, l: g.losses }));
           }, { cls: 'primary', id: 'cf-gane' }),
-          item('He perdido', () => {
+          item(t('He perdido'), () => {
             store.logResult(id, false);
             sfx.back();
-            toast(`Derrota apuntada. La próxima, mejor robo.`);
+            toast(t('Derrota apuntada. La próxima, mejor robo.'));
           }, { id: 'cf-perdi' }),
-          stepper('Juego', tcg(g.tcg).short, (dir) => upd({ tcg: cycle(TCG_IDS, g.tcg, dir) }), { id: 'cf-juego' }),
-          h('label', { class: 'item field' }, h('span', { class: 'item-label', text: 'Formato' }), format),
-          stepper('Estado', DECK_STATUS_LABEL[g.status], (dir) => upd({ status: cycle(DECK_STATUSES, g.status, dir) }), { id: 'cf-estado' }),
-          stepper('Nota', stars(g.score), (dir) => upd({ score: cycle(SCORES, g.score, dir) }), { id: 'cf-nota' }),
-          item(`Lista del mazo (${deckCount(g.list)} cartas)`, () => go('listaMazo', { id }), { id: 'cf-lista' }),
-          item(g.review ? `“${g.review.slice(0, 70)}${g.review.length > 70 ? '…' : ''}”` : 'Escribir notas…', () => go('resena', { id }), { meta: 'Notas', cls: 'review', id: 'cf-notas' }),
-          item('Ver en la habitación', () => actions.showInRoom(id), { id: 'cf-ver' }),
-          item('Borrar mazo', () => go('confirmar', { text: `¿Borrar el mazo «${g.title}»?`, yes: 'Sí, borrar', action: 'borrar', id }), { cls: 'danger', id: 'cf-borrar' }),
+          stepper(t('Juego'), tcg(g.tcg).short, (dir) => upd({ tcg: cycle(TCG_IDS, g.tcg, dir) }), { id: 'cf-juego' }),
+          h('label', { class: 'item field' }, h('span', { class: 'item-label', text: t('Formato') }), format),
+          stepper(t('Estado'), t(DECK_STATUS_LABEL[g.status]), (dir) => upd({ status: cycle(DECK_STATUSES, g.status, dir) }), { id: 'cf-estado' }),
+          stepper(t('Nota'), stars(g.score), (dir) => upd({ score: cycle(SCORES, g.score, dir) }), { id: 'cf-nota' }),
+          item(t('Lista del mazo ({n} cartas)', { n: deckCount(g.list) }), () => go('listaMazo', { id }), { id: 'cf-lista' }),
+          item(g.review ? `“${g.review.slice(0, 70)}${g.review.length > 70 ? '…' : ''}”` : t('Escribir notas…'), () => go('resena', { id }), { meta: t('Notas'), cls: 'review', id: 'cf-notas' }),
+          item(t('Ver en la habitación'), () => actions.showInRoom(id), { id: 'cf-ver' }),
+          item(t('Borrar mazo'), () => go('confirmar', { text: t('¿Borrar el mazo «{title}»?', { title: g.title }), yes: t('Sí, borrar'), action: 'borrar', id }), { cls: 'danger', id: 'cf-borrar' }),
         ),
       );
     },
@@ -789,31 +798,31 @@ export function createDevice(root, actions) {
     listaMazo({ id }) {
       const g = store.getGame(id);
       if (!g) return SCREENS.mazoFicha({ id });
-      const counter = h('span', { class: 'counter', 'aria-live': 'polite', text: `${deckCount(g.list)} cartas` });
+      const counter = h('span', { class: 'counter', 'aria-live': 'polite', text: tp(deckCount(g.list), '1 carta', '{n} cartas') });
       const area = h('textarea', {
         id: 'lm-texto',
         rows: '8',
         maxlength: '6000',
         'data-nav': '',
-        'aria-label': `Lista del mazo ${g.title}`,
-        placeholder: '4 Rayo\n1 Sol Ring\n…',
-        oninput: (e) => (counter.textContent = `${deckCount(e.target.value)} cartas`),
+        'aria-label': t('Lista del mazo {title}', { title: g.title }),
+        placeholder: t('4 Rayo\n1 Sol Ring\n…'),
+        oninput: (e) => (counter.textContent = tp(deckCount(e.target.value), '1 carta', '{n} cartas')),
       });
       area.value = g.list;
       return view(
-        'Lista del mazo',
+        t('Lista del mazo'),
         p(g.title, 'sub'),
         area,
         counter,
         h(
           'div',
           { class: 'list' },
-          item('Guardar lista', () => {
+          item(t('Guardar lista'), () => {
             store.updateGame(id, { list: area.value });
-            toast(`Lista guardada: ${deckCount(area.value)} cartas`);
+            toast(t('Lista guardada: {n} cartas', { n: deckCount(area.value) }));
             back();
           }, { id: 'lm-guardar' }),
-          item('Cancelar', back),
+          item(t('Cancelar'), back),
         ),
       );
     },
@@ -822,45 +831,45 @@ export function createDevice(root, actions) {
       const form = h(
         'form',
         { class: 'form', autocomplete: 'off', onsubmit: (e) => (e.preventDefault(), addFromForm(form, { kind: 'mazo' })) },
-        h('label', {}, 'Nombre del mazo', h('input', { name: 'title', id: 'cn-titulo', required: true, maxlength: '120', 'data-nav': '', placeholder: 'Ej.: Rojo Burn' })),
-        h('label', {}, 'Juego', h('select', { name: 'tcg', id: 'cn-juego', 'data-nav': '' }, TCGS.map((t) => h('option', { value: t.id, text: t.name })))),
-        h('label', {}, 'Formato', h('input', { name: 'format', id: 'cn-formato', maxlength: '40', 'data-nav': '', placeholder: 'Commander, Estándar…' })),
-        h('label', {}, 'Estado', h('select', { name: 'status', id: 'cn-estado', 'data-nav': '' }, DECK_STATUSES.map((st) => h('option', { value: st, text: DECK_STATUS_LABEL[st] })))),
-        h('button', { type: 'submit', class: 'item primary', id: 'cn-anadir', 'data-nav': '' }, h('span', { class: 'item-label', text: 'Crear mazo' })),
+        h('label', {}, t('Nombre del mazo'), h('input', { name: 'title', id: 'cn-titulo', required: true, maxlength: '120', 'data-nav': '', placeholder: t('Ej.: Rojo Burn') })),
+        h('label', {}, t('Juego'), h('select', { name: 'tcg', id: 'cn-juego', 'data-nav': '' }, TCGS.map((x) => h('option', { value: x.id, text: t(x.name) })))),
+        h('label', {}, t('Formato'), h('input', { name: 'format', id: 'cn-formato', maxlength: '40', 'data-nav': '', placeholder: t('Commander, Estándar…') })),
+        h('label', {}, t('Estado'), h('select', { name: 'status', id: 'cn-estado', 'data-nav': '' }, DECK_STATUSES.map((st) => h('option', { value: st, text: t(DECK_STATUS_LABEL[st]) })))),
+        h('button', { type: 'submit', class: 'item primary', id: 'cn-anadir', 'data-nav': '' }, h('span', { class: 'item-label', text: t('Crear mazo') })),
       );
-      return view('Nuevo mazo', form);
+      return view(t('Nuevo mazo'), form);
     },
 
     carpetaNueva() {
       const form = h(
         'form',
         { class: 'form', autocomplete: 'off', onsubmit: (e) => (e.preventDefault(), addFromForm(form, { kind: 'carpeta' })) },
-        h('label', {}, 'Nombre de la carpeta', h('input', { name: 'title', id: 'pn-titulo', required: true, maxlength: '120', 'data-nav': '', placeholder: 'Ej.: Mis brillis' })),
-        h('label', {}, 'Juego', h('select', { name: 'tcg', id: 'pn-juego', 'data-nav': '' }, TCGS.map((t) => h('option', { value: t.id, text: t.name })))),
+        h('label', {}, t('Nombre de la carpeta'), h('input', { name: 'title', id: 'pn-titulo', required: true, maxlength: '120', 'data-nav': '', placeholder: t('Ej.: Mis brillis') })),
+        h('label', {}, t('Juego'), h('select', { name: 'tcg', id: 'pn-juego', 'data-nav': '' }, TCGS.map((x) => h('option', { value: x.id, text: t(x.name) })))),
         h(
           'div',
           { class: 'row2' },
-          h('label', {}, 'Cartas', h('input', { name: 'cards', id: 'pn-cartas', type: 'number', min: '0', max: '1000000', value: '0', inputmode: 'numeric', 'data-nav': '' })),
-          h('label', {}, 'Valor (€)', h('input', { name: 'value', id: 'pn-valor', type: 'number', min: '0', step: '0.01', value: '0', inputmode: 'decimal', 'data-nav': '' })),
+          h('label', {}, t('Cartas'), h('input', { name: 'cards', id: 'pn-cartas', type: 'number', min: '0', max: '1000000', value: '0', inputmode: 'numeric', 'data-nav': '' })),
+          h('label', {}, t('Valor (€)'), h('input', { name: 'value', id: 'pn-valor', type: 'number', min: '0', step: '0.01', value: '0', inputmode: 'decimal', 'data-nav': '' })),
         ),
-        h('label', {}, 'Estado', h('select', { name: 'status', id: 'pn-estado', 'data-nav': '' }, BINDER_STATUSES.map((st) => h('option', { value: st, text: BINDER_STATUS_LABEL[st] })))),
-        h('button', { type: 'submit', class: 'item primary', id: 'pn-anadir', 'data-nav': '' }, h('span', { class: 'item-label', text: 'Crear carpeta' })),
+        h('label', {}, t('Estado'), h('select', { name: 'status', id: 'pn-estado', 'data-nav': '' }, BINDER_STATUSES.map((st) => h('option', { value: st, text: t(BINDER_STATUS_LABEL[st]) })))),
+        h('button', { type: 'submit', class: 'item primary', id: 'pn-anadir', 'data-nav': '' }, h('span', { class: 'item-label', text: t('Crear carpeta') })),
       );
-      return view('Nueva carpeta', form);
+      return view(t('Nueva carpeta'), form);
     },
 
     carpetaFicha({ id }) {
       const g = store.getGame(id);
-      if (!g) return view('Carpeta borrada', p('Esta carpeta ya no está en tu colección.'), h('div', { class: 'list' }, item('Volver', back)));
-      const sub = p(`${tcg(g.tcg).name} · ${g.cards.toLocaleString('es-ES')} cartas · ${euros(g.value)}`, 'sub');
+      if (!g) return view(t('Carpeta borrada'), p(t('Esta carpeta ya no está en tu colección.')), h('div', { class: 'list' }, item(t('Volver'), back)));
+      const sub = p(`${t(tcg(g.tcg).name)} · ${tp(g.cards, '1 carta', '{n} cartas', { n: num(g.cards) })} · ${euros(g.value)}`, 'sub');
       if (store.visiting()) {
-        return view(g.title, sub, h('dl', { class: 'stats' }, statRow('Estado', statusLabel(g))), p(g.review ? `“${g.review}”` : 'Sin notas.', 'note quote'), h('div', { class: 'list' }, item('Ver en la habitación', () => actions.showInRoom(id), { id: 'f-ver' }), item('Volver', back)));
+        return view(g.title, sub, h('dl', { class: 'stats' }, statRow(t('Estado'), statusLabel(g))), p(g.review ? `“${g.review}”` : t('Sin notas.'), 'note quote'), h('div', { class: 'list' }, item(t('Ver en la habitación'), () => actions.showInRoom(id), { id: 'f-ver' }), item(t('Volver'), back)));
       }
       const upd = (patch) => {
         store.updateGame(id, patch);
         sfx.save();
       };
-      const num = (idf, label, value, step, key) =>
+      const field = (idf, label, value, step, key) =>
         h('label', { class: 'item field' }, h('span', { class: 'item-label', text: label }), h('input', { type: 'number', id: idf, min: '0', step, value: String(value), inputmode: 'decimal', 'data-nav': '', onchange: (e) => upd({ [key]: e.target.value }) }));
       return view(
         g.title,
@@ -868,14 +877,14 @@ export function createDevice(root, actions) {
         h(
           'div',
           { class: 'list' },
-          stepper('Juego', tcg(g.tcg).short, (dir) => upd({ tcg: cycle(TCG_IDS, g.tcg, dir) }), { id: 'pf-juego' }),
-          stepper('Estado', BINDER_STATUS_LABEL[g.status], (dir) => upd({ status: cycle(BINDER_STATUSES, g.status, dir) }), { id: 'pf-estado' }),
-          stepper('Nota', stars(g.score), (dir) => upd({ score: cycle(SCORES, g.score, dir) }), { id: 'pf-nota' }),
-          num('pf-cartas', 'Cartas', g.cards, '1', 'cards'),
-          num('pf-valor', 'Valor (€)', g.value, '0.01', 'value'),
-          item(g.review ? `“${g.review.slice(0, 70)}${g.review.length > 70 ? '…' : ''}”` : 'Escribir notas…', () => go('resena', { id }), { meta: 'Notas', cls: 'review', id: 'pf-notas' }),
-          item('Ver en la habitación', () => actions.showInRoom(id), { id: 'pf-ver' }),
-          item('Borrar carpeta', () => go('confirmar', { text: `¿Borrar la carpeta «${g.title}»?`, yes: 'Sí, borrar', action: 'borrar', id }), { cls: 'danger', id: 'pf-borrar' }),
+          stepper(t('Juego'), tcg(g.tcg).short, (dir) => upd({ tcg: cycle(TCG_IDS, g.tcg, dir) }), { id: 'pf-juego' }),
+          stepper(t('Estado'), t(BINDER_STATUS_LABEL[g.status]), (dir) => upd({ status: cycle(BINDER_STATUSES, g.status, dir) }), { id: 'pf-estado' }),
+          stepper(t('Nota'), stars(g.score), (dir) => upd({ score: cycle(SCORES, g.score, dir) }), { id: 'pf-nota' }),
+          field('pf-cartas', t('Cartas'), g.cards, '1', 'cards'),
+          field('pf-valor', t('Valor (€)'), g.value, '0.01', 'value'),
+          item(g.review ? `“${g.review.slice(0, 70)}${g.review.length > 70 ? '…' : ''}”` : t('Escribir notas…'), () => go('resena', { id }), { meta: t('Notas'), cls: 'review', id: 'pf-notas' }),
+          item(t('Ver en la habitación'), () => actions.showInRoom(id), { id: 'pf-ver' }),
+          item(t('Borrar carpeta'), () => go('confirmar', { text: t('¿Borrar la carpeta «{title}»?', { title: g.title }), yes: t('Sí, borrar'), action: 'borrar', id }), { cls: 'danger', id: 'pf-borrar' }),
         ),
       );
     },
@@ -883,54 +892,63 @@ export function createDevice(root, actions) {
     cartasStats() {
       const cs = cardsStats(store.getCards());
       return view(
-        'Estadísticas',
+        t('Estadísticas'),
         h(
           'dl',
           { class: 'stats' },
-          statRow('Mazos', String(cs.decks)),
-          statRow('Carpetas', String(cs.binders)),
-          statRow('Cartas en carpetas', cs.cards.toLocaleString('es-ES')),
-          statRow('Valor estimado', euros(cs.value)),
-          statRow('Récord total', cs.winRate === null ? 'Sin partidas' : `${cs.wins}V · ${cs.losses}D (${cs.winRate}%)`),
+          statRow(t('Mazos'), String(cs.decks)),
+          statRow(t('Carpetas'), String(cs.binders)),
+          statRow(t('Cartas en carpetas'), num(cs.cards)),
+          statRow(t('Valor estimado'), euros(cs.value)),
+          statRow(t('Récord total'), cs.winRate === null ? t('Sin partidas') : t('{w}V · {l}D ({pct}%)', { w: cs.wins, l: cs.losses, pct: cs.winRate })),
         ),
-        cs.best ? p(`Tu mejor mazo: ${cs.best.title} (${recordText(cs.best)})`) : null,
-        h('div', { class: 'list' }, item('Volver', back)),
+        cs.best ? p(t('Tu mejor mazo: {title} ({record})', { title: cs.best.title, record: recordText(cs.best) })) : null,
+        h('div', { class: 'list' }, item(t('Volver'), back)),
       );
     },
 
     ajustes() {
       const s = store.getSettings();
       const file = h('input', { type: 'file', accept: 'application/json,.json', hidden: true, onchange: (e) => restore(e.target.files?.[0]) });
+      // Cambiar de idioma recarga la página: así todo (consola, habitación y portadas) sale en el nuevo
+      const setLanguage = (dir) => {
+        const lang = cycle(LANGS, getLang(), dir);
+        if (!store.visiting()) store.setSettings({ lang });
+        const url = new URL(location.href);
+        url.searchParams.set('lang', lang);
+        location.replace(url);
+      };
       const looks = [
-        stepper('Pantalla', PALETTE_LABEL[s.palette], (dir) => store.setSettings({ palette: cycle(PALETTES, s.palette, dir) }), { id: 'a-paleta' }),
-        stepper('Sonido', s.sound ? 'Sí' : 'No', () => store.setSettings({ sound: !s.sound }), { id: 'a-sonido' }),
-        stepper('Habitación', THEME_LABEL[s.theme], (dir) => store.setSettings({ theme: cycle(THEMES, s.theme, dir) }), { id: 'a-tema' }),
-        stepper('Gato', s.pet ? 'Sí, durmiendo' : 'No', () => store.setSettings({ pet: !s.pet }), { id: 'a-gato' }),
+        stepper(t('Idioma'), LANG_NAME[getLang()], setLanguage, { id: 'a-idioma' }),
+        stepper(t('Pantalla'), t(PALETTE_LABEL[s.palette]), (dir) => store.setSettings({ palette: cycle(PALETTES, s.palette, dir) }), { id: 'a-paleta' }),
+        stepper(t('Sonido'), s.sound ? t('Sí') : t('No'), () => store.setSettings({ sound: !s.sound }), { id: 'a-sonido' }),
+        stepper(t('Habitación'), t(THEME_LABEL[s.theme]), (dir) => store.setSettings({ theme: cycle(THEMES, s.theme, dir) }), { id: 'a-tema' }),
+        stepper(t('Gato'), s.pet ? t('Sí, durmiendo') : t('No'), () => store.setSettings({ pet: !s.pet }), { id: 'a-gato' }),
       ];
-      if (store.visiting()) return view('Ajustes', h('div', { class: 'list' }, ...looks, item('Volver', back)));
+      if (store.visiting()) return view(t('Ajustes'), h('div', { class: 'list' }, ...looks, item(t('Volver'), back)));
       const nameInput = h('input', {
         id: 'a-nombre',
         'data-nav': '',
         maxlength: '30',
-        placeholder: 'Para tus visitas',
+        placeholder: t('Para tus visitas'),
         autocomplete: 'nickname',
         value: s.name,
         onchange: (e) => store.setSettings({ name: e.target.value }),
       });
       return view(
-        'Ajustes',
+        t('Ajustes'),
         h(
           'div',
           { class: 'list' },
-          h('label', { class: 'item field' }, h('span', { class: 'item-label', text: 'Tu nombre' }), nameInput),
+          h('label', { class: 'item field' }, h('span', { class: 'item-label', text: t('Tu nombre') }), nameInput),
           ...looks,
-          stepper('Ordenar estantería', SORT_LABEL[s.sort], (dir) => store.setSettings({ sort: cycle(SORTS, s.sort, dir) }), { id: 'a-orden' }),
-          item('Guardar copia de seguridad', backup, { id: 'a-exportar' }),
-          item('Cargar copia de seguridad', () => file.click(), { id: 'a-importar' }),
-          item('Cargar colección de demo', loadDemo, { id: 'a-demo' }),
-          item('Borrar toda la colección', () => go('confirmar', { text: '¿Borrar TODA tu colección? No se puede deshacer (guarda antes una copia).', yes: 'Sí, borrarlo todo', action: 'vaciar' }), { cls: 'danger', id: 'a-vaciar' }),
-          item('Privacidad', () => go('privacidad'), { id: 'a-privacidad' }),
-          item('Créditos', () => go('creditos'), { id: 'a-creditos' }),
+          stepper(t('Ordenar estantería'), t(SORT_LABEL[s.sort]), (dir) => store.setSettings({ sort: cycle(SORTS, s.sort, dir) }), { id: 'a-orden' }),
+          item(t('Guardar copia de seguridad'), backup, { id: 'a-exportar' }),
+          item(t('Cargar copia de seguridad'), () => file.click(), { id: 'a-importar' }),
+          item(t('Cargar colección de demo'), loadDemo, { id: 'a-demo' }),
+          item(t('Borrar toda la colección'), () => go('confirmar', { text: t('¿Borrar TODA tu colección? No se puede deshacer (guarda antes una copia).'), yes: t('Sí, borrarlo todo'), action: 'vaciar' }), { cls: 'danger', id: 'a-vaciar' }),
+          item(t('Privacidad'), () => go('privacidad'), { id: 'a-privacidad' }),
+          item(t('Créditos'), () => go('creditos'), { id: 'a-creditos' }),
         ),
         file,
       );
@@ -938,30 +956,30 @@ export function createDevice(root, actions) {
 
     privacidad() {
       return view(
-        'Privacidad',
-        p('Tu colección se guarda solo en este navegador. No hay cuentas, ni cookies, ni anuncios.'),
-        p('Steam: solo se lee la biblioteca que tu perfil ya enseña en público. Pasa por nuestro servidor para hablar con Steam y no se guarda.'),
-        p('Las portadas se cargan desde Steam.'),
-        p('El enlace de visita lleva tu colección dentro del propio enlace, detrás de la #, y nunca pasa por ningún servidor.'),
-        p('Guarda de vez en cuando una copia de seguridad: si borras los datos del navegador, la colección se va con ellos.'),
-        h('div', { class: 'list' }, item('Volver', back)),
+        t('Privacidad'),
+        p(t('Tu colección se guarda solo en este navegador. No hay cuentas, ni cookies, ni anuncios.')),
+        p(t('Steam: solo se lee la biblioteca que tu perfil ya enseña en público. Pasa por nuestro servidor para hablar con Steam y no se guarda.')),
+        p(t('Las portadas se cargan desde Steam.')),
+        p(t('El enlace de visita lleva tu colección dentro del propio enlace, detrás de la #, y nunca pasa por ningún servidor.')),
+        p(t('Guarda de vez en cuando una copia de seguridad: si borras los datos del navegador, la colección se va con ellos.')),
+        h('div', { class: 'list' }, item(t('Volver'), back)),
       );
     },
 
     creditos() {
       const donate = donateUrl();
       return view(
-        'Créditos',
-        p('DisketeBoy · prototipo hecho con cariño en España.'),
-        p('Todo lo que ves está hecho con código: ni dibujos con IA ni assets ajenos. Las portadas de Steam son de sus autores.'),
-        p('Es gratis y lo seguirá siendo. Gracias a quienes apoyan el proyecto: ¡aquí saldrá tu nombre!'),
+        t('Créditos'),
+        p(t('DisketeBoy · prototipo hecho con cariño en España.')),
+        p(t('Todo lo que ves está hecho con código: ni dibujos con IA ni assets ajenos. Las portadas de Steam son de sus autores.')),
+        p(t('Es gratis y lo seguirá siendo. Gracias a quienes apoyan el proyecto: ¡aquí saldrá tu nombre!')),
         h(
           'div',
           { class: 'list' },
           donate
-            ? h('a', { class: 'item', 'data-nav': '', id: 'a-donar', href: donate, target: '_blank', rel: 'noopener' }, h('span', { class: 'item-label', text: '☕ Invítame a un café' }))
+            ? h('a', { class: 'item', 'data-nav': '', id: 'a-donar', href: donate, target: '_blank', rel: 'noopener' }, h('span', { class: 'item-label', text: t('☕ Invítame a un café') }))
             : null,
-          item('Volver', back),
+          item(t('Volver'), back),
         ),
       );
     },
@@ -971,16 +989,16 @@ export function createDevice(root, actions) {
         if (action === 'borrar') {
           const g = store.getGame(id);
           store.removeGame(id);
-          toast(g ? `«${g.title}» ya no está en tu colección` : 'Borrado');
+          toast(g ? t('«{title}» ya no está en tu colección', { title: g.title }) : t('Borrado'));
           history.pop();
           back();
         } else if (action === 'vaciar') {
           store.clearAll();
-          toast('Colección vaciada');
+          toast(t('Colección vaciada'));
           home();
         }
       };
-      return view('¿Seguro?', p(text, 'big'), h('div', { class: 'list' }, item('No', back, { id: 'c-no' }), item(yes || 'Sí', run, { cls: 'danger', id: 'c-si' })));
+      return view(t('¿Seguro?'), p(text, 'big'), h('div', { class: 'list' }, item(t('No'), back, { id: 'c-no' }), item(yes || t('Sí'), run, { cls: 'danger', id: 'c-si' })));
     },
   };
 
@@ -1044,8 +1062,8 @@ export function createDevice(root, actions) {
   }
 
   function loadDemo() {
-    const { added } = store.importGames([...DEMO_GAMES, ...DEMO_BOARDS, ...DEMO_CARDS]);
-    toast(added ? `Demo cargada: ${added} juegos han caído en tu habitación` : 'La demo ya estaba cargada');
+    const { added } = store.importGames(demoCollection());
+    toast(added ? t('Demo cargada: {n} juegos han caído en tu habitación', { n: added }) : t('La demo ya estaba cargada'));
     if (!root.dataset.disk) root.dataset.disk = 'videojuegos';
     history.length = 0;
     current = { name: 'menu', params: {} };
@@ -1060,14 +1078,14 @@ export function createDevice(root, actions) {
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-    toast('Copia guardada en tus descargas');
+    toast(t('Copia guardada en tus descargas'));
   }
 
   async function restore(file) {
     if (!file) return;
     try {
       const n = store.importBackup(await file.text());
-      toast(`Copia cargada: ${n} juegos`);
+      toast(t('Copia cargada: {n} juegos', { n }));
       home();
     } catch (err) {
       sfx.error();
@@ -1078,7 +1096,7 @@ export function createDevice(root, actions) {
   function insertDisk(kind) {
     root.dataset.disk = kind;
     sfx.insert();
-    screen.replaceChildren(h('div', { class: 'view boot' }, h('p', { class: 'boot-tip', text: 'Leyendo disquete…' }), h('div', { class: 'boot-bar' }, h('span'))));
+    screen.replaceChildren(h('div', { class: 'view boot' }, h('p', { class: 'boot-tip', text: t('Leyendo disquete…') }), h('div', { class: 'boot-bar' }, h('span'))));
     setTimeout(() => {
       history.length = 0;
       current = { name: 'menu', params: {} };
@@ -1138,11 +1156,11 @@ export function createDevice(root, actions) {
 
   /** Teclado: flechas = cruceta, Enter = A, Escape = B. Devuelve true si lo ha usado. */
   function handleKey(e) {
-    const t = e.target;
-    const typing = t && t.matches?.('input, textarea, select');
+    const target = e.target;
+    const typing = target && target.matches?.('input, textarea, select');
     if (e.key === 'Escape') {
       e.preventDefault();
-      if (typing && t.matches('textarea')) t.blur();
+      if (typing && target.matches('textarea')) target.blur();
       back();
       return true;
     }
@@ -1152,7 +1170,7 @@ export function createDevice(root, actions) {
       return true;
     }
     if (typing) {
-      const nativeArrows = t.matches('textarea, select, input[type=number]');
+      const nativeArrows = target.matches('textarea, select, input[type=number]');
       if (!nativeArrows && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
         e.preventDefault();
         move(e.key === 'ArrowDown' ? 1 : -1);

@@ -12,6 +12,8 @@ Cómo sacarlo a Reddit para que la gente lo use, lo comparta y done. Está orden
 - [ ] **Página de donaciones** (Ko-fi, Buy Me a Coffee o Patreon). El botón ya está hecho: pega el enlace en `js/config.js` (`DONATE_URL`) y aparece en Créditos y bajo el ticket. Mientras esté vacío, no sale nada.
 - [x] **Vista previa del enlace**: `og.jpg` (1200×630, la estantería arcoíris con el gato y el logo, sin texto en ningún idioma) y sus etiquetas en `index.html`. Así, cada enlace compartido se ve bonito en Reddit, WhatsApp y Discord. **Al publicar**, cambia `og:image` por la dirección completa (`https://tu-dominio/og.jpg`): algunas webs no entienden la dirección corta.
 
+- [x] **Versión en inglés**: sale sola con el navegador en inglés. Para enseñarla en un post, enlaza con `?lang=en`.
+
 **Muy recomendable**
 - [ ] **Estadísticas sin cookies** (Plausible o GoatCounter), para saber de qué subreddit viene la gente. Sin cookies no hace falta banner.
 - [x] **Un texto corto de privacidad** en Ajustes → Privacidad: todo se guarda en tu navegador, Steam solo lee lo que tu perfil ya tiene público, y el enlace de visita no pasa por ningún servidor. Si añades estadísticas, cuéntalo también ahí.
@@ -44,7 +46,7 @@ En Reddit gana el vídeo corto y sin voz. Guion:
 | 4 | r/InternetIsBeautiful | Cuando esté pulido del todo: es el grande |
 | — | En español: r/spain, Mediavida, Forocoches (sección de juegos) | Con la versión en español tal cual |
 
-**Títulos de ejemplo** (en inglés para los subreddits grandes):
+**Títulos de ejemplo** (en inglés para los subreddits grandes). Los posts completos, listos para pegar, están en [POSTS.md](POSTS.md):
 - *I made a free web app that turns your game collection into a cozy 3D room — unplayed games pile up on the floor*
 - *My Steam backlog, but physical: a «pile of shame» that grows on my bedroom floor*
 - *I built a free tool for board gamers: your games in a virtual Kallax + a roulette that picks tonight's game*

@@ -6,6 +6,7 @@ import { statusLabel, isBoard } from './store.js';
 import { steamCover } from './steam.js';
 import { playersText, minutesText, lentText } from './boards.js';
 import { tcg, recordText, deckCount, euros } from './cards.js';
+import { t, tp, num, locale } from './i18n.js';
 
 const SANS = '"Trebuchet MS", "Segoe UI", system-ui, sans-serif';
 const HEAVY = '"Arial Black", "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
@@ -286,8 +287,8 @@ function drawBoardCover(g) {
     ctx.font = `900 ${Math.round(W * 0.042)}px ${SANS}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('SIN', 0, -W * 0.025);
-    ctx.fillText('ESTRENAR', 0, W * 0.025, W * 0.2);
+    ctx.fillText(t('SIN'), 0, -W * 0.025, W * 0.2);
+    ctx.fillText(t('ESTRENAR'), 0, W * 0.025, W * 0.2);
     ctx.restore();
   }
   const gloss = ctx.createLinearGradient(0, 0, W, H);
@@ -305,8 +306,8 @@ function drawDeckCover(g) {
   const H = Math.round((W * box.h) / box.w);
   const c = canvas(W, H);
   const ctx = c.getContext('2d');
-  const t = tcg(g.tcg);
-  const base = g.color || t.color;
+  const tc = tcg(g.tcg);
+  const base = g.color || tc.color;
   const { h, s, l } = hexToHsl(base);
   const bg = ctx.createLinearGradient(0, 0, W, H);
   bg.addColorStop(0, hslToHex(h, s, Math.min(70, l + 14)));
@@ -328,7 +329,7 @@ function drawDeckCover(g) {
   ctx.fillStyle = '#fbf3e4';
   ctx.font = `800 ${Math.round(H * 0.06)}px ${SANS}`;
   ctx.textBaseline = 'middle';
-  ctx.fillText(t.short, W * 0.08, H * 0.056);
+  ctx.fillText(tc.short, W * 0.08, H * 0.056);
   // Etiqueta escrita
   const lx = W * 0.1;
   const ly = H * 0.26;
@@ -362,7 +363,7 @@ function drawDeckCover(g) {
     ctx.strokeRect(-W * 0.36, -H * 0.06, W * 0.72, H * 0.12);
     ctx.fillStyle = '#b3261ecc';
     ctx.font = `900 ${Math.round(W * 0.085)}px ${SANS}`;
-    ctx.fillText('DESMONTADO', 0, 2, W * 0.66);
+    ctx.fillText(t('DESMONTADO'), 0, 2, W * 0.66);
     ctx.restore();
   }
   return c;
@@ -375,8 +376,8 @@ function drawBinderCover(g) {
   const H = Math.round((W * box.h) / box.w);
   const c = canvas(W, H);
   const ctx = c.getContext('2d');
-  const t = tcg(g.tcg);
-  const { h, s, l } = hexToHsl(g.color || t.color);
+  const tc = tcg(g.tcg);
+  const { h, s, l } = hexToHsl(g.color || tc.color);
   ctx.fillStyle = hslToHex(h, Math.max(20, s - 10), Math.max(10, l - 10));
   ctx.fillRect(0, 0, W, H);
   const r = rng(`carpeta:${g.id}`);
@@ -411,7 +412,7 @@ function drawBinderCover(g) {
   }
   ctx.font = `700 ${Math.round(W * 0.05)}px ${SANS}`;
   ctx.fillStyle = '#5b5146';
-  ctx.fillText(`${t.short} · ${g.cards.toLocaleString('es-ES')} cartas`, px + pw / 2, py + ph * 0.82, pw * 0.92);
+  ctx.fillText(`${tc.short} · ${tp(g.cards, '1 carta', '{n} cartas', { n: num(g.cards) })}`, px + pw / 2, py + ph * 0.82, pw * 0.92);
   return c;
 }
 
@@ -523,7 +524,7 @@ export function drawSpine(g, { strip = '#1c1b20', small = false } = {}) {
     ctx.fillStyle = '#231e1a';
     ctx.font = `900 ${Math.round(W * 0.3)}px ${SANS}`;
     ctx.textAlign = 'center';
-    ctx.fillText('PRESTADO', 0, 1, W * 1.05);
+    ctx.fillText(t('PRESTADO'), 0, 1, W * 1.05);
     ctx.restore();
   }
   return c;
@@ -560,10 +561,10 @@ export function drawBack(g) {
   const sub = board
     ? `${playersText(g)} · ${minutesText(g.minutes)} · ${statusLabel(g)}`
     : g.kind === 'mazo'
-      ? `${tcg(g.tcg).name} · ${g.format || 'sin formato'} · ${statusLabel(g)}`
+      ? `${t(tcg(g.tcg).name)} · ${g.format || t('sin formato')} · ${statusLabel(g)}`
       : g.kind === 'carpeta'
-        ? `${tcg(g.tcg).name} · ${statusLabel(g)}`
-        : `${platform(g.platform).name} · ${statusLabel(g)}`;
+        ? `${t(tcg(g.tcg).name)} · ${statusLabel(g)}`
+        : `${t(platform(g.platform).name)} · ${statusLabel(g)}`;
   ctx.fillText(sub, pad, y + 4, W - pad * 2 - (g.score !== null ? W * 0.24 : 0));
   y += W * 0.07;
   // Nota en un círculo gordo
@@ -600,7 +601,7 @@ export function drawBack(g) {
   ctx.fillStyle = '#2b2622';
   const footer = H * 0.16;
   const maxLines = Math.max(1, Math.floor((H - y - footer) / (size * 1.3)));
-  const text = g.review ? `«${g.review}»` : 'Todavía no hay reseña. Escríbela desde la DisketeBoy y aparecerá aquí, como el texto de la caja.';
+  const text = g.review ? `«${g.review}»` : t('Todavía no hay reseña. Escríbela desde la DisketeBoy y aparecerá aquí, como el texto de la caja.');
   if (!g.review) ctx.fillStyle = '#8a7d6c';
   for (const line of wrap(ctx, text.replace(/\n+/g, ' '), W - pad * 2, maxLines)) {
     ctx.fillText(line, pad, y);
@@ -610,13 +611,13 @@ export function drawBack(g) {
   const fy = H - footer + H * 0.02;
   ctx.fillStyle = '#231e1a';
   ctx.font = `800 ${Math.round(W * 0.042)}px ${SANS}`;
-  if (board) ctx.fillText(g.plays ? `${g.plays} partida${g.plays === 1 ? '' : 's'}` : '¡Aún sin estrenar!', pad, fy);
-  else if (g.kind === 'mazo') ctx.fillText(`${recordText(g)} · ${deckCount(g.list)} cartas`, pad, fy, W * 0.6);
-  else if (g.kind === 'carpeta') ctx.fillText(`${g.cards.toLocaleString('es-ES')} cartas · ${euros(g.value)}`, pad, fy, W * 0.6);
-  else ctx.fillText(g.hours ? `${g.hours} h jugadas` : 'Sin horas apuntadas', pad, fy);
+  if (board) ctx.fillText(g.plays ? tp(g.plays, '1 partida', '{n} partidas') : t('¡Aún sin estrenar!'), pad, fy);
+  else if (g.kind === 'mazo') ctx.fillText(`${recordText(g)} · ${tp(deckCount(g.list), '1 carta', '{n} cartas')}`, pad, fy, W * 0.6);
+  else if (g.kind === 'carpeta') ctx.fillText(`${tp(g.cards, '1 carta', '{n} cartas', { n: num(g.cards) })} · ${euros(g.value)}`, pad, fy, W * 0.6);
+  else ctx.fillText(g.hours ? t('{n} h jugadas', { n: g.hours }) : t('Sin horas apuntadas'), pad, fy);
   ctx.font = `500 ${Math.round(W * 0.032)}px ${SANS}`;
   ctx.fillStyle = board && g.lentTo ? '#b3261e' : '#6b5f50';
-  ctx.fillText(board && g.lentTo ? lentText(g) : `En tu colección desde ${new Date(g.addedAt).toLocaleDateString('es-ES')}`, pad, fy + W * 0.06, W * 0.6);
+  ctx.fillText(board && g.lentTo ? lentText(g) : t('En tu colección desde {date}', { date: new Date(g.addedAt).toLocaleDateString(locale()) }), pad, fy + W * 0.06, W * 0.6);
   const r = rng(g.id);
   let bx = W - pad - W * 0.26;
   ctx.fillStyle = '#111';

@@ -6,7 +6,8 @@ Lo que se ha ido haciendo mientras dormías, tanda por tanda.
 > - **Qué hay**: una consola propia (la DisketeBoy) con **3 disquetes**: videojuegos, juegos de mesa y cartas. Detrás, una **habitación 3D** donde cada juego acaba en su sitio: la pila de la vergüenza, la estantería, el escritorio, la caja de abandonados, la Kallax o las cajitas de mazo.
 > - **Extras**: importar de Steam, el ticket de la DisketePrinter, el enlace «Visita mi habitación», la ruleta de «¿Qué jugamos esta noche?», 3 temas de habitación y un gato.
 > - **Cómo verlo**: `node disketeboy/server.mjs` y abre http://localhost:5180/?demo=1. Las capturas están en el [README](../README.md).
-> - **Calidad**: 58 pruebas unitarias y 21 en navegador, todas verdes, y axe-core sin errores de accesibilidad.
+> - **Idiomas**: español e inglés. Sale en el idioma del navegador y se cambia en Ajustes.
+> - **Calidad**: 62 pruebas unitarias y 22 en navegador, todas verdes, y axe-core sin errores de accesibilidad.
 > - **Lo que te toca a ti**: está en [LANZAMIENTO.md](LANZAMIENTO.md), en el apartado «Antes de publicar nada»: dominio, comprobar el nombre, clave de Steam y crear la página de Ko-fi. El botón de donar ya está hecho: solo hay que pegar el enlace en `js/config.js`.
 
 ## Tanda 1: la consola DisketeBoy
@@ -233,3 +234,28 @@ Lo que se ha ido haciendo mientras dormías, tanda por tanda.
   - Con enlace, sale en Créditos y bajo el ticket.
   - Un enlace que no es `https://` se ignora.
   - axe-core revisa también Privacidad y Créditos.
+
+## Tanda 12: DisketeBoy en inglés
+
+Los subreddits grandes del plan de lanzamiento son en inglés, así que tocaba.
+
+- **Sale en el idioma del navegador**:
+  - Español para quien lo tenga en español, catalán, gallego o euskera.
+  - Inglés para todos los demás.
+  - Se cambia en **Ajustes → Idioma**, y para probar basta con `?lang=en`.
+- **Se traduce todo, no solo los menús**:
+  - Los carteles de la habitación: «PILE OF SHAME», la caja «DROPPED» y la tele, que pone «NOW PLAYING».
+  - Las pegatinas y lomos: «NEVER PLAYED», «LENT OUT» y «TAKEN APART».
+  - Las contraportadas y el ticket, con la fecha a la americana y «BALANCE DUE: 7 GAMES».
+  - Los textos para lector de pantalla y las etiquetas de los disquetes.
+  - Hasta **las reseñas de la demo**: *«Margit beat me 43 times. I'll be back… someday.»*.
+- **Cómo está hecho**, para que añadir idiomas sea fácil:
+  - El código sigue en español y cada texto va dentro de `t('…')`.
+  - El diccionario inglés (`js/lang/en.js`) traduce de español a inglés.
+  - Si algún día falta una traducción, sale en español en vez de romperse.
+- **Una prueba vigila el diccionario**: lee todo el código y el HTML y falla si un texto no tiene traducción, si sobra alguna o si una traducción pierde un hueco como `{name}`. Ahora mismo hay **más de 420 textos** y no falta ninguno.
+- **Fallo evitado por el camino**: en dos fichas había una función que se llamaba igual que la de los números. La de las carpetas se habría roto al abrirla. Ahora se llaman distinto.
+- **Pruebas**: 62 unitarias (antes 58) y 22 en navegador (antes 21):
+  - Un navegador en inglés lo ve todo en inglés, con la demo traducida.
+  - Se cambia a español desde Ajustes, y se recuerda.
+  - axe-core revisa los Ajustes en inglés.

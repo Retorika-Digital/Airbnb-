@@ -9,6 +9,7 @@ import { drawCover, drawSpine, drawBack, loadCover, loadSpineColor, dominantColo
 import { sfx } from './audio.js';
 import { rng, hexToHsl, hslToHex } from './util.js';
 import { isBoard } from './store.js';
+import { t } from './i18n.js';
 
 const REDUCED = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ease = {
@@ -159,9 +160,9 @@ function signPaint() {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = '900 54px "Comic Sans MS", "Segoe Print", "Marker Felt", cursive';
-    ctx.fillText('PILA DE LA', w / 2, h * 0.36, w - 40);
+    ctx.fillText(t('PILA DE LA'), w / 2, h * 0.36, w - 40);
     ctx.fillStyle = '#b3261e';
-    ctx.fillText('VERGÜENZA', w / 2, h * 0.7, w - 40);
+    ctx.fillText(t('VERGÜENZA'), w / 2, h * 0.7, w - 40);
   });
 }
 
@@ -244,7 +245,7 @@ function crtPaint(game) {
     ctx.textAlign = 'center';
     if (game) {
       ctx.font = '16px "VT323", ui-monospace, monospace';
-      ctx.fillText('JUGANDO A', w / 2, 52);
+      ctx.fillText(t('JUGANDO A'), w / 2, 52);
       ctx.font = 'bold 26px "VT323", ui-monospace, monospace';
       const lines = wrap(ctx, game.title.toUpperCase(), w - 30, 3);
       lines.forEach((l, i) => ctx.fillText(l, w / 2, 92 + i * 28));
@@ -252,7 +253,7 @@ function crtPaint(game) {
       ctx.font = 'bold 30px "VT323", ui-monospace, monospace';
       ctx.fillText('DISKETEBOY', w / 2, 92);
       ctx.font = '18px "VT323", ui-monospace, monospace';
-      ctx.fillText('> nada en juego_', w / 2, 124);
+      ctx.fillText(t('> nada en juego_'), w / 2, 124);
     }
     for (let y = 0; y < h; y += 3) {
       ctx.fillStyle = '#0000002e';
@@ -271,7 +272,7 @@ function posterPaint(game, image) {
     ctx.fillStyle = '#231e1a';
     ctx.font = '900 22px "Arial Black", "Trebuchet MS", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(game.score === null ? 'FAVORITO' : `${game.score}/10`, w / 2, h - 22);
+    ctx.fillText(game.score === null ? t('FAVORITO') : `${game.score}/10`, w / 2, h - 22);
   });
 }
 
@@ -655,7 +656,7 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
   // Caja de cartón de los abandonados
   const binGroup = new THREE.Group();
   const kraft = mat({ map: toTexture(cardboardPaint('')), roughness: 0.95 });
-  const kraftLabel = mat({ map: toTexture(cardboardPaint('ABANDONADOS')), roughness: 0.95 });
+  const kraftLabel = mat({ map: toTexture(cardboardPaint(t('ABANDONADOS'))), roughness: 0.95 });
   binGroup.add(boxMesh(BIN.w, 0.012, BIN.d, kraft, 0, 0.006, 0));
   binGroup.add(boxMesh(BIN.w, BIN.h, 0.012, kraftLabel, 0, BIN.h / 2, BIN.d / 2));
   binGroup.add(boxMesh(BIN.w, BIN.h, 0.012, kraft, 0, BIN.h / 2, -BIN.d / 2));
@@ -1128,7 +1129,7 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
           b.visible = true;
           b.scale.set(1, 0.01, 1);
           tweenTo(`bookcase${i}`, b, { scale: 1, dur: 0.7, fn: ease.back, onDone: () => b.scale.set(1, 1, 1) });
-          if (change.type !== 'init') onNotice('¡Nueva estantería desbloqueada! 📚');
+          if (change.type !== 'init') onNotice(t('¡Nueva estantería desbloqueada! 📚'));
         } else if (!show) b.visible = false;
       });
       shownBookcases = layout.bookcases;
@@ -1475,7 +1476,7 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
     else if (inspected) release();
     else if (catHit(ev.clientX, ev.clientY)) {
       sfx.meow();
-      onNotice('Prrr… 🐱 (mejor no despertarlo)');
+      onNotice(t('Prrr… 🐱 (mejor no despertarlo)'));
     }
   };
   canvas.addEventListener('pointerup', endPointer);

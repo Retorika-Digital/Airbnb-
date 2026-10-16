@@ -46,6 +46,8 @@ Coges una caja, la giras y **en la contraportada está tu reseña**, con tu nota
 
 **«Compartir mi habitación»** crea un enlace con tu colección comprimida dentro, sin cuentas ni servidor. Quien lo abre ve tu habitación de visita, sin tocar la suya.
 
+**En español y en inglés**: sale en el idioma del navegador y se cambia en Ajustes → Idioma (o con `?lang=en` en la dirección). Se traduce todo: la consola, los carteles de la habitación, las portadas, el ticket e incluso las reseñas de la demo.
+
 **Tu habitación, a tu gusto**: en Ajustes eliges el tema (*Crema*, *Gamer RGB* con tira LED o *Retro 90*) y si quieres al gato, que duerme en la alfombra y ronronea si lo tocas. El tema y el gato viajan en el enlace de visita. Están pensados como futuras ventajas para mecenas; ahora son gratis para todos.
 
 > Prototipo en desarrollo. Está en esta carpeta para no mezclarlo con retorika Home; cuando guste, se pasa a su propio repositorio.
@@ -63,6 +65,7 @@ STEAM_API_KEY=xxxx node disketeboy/server.mjs
 | Con la colección de demo | http://localhost:5180/?demo=1 |
 | Probar otra hora (día, tarde, noche) | añade `&hora=12`, `&hora=20` o `&hora=23` |
 | Solo la consola, sin 3D | añade `&sin3d=1` |
+| En inglés | añade `&lang=en` |
 
 En Netlify se sirve en `/disketeboy/`, con sus funciones en `netlify/functions/disketeboy-*.mjs`.
 
@@ -95,6 +98,8 @@ En Netlify se sirve en `/disketeboy/`, con sus funciones en `netlify/functions/d
 | `js/cards.js` | Cartas: juegos de cartas, contar la lista de un mazo, récord y estadísticas (funciones puras) |
 | `js/share.js` | «Visita mi habitación»: la colección comprimida en el enlace |
 | `js/config.js` | Lo que se cambia a mano antes de publicar: el enlace de donaciones |
+| `js/i18n.js` | Idiomas: `t('texto en español')` lo traduce con el diccionario |
+| `js/lang/en.js` | El diccionario inglés (una prueba vigila que no falte ni sobre nada) |
 | `api/steam.mjs` | Lee tu biblioteca pública de Steam |
 | `api/cover.mjs` | Plan B para las portadas de Steam (solo admite ids numéricos) |
 
@@ -102,10 +107,10 @@ En Netlify se sirve en `/disketeboy/`, con sus funciones en `netlify/functions/d
 
 ```bash
 npm ci                                        # en la raíz: Playwright y axe-core
-node --test disketeboy/tests/unit/*.test.mjs  # 58 pruebas unitarias
-node disketeboy/tests/e2e/run.mjs             # 21 pruebas en Chromium (E2E_SHOTS=1 guarda capturas)
+node --test disketeboy/tests/unit/*.test.mjs  # 62 pruebas unitarias
+node disketeboy/tests/e2e/run.mjs             # 22 pruebas en Chromium (E2E_SHOTS=1 guarda capturas)
 ```
 
 En GitHub se ejecutan solas con `.github/workflows/disketeboy.yml` cada vez que cambia algo en `disketeboy/`.
 
-Lo que se ha hecho cada noche está en [docs/DIARIO-NOCHE.md](docs/DIARIO-NOCHE.md), y el plan para sacarlo a Reddit, en [docs/LANZAMIENTO.md](docs/LANZAMIENTO.md).
+Lo que se ha hecho cada noche está en [docs/DIARIO-NOCHE.md](docs/DIARIO-NOCHE.md), el plan para sacarlo a Reddit, en [docs/LANZAMIENTO.md](docs/LANZAMIENTO.md), y los posts listos para pegar, en [docs/POSTS.md](docs/POSTS.md).

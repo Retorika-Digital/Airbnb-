@@ -3,13 +3,16 @@
 // consola sigue funcionando igual.
 import * as store from './store.js';
 import { createDevice } from './device.js';
-import { DEMO_GAMES, DEMO_BOARDS, DEMO_CARDS } from './demo.js';
+import { demoCollection } from './demo.js';
 import { platform } from './platforms.js';
 import { statusLabel, isBoard } from './store.js';
 import { playersText, minutesText, lentText } from './boards.js';
 import { tcg, recordText, euros, deckCount } from './cards.js';
+import { t, tp, num, setLang, detectLang } from './i18n.js';
 
 const params = new URLSearchParams(location.search);
+setLang(params.get('lang') || store.getSettings().lang || detectLang());
+translatePage();
 const body = document.body;
 const canvas = document.getElementById('room');
 const deviceEl = document.getElementById('dkb');
@@ -45,6 +48,14 @@ function release() {
   room?.release();
 }
 
+// ------------------------------------------------------------------ idioma
+/** Los textos fijos de la página (index.html), en el idioma elegido. */
+function translatePage() {
+  document.title = t(document.title);
+  for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = t(el.textContent.trim());
+  for (const el of document.querySelectorAll('[aria-label]')) el.setAttribute('aria-label', t(el.getAttribute('aria-label')));
+}
+
 // ------------------------------------------------------------------ consola
 const actions = {
   isLowered,
@@ -65,7 +76,7 @@ const actions = {
       if (!res.ok) return { error: data.error || 'red', message: data.message };
       return data;
     } catch {
-      return { error: 'red', message: 'No hay conexión con el servidor. ¿Estás sin internet?' };
+      return { error: 'sin_conexion' };
     }
   },
   printTicket,
@@ -80,10 +91,10 @@ async function shareVisit() {
   const { encodeRoom, visitUrl, LONG_URL } = await import('./share.js');
   const { name, theme, pet } = store.getSettings();
   const url = visitUrl(location.origin + location.pathname, await encodeRoom(store.getGames(), { name, theme, pet }));
-  const long = url.length > LONG_URL ? ` Ojo: tu colección es enorme y el enlace mide ${Math.round(url.length / 1000)} mil caracteres; alguna app podría cortarlo.` : '';
+  const long = url.length > LONG_URL ? ` ${t('Ojo: tu colección es enorme y el enlace mide {n} mil caracteres; alguna app podría cortarlo.', { n: Math.round(url.length / 1000) })}` : '';
   if (navigator.share && matchMedia('(pointer: coarse)').matches) {
     try {
-      await navigator.share({ title: 'Mi habitación en DisketeBoy', text: '¡Pasa a ver mi colección!', url });
+      await navigator.share({ title: t('Mi habitación en DisketeBoy'), text: t('¡Pasa a ver mi colección!'), url });
       return;
     } catch {
       /* cancelado: probamos a copiarlo */
@@ -91,9 +102,9 @@ async function shareVisit() {
   }
   try {
     await navigator.clipboard.writeText(url);
-    device.toast(`¡Enlace copiado! Quien lo abra verá tu habitación de visita.${long}`);
+    device.toast(`${t('¡Enlace copiado! Quien lo abra verá tu habitación de visita.')}${long}`);
   } catch {
-    window.prompt('Copia este enlace para compartir tu habitación:', url);
+    window.prompt(t('Copia este enlace para compartir tu habitación:'), url);
   }
   window.disketeboy.lastVisitUrl = url;
 }
@@ -108,7 +119,10 @@ async function maybeVisit() {
     const { decodeRoom } = await import('./share.js');
     const { name, games, look } = await decodeRoom(location.hash.slice('#visita='.length));
     store.startVisit(games, name, look);
-    document.getElementById('visit-name').textContent = name || 'alguien';
+    // El nombre va en negrita en mitad de la frase, esté donde esté según el idioma
+    const [before, after = ''] = t('👀 Estás de visita en la habitación de {name}').split('{name}');
+    const who = Object.assign(document.createElement('b'), { id: 'visit-name', textContent: name || t('alguien') });
+    document.getElementById('visit-text').replaceChildren(before, who, after);
     document.getElementById('visit-banner').hidden = false;
     document.getElementById('i-editar').hidden = true;
     body.classList.add('is-visit');
@@ -128,12 +142,12 @@ function onInspect(game) {
   }
   document.getElementById('inspect-title').textContent = game.title;
   const bits = game.kind === 'mazo'
-    ? [tcg(game.tcg).name, game.format, statusLabel(game), recordText(game), `${deckCount(game.list)} cartas`]
+    ? [t(tcg(game.tcg).name), game.format, statusLabel(game), recordText(game), tp(deckCount(game.list), '1 carta', '{n} cartas')]
     : game.kind === 'carpeta'
-      ? [tcg(game.tcg).name, `${game.cards} cartas`, euros(game.value), statusLabel(game)]
+      ? [t(tcg(game.tcg).name), tp(game.cards, '1 carta', '{n} cartas', { n: num(game.cards) }), euros(game.value), statusLabel(game)]
       : isBoard(game)
-    ? [playersText(game), minutesText(game.minutes), statusLabel(game), game.score === null ? 'sin nota' : `${game.score}/10`, `${game.plays} partida${game.plays === 1 ? '' : 's'}`, game.lentTo ? lentText(game) : null]
-    : [platform(game.platform).name, statusLabel(game), game.score === null ? 'sin nota' : `${game.score}/10`, game.hours ? `${game.hours} h` : null];
+    ? [playersText(game), minutesText(game.minutes), statusLabel(game), game.score === null ? t('sin nota') : `${game.score}/10`, tp(game.plays, '1 partida', '{n} partidas'), game.lentTo ? lentText(game) : null]
+    : [t(platform(game.platform).name), statusLabel(game), game.score === null ? t('sin nota') : `${game.score}/10`, game.hours ? `${game.hours} h` : null];
   document.getElementById('inspect-meta').textContent = bits.filter(Boolean).join(' · ');
   inspectEl.hidden = false;
 }
@@ -178,7 +192,7 @@ async function printTicket() {
   const canvasTicket = renderTicket(store.getVideoGames());
   const img = document.getElementById('ticket-img');
   img.src = canvasTicket.toDataURL('image/png');
-  img.alt = 'Ticket con el resumen de tu colección';
+  img.alt = t('Ticket con el resumen de tu colección');
   ticketEl.hidden = false;
   lastFocus = document.activeElement;
   document.getElementById('t-descargar').focus();
@@ -186,7 +200,7 @@ async function printTicket() {
   sfx.print();
   const shareBtn = document.getElementById('t-compartir');
   shareBtn.hidden = !navigator.canShare;
-  shareBtn.onclick = () => shareCanvas(canvasTicket, 'disketeboy-ticket.png', 'Mi colección en DisketeBoy');
+  shareBtn.onclick = () => shareCanvas(canvasTicket, 'disketeboy-ticket.png', t('Mi colección en DisketeBoy'));
   document.getElementById('t-descargar').onclick = () => download(canvasTicket, 'disketeboy-ticket.png');
   // El momento «¡qué chulo!»: aquí, y no al entrar, va la invitación a donar
   const { donateUrl } = await import('./config.js');
@@ -225,10 +239,10 @@ async function shareCanvas(cnv, name, text) {
 }
 
 async function shareRoom() {
-  if (!room) return device.toast('Sin habitación 3D no puedo hacer la foto');
+  if (!room) return device.toast(t('Sin habitación 3D no puedo hacer la foto'));
   const { renderSnapshot } = await import('./ticket.js');
   const shot = renderSnapshot(room.snapshot(), store.getGames());
-  await shareCanvas(shot, 'mi-habitacion-disketeboy.png', 'Mi habitación en DisketeBoy 🎮');
+  await shareCanvas(shot, 'mi-habitacion-disketeboy.png', t('Mi habitación en DisketeBoy 🎮'));
 }
 
 // ------------------------------------------------------------------ botones de la habitación
@@ -237,7 +251,7 @@ document.getElementById('dkb-handle').addEventListener('click', raise);
 tidyBtn.addEventListener('click', () => {
   const tidy = !store.getSettings().tidy;
   store.setSettings({ tidy });
-  device.toast(tidy ? '¡Todo a la estantería! (la pila sigue contando, tranquilo)' : 'Vuelta al caos natural de tu habitación');
+  device.toast(tidy ? t('¡Todo a la estantería! (la pila sigue contando, tranquilo)') : t('Vuelta al caos natural de tu habitación'));
 });
 document.getElementById('r-compartir').addEventListener('click', shareRoom);
 document.getElementById('i-girar').addEventListener('click', () => room?.flip());
@@ -275,6 +289,6 @@ document.addEventListener('keydown', (e) => {
 window.disketeboy = { store, get room() { return room; }, device, lower, raise, shareVisit };
 canvas.tabIndex = 0;
 await maybeVisit();
-if (!store.visiting() && params.get('demo') === '1' && !store.getGames().length) store.importGames([...DEMO_GAMES, ...DEMO_BOARDS, ...DEMO_CARDS]);
+if (!store.visiting() && params.get('demo') === '1' && !store.getGames().length) store.importGames(demoCollection());
 device.boot();
 startRoom();

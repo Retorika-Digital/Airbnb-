@@ -1,24 +1,26 @@
 // Juegos de mesa: «¿Qué jugamos esta noche?», textos y préstamos (funciones puras).
+import { t, tp } from './i18n.js';
 
 export const TIME_OPTIONS = [15, 30, 45, 60, 90, 120, 180, 0]; // 0 = sin prisa
 
 export function playersText(g) {
-  if (g.minPlayers === g.maxPlayers) return `${g.minPlayers} jugador${g.minPlayers === 1 ? '' : 'es'}`;
-  return `${g.minPlayers}–${g.maxPlayers} jugadores`;
+  if (g.minPlayers === g.maxPlayers) return tp(g.minPlayers, '1 jugador', '{n} jugadores');
+  return t('{min}–{max} jugadores', { min: g.minPlayers, max: g.maxPlayers });
 }
 
 export const minutesText = (m) => (m >= 60 && m % 60 === 0 ? `${m / 60} h` : m > 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m} min`);
 
 export function daysSince(iso, now = new Date()) {
-  const t = Date.parse(iso);
-  if (!Number.isFinite(t)) return 0;
-  return Math.max(0, Math.floor((now.getTime() - t) / 86400000));
+  const ms = Date.parse(iso);
+  if (!Number.isFinite(ms)) return 0;
+  return Math.max(0, Math.floor((now.getTime() - ms) / 86400000));
 }
 
 export const lentText = (g, now = new Date()) => {
   if (!g.lentTo) return '';
   const d = daysSince(g.lentAt, now);
-  return `Lo tiene ${g.lentTo} ${d === 0 ? 'desde hoy' : d === 1 ? 'desde ayer' : `desde hace ${d} días`}`;
+  if (d === 0) return t('Lo tiene {name} desde hoy', { name: g.lentTo });
+  return d === 1 ? t('Lo tiene {name} desde ayer', { name: g.lentTo }) : t('Lo tiene {name} desde hace {n} días', { name: g.lentTo, n: d });
 };
 
 /**

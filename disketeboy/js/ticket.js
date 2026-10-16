@@ -4,13 +4,14 @@
 import { stats, pileForecast } from './store.js';
 import { platform } from './platforms.js';
 import { hash, rng } from './util.js';
+import { t, tp, mark, locale } from './i18n.js';
 
 const MONO = '"VT323", ui-monospace, "Courier New", monospace';
-const MONTHS = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+const MONTHS = [mark('ENE'), mark('FEB'), mark('MAR'), mark('ABR'), mark('MAY'), mark('JUN'), mark('JUL'), mark('AGO'), mark('SEP'), mark('OCT'), mark('NOV'), mark('DIC')];
 const WIDTH = 32; // caracteres por línea
 
 const pad2 = (n) => String(n).padStart(2, '0');
-const num = (n) => Math.round(n).toLocaleString('es-ES');
+const num = (n) => Math.round(n).toLocaleString(locale());
 const cut = (s, n) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 const row = (left, right) => {
   const r = String(right);
@@ -18,8 +19,8 @@ const row = (left, right) => {
   return `${l}${' '.repeat(Math.max(1, WIDTH - l.length - r.length))}${r}`;
 };
 const center = (s) => {
-  const t = cut(String(s), WIDTH);
-  return ' '.repeat(Math.floor((WIDTH - t.length) / 2)) + t;
+  const text = cut(String(s), WIDTH);
+  return ' '.repeat(Math.floor((WIDTH - text.length) / 2)) + text;
 };
 
 /** Las líneas del ticket (texto puro: así se puede probar sin navegador). */
@@ -29,14 +30,14 @@ export function ticketLines(all, now = new Date()) {
   const rule = '-'.repeat(WIDTH);
   const lines = [
     { text: center('DISKETEBOY'), big: true, align: 'center' },
-    { text: center('TIENDA DE TU COLECCIÓN'), align: 'center' },
-    { text: center('C/ del Cartucho, 64 · 8 bits'), align: 'center' },
+    { text: center(t('TIENDA DE TU COLECCIÓN')), align: 'center' },
+    { text: center(t('C/ del Cartucho, 64 · 8 bits')), align: 'center' },
     { text: rule },
-    { text: row(`${pad2(now.getDate())}/${pad2(now.getMonth() + 1)}/${now.getFullYear()} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`, `Nº ${String(hash(games.map((g) => g.id).join()) % 1e6).padStart(6, '0')}`) },
+    { text: row(`${t('{d}/{m}/{y}', { d: pad2(now.getDate()), m: pad2(now.getMonth() + 1), y: now.getFullYear() })} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`, t('Nº {n}', { n: String(hash(games.map((g) => g.id).join()) % 1e6).padStart(6, '0') })) },
     { text: rule },
   ];
   if (st.mostPlayed.length) {
-    lines.push({ text: 'LO QUE MÁS HAS JUGADO', bold: true });
+    lines.push({ text: t('LO QUE MÁS HAS JUGADO'), bold: true });
     const top = [...games].filter((g) => g.hours > 0).sort((a, b) => b.hours - a.hours).slice(0, 5);
     for (const g of top) lines.push({ text: row(g.title, `${num(g.hours)} h`) });
     lines.push({ text: rule });
@@ -45,28 +46,28 @@ export function ticketLines(all, now = new Date()) {
   for (const g of games) perPlatform[g.platform] = (perPlatform[g.platform] || 0) + 1;
   const plats = Object.entries(perPlatform).sort((a, b) => b[1] - a[1]);
   if (plats.length) {
-    lines.push({ text: 'POR PLATAFORMA', bold: true });
-    for (const [pid, n] of plats.slice(0, 6)) lines.push({ text: row(`${n} x ${platform(pid).name}`, n === 1 ? 'caja' : 'cajas') });
-    if (plats.length > 6) lines.push({ text: row(`${plats.length - 6} plataforma${plats.length - 6 === 1 ? '' : 's'} más`, '…') });
+    lines.push({ text: t('POR PLATAFORMA'), bold: true });
+    for (const [pid, n] of plats.slice(0, 6)) lines.push({ text: row(`${n} x ${t(platform(pid).name)}`, tp(n, 'caja', 'cajas')) });
+    if (plats.length > 6) lines.push({ text: row(tp(plats.length - 6, '1 plataforma más', '{n} plataformas más'), '…') });
     lines.push({ text: rule });
   }
-  lines.push({ text: row('JUEGOS', num(st.total)) });
-  lines.push({ text: row('HORAS JUGADAS', num(st.hours)) });
-  lines.push({ text: row('NOTA MEDIA', st.avgScore === null ? '—' : String(st.avgScore).replace('.', ',')) });
-  lines.push({ text: row('TERMINADOS', `${st.by.terminado} (${st.total ? Math.round((st.by.terminado / st.total) * 100) : 0}%)`) });
-  lines.push({ text: row('ABANDONADOS', st.by.abandonado) });
+  lines.push({ text: row(t('JUEGOS'), num(st.total)) });
+  lines.push({ text: row(t('HORAS JUGADAS'), num(st.hours)) });
+  lines.push({ text: row(t('NOTA MEDIA'), st.avgScore === null ? '—' : st.avgScore.toLocaleString(locale())) });
+  lines.push({ text: row(t('TERMINADOS'), `${st.by.terminado} (${st.total ? Math.round((st.by.terminado / st.total) * 100) : 0}%)`) });
+  lines.push({ text: row(t('ABANDONADOS'), st.by.abandonado) });
   lines.push({ text: rule });
-  lines.push({ text: row('PENDIENTE DE PAGO:', `${st.by.pendiente} JUEGOS`), big: true });
+  lines.push({ text: row(t('PENDIENTE DE PAGO:'), tp(st.by.pendiente, '1 JUEGO', '{n} JUEGOS')), big: true });
   if (st.by.pendiente) {
     const f = pileForecast(st.by.pendiente, 1, now);
-    lines.push({ text: row('A 1 al mes, acabas en', `${MONTHS[f.month]} ${f.year}`) });
+    lines.push({ text: row(t('A 1 al mes, acabas en'), `${t(MONTHS[f.month])} ${f.year}`) });
   } else {
-    lines.push({ text: center('¡PILA DE LA VERGÜENZA A CERO!'), align: 'center' });
+    lines.push({ text: center(t('¡PILA DE LA VERGÜENZA A CERO!')), align: 'center' });
   }
   lines.push({ text: rule });
-  lines.push({ text: center('GRACIAS POR JUGAR'), align: 'center' });
-  lines.push({ text: center('No se admiten devoluciones'), align: 'center' });
-  lines.push({ text: center('de horas jugadas'), align: 'center' });
+  lines.push({ text: center(t('GRACIAS POR JUGAR')), align: 'center' });
+  lines.push({ text: center(t('No se admiten devoluciones')), align: 'center' });
+  lines.push({ text: center(t('de horas jugadas')), align: 'center' });
   return lines;
 }
 
@@ -133,8 +134,9 @@ export function renderTicket(games, now = new Date()) {
     x += w + 1 + Math.floor(br() * 3);
   }
   ctx.textAlign = 'center';
-  fit(18, 'disketeboy · tu colección en tu habitación');
-  ctx.fillText('disketeboy · tu colección en tu habitación', W / 2, y + 54);
+  const tagline = t('disketeboy · tu colección en tu habitación');
+  fit(18, tagline);
+  ctx.fillText(tagline, W / 2, y + 54);
   ctx.restore();
   return c;
 }
@@ -160,9 +162,10 @@ export function renderSnapshot(roomCanvas, all) {
   ctx.fillStyle = '#fbf3e4';
   ctx.font = '900 40px "Trebuchet MS", system-ui, sans-serif';
   ctx.textBaseline = 'middle';
-  ctx.fillText('Mi habitación en DisketeBoy', 40, photoH + footer / 2 - 16);
+  ctx.fillText(t('Mi habitación en DisketeBoy'), 40, photoH + footer / 2 - 16);
   ctx.font = '500 26px system-ui, sans-serif';
   ctx.fillStyle = '#d9cbb4';
-  ctx.fillText(`${num(st.total)} videojuegos${boards ? ` · ${boards} de mesa` : ''} · ${num(st.hours)} h jugadas · ${st.by.pendiente} en la pila de la vergüenza`, 40, photoH + footer / 2 + 26, W - 80);
+  const parts = [tp(st.total, '1 videojuego', '{n} videojuegos', { n: num(st.total) }), boards ? t('{n} de mesa', { n: boards }) : null, t('{n} h jugadas', { n: num(st.hours) }), t('{n} en la pila de la vergüenza', { n: st.by.pendiente })];
+  ctx.fillText(parts.filter(Boolean).join(' · '), 40, photoH + footer / 2 + 26, W - 80);
   return c;
 }
