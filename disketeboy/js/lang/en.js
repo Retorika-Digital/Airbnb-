@@ -443,4 +443,8 @@ export default {
   "BoardGameGeek está preparando tu colección. Vuelve a intentarlo en unos segundos.": "BoardGameGeek is preparing your collection. Try again in a few seconds.",
   "BoardGameGeek no responde ahora mismo. Inténtalo en un rato.": "BoardGameGeek isn't responding right now. Try again in a bit.",
   "BoardGameGeek: igual, solo se lee la colección que ya es pública.": "BoardGameGeek: same thing, we only read the collection that is already public.",
+  "Ese archivo no tiene cartas que pueda leer.": "That file has no cards I can read.",
+  "CSV importado: {cards} cartas · {value}": "CSV imported: {cards} cards · {value}",
+  "CSV importado: {cards} cartas (sin precios)": "CSV imported: {cards} cards (no prices)",
+  "Importar CSV (ManaBox, Dragon Shield…)": "Import CSV (ManaBox, Dragon Shield…)",
 };

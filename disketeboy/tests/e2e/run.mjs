@@ -511,6 +511,36 @@ try {
     await page.close();
   });
 
+  await check('carpeta: importar el CSV de ManaBox cuenta las cartas y suma su valor', async () => {
+    const page = await newPage(browser);
+    await page.goto(BASE);
+    await booted(page);
+    const id = await page.evaluate(() => {
+      window.disketeboy.store.importGames([{ kind: 'carpeta', title: 'Mi Modern', tcg: 'mtg', cards: 0, value: 0 }]);
+      return window.disketeboy.store.getCards()[0].id;
+    });
+    await page.evaluate((gid) => window.disketeboy.device.go('ficha', { id: gid }), id);
+    await page.waitForSelector('#pf-csv');
+    const csv = 'Name,Set code,Quantity,Purchase price\n"Lightning Bolt",M10,4,1.50\n"Atraxa, Praetors\' Voice",C16,1,25.00\n';
+    await page.setInputFiles('#screen input[type=file]', { name: 'manabox.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('text=CSV importado: 5 cartas');
+    const g = await page.evaluate((gid) => window.disketeboy.store.getGame(gid), id);
+    eq(`${g.cards}/${g.value}`, '5/31', 'cartas y valor de la carpeta');
+    eq(page.errors.join('\n'), '', 'errores en consola');
+    await page.close();
+  });
+
+  await check('se puede instalar en el móvil: manifiesto e iconos', async () => {
+    const page = await newPage(browser);
+    await page.goto(BASE);
+    const href = await page.getAttribute('link[rel="manifest"]', 'href');
+    const manifest = await (await fetch(new URL(href, `${BASE}/`))).json();
+    eq(manifest.display, 'standalone', 'se abre como una app');
+    for (const icon of manifest.icons) eq((await fetch(new URL(icon.src, `${BASE}/`))).status, 200, `icono ${icon.src}`);
+    expect(manifest.icons.some((i) => i.sizes === '512x512') && manifest.icons.some((i) => i.sizes === '192x192'), 'iconos de 192 y 512');
+    await page.close();
+  });
+
   await check('ajustes: tema de la habitación y el gato que duerme en la alfombra', async () => {
     const page = await newPage(browser);
     await page.goto(`${BASE}/?demo=1`);

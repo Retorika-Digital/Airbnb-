@@ -1,0 +1,16 @@
+{
+  "name": "DisketeBoy",
+  "short_name": "DisketeBoy",
+  "description": "Your game collection in a 3D room · Tu colección en una habitación 3D",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#231e1a",
+  "theme_color": "#231e1a",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

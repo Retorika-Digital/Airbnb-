@@ -6,7 +6,7 @@ import { STATUSES, STATUS_LABEL, PALETTES, SORTS, THEMES, BOARD_STATUSES, BOARD_
 import { PLATFORMS, BOARD_SIZES, platform } from './platforms.js';
 import { mapSteamGames } from './steam.js';
 import { demoCollection } from './demo.js';
-import { TCGS, TCG_IDS, tcg, DECK_STATUSES, DECK_STATUS_LABEL, BINDER_STATUSES, BINDER_STATUS_LABEL, deckCount, recordText, euros, cardsStats } from './cards.js';
+import { TCGS, TCG_IDS, tcg, DECK_STATUSES, DECK_STATUS_LABEL, BINDER_STATUSES, BINDER_STATUS_LABEL, deckCount, recordText, euros, cardsStats, parseCardCsv } from './cards.js';
 import { sfx, setSound } from './audio.js';
 import { whatToPlay, playersText, minutesText, lentText, boardStats, pickOne, TIME_OPTIONS, mapBggGames } from './boards.js';
 import { clamp } from './util.js';
@@ -929,6 +929,24 @@ export function createDevice(root, actions) {
         store.updateGame(id, patch);
         sfx.save();
       };
+      // CSV de ManaBox, Dragon Shield, Delver Lens…: cuenta las cartas y suma su valor
+      const csv = h('input', {
+        type: 'file',
+        accept: '.csv,text/csv',
+        hidden: true,
+        onchange: async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          const r = parseCardCsv(await file.text());
+          if (!r.rows) {
+            sfx.error();
+            toast(t('Ese archivo no tiene cartas que pueda leer.'));
+            return;
+          }
+          upd(r.hasPrice ? { cards: r.cards, value: r.value } : { cards: r.cards });
+          toast(r.hasPrice ? t('CSV importado: {cards} cartas · {value}', { cards: num(r.cards), value: euros(r.value) }) : t('CSV importado: {cards} cartas (sin precios)', { cards: num(r.cards) }));
+        },
+      });
       const field = (idf, label, value, step, key) =>
         h('label', { class: 'item field' }, h('span', { class: 'item-label', text: label }), h('input', { type: 'number', id: idf, min: '0', step, value: String(value), inputmode: 'decimal', 'data-nav': '', onchange: (e) => upd({ [key]: e.target.value }) }));
       return view(
@@ -942,10 +960,12 @@ export function createDevice(root, actions) {
           stepper(t('Nota'), stars(g.score), (dir) => upd({ score: cycle(SCORES, g.score, dir) }), { id: 'pf-nota' }),
           field('pf-cartas', t('Cartas'), g.cards, '1', 'cards'),
           field('pf-valor', t('Valor (€)'), g.value, '0.01', 'value'),
+          item(t('Importar CSV (ManaBox, Dragon Shield…)'), () => csv.click(), { id: 'pf-csv' }),
           item(g.review ? `“${g.review.slice(0, 70)}${g.review.length > 70 ? '…' : ''}”` : t('Escribir notas…'), () => go('resena', { id }), { meta: t('Notas'), cls: 'review', id: 'pf-notas' }),
           item(t('Ver en la habitación'), () => actions.showInRoom(id), { id: 'pf-ver' }),
           item(t('Borrar carpeta'), () => go('confirmar', { text: t('¿Borrar la carpeta «{title}»?', { title: g.title }), yes: t('Sí, borrar'), action: 'borrar', id }), { cls: 'danger', id: 'pf-borrar' }),
         ),
+        csv,
       );
     },
 

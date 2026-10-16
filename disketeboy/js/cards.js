@@ -70,3 +70,63 @@ export function cardsStats(items) {
     best,
   };
 }
+
+/** Un precio escrito de cualquier manera: «1,50», «1.234,56», «$1,234.56» o «0.25 €». */
+export function parseAmount(raw) {
+  let s = String(raw ?? '').replace(/[^\d.,-]/g, '');
+  if (!s) return null;
+  const comma = s.lastIndexOf(',');
+  const dot = s.lastIndexOf('.');
+  if (comma > -1 && dot > -1) s = comma > dot ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '');
+  else if (comma > -1) s = /,\d{1,2}$/.test(s) && s.indexOf(',') === comma ? s.replace(',', '.') : s.replace(/,/g, '');
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** Separa una línea de CSV respetando las comillas. */
+function csvRow(line, sep) {
+  const out = [];
+  let cur = '';
+  let quoted = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (quoted) {
+      if (ch === '"' && line[i + 1] === '"') (cur += '"'), i++;
+      else if (ch === '"') quoted = false;
+      else cur += ch;
+    } else if (ch === '"') quoted = true;
+    else if (ch === sep) out.push(cur), (cur = '');
+    else cur += ch;
+  }
+  out.push(cur);
+  return out.map((x) => x.trim());
+}
+
+const QTY = ['quantity', 'qty', 'count', 'amount', 'cantidad', 'copies'];
+const PRICE = ['purchase price', 'price', 'market price', 'value', 'precio', 'price (eur)', 'price (usd)', 'tcg market price'];
+
+/**
+ * Lee el CSV que exportan ManaBox, Dragon Shield, Delver Lens y compañía:
+ * suma las cartas (columna de cantidad) y su valor (cantidad × precio, si hay precio).
+ */
+export function parseCardCsv(text) {
+  const lines = String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/).filter((l) => l.trim());
+  if (lines.length < 2) return { rows: 0, cards: 0, value: 0, hasPrice: false };
+  const sep = (lines[0].match(/;/g) || []).length > (lines[0].match(/,/g) || []).length ? ';' : ',';
+  const head = csvRow(lines[0], sep).map((h) => h.toLowerCase());
+  const qi = head.findIndex((h) => QTY.includes(h));
+  const pi = head.findIndex((h) => PRICE.includes(h));
+  let cards = 0;
+  let value = 0;
+  let rows = 0;
+  for (const line of lines.slice(1)) {
+    const cells = csvRow(line, sep);
+    if (cells.every((c) => !c)) continue;
+    const qty = qi > -1 ? Math.max(0, Math.round(parseAmount(cells[qi]) ?? 1)) : 1;
+    const price = pi > -1 ? parseAmount(cells[pi]) : null;
+    cards += qty;
+    if (price !== null && price > 0) value += qty * price;
+    rows++;
+  }
+  return { rows, cards, value: Math.round(value * 100) / 100, hasPrice: pi > -1 };
+}

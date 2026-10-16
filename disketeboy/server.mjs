@@ -26,6 +26,9 @@ const MIME = {
   '.jpg': 'image/jpeg',
   '.webp': 'image/webp',
   '.md': 'text/markdown; charset=utf-8',
+  '.webmanifest': 'application/manifest+json',
+  '.mp4': 'video/mp4',
+  '.gif': 'image/gif',
 };
 
 createServer(async (req, res) => {

@@ -48,7 +48,7 @@ Coges una caja, la giras y **en la contraportada está tu reseña**, con tu nota
 
 **Disquete de juegos de mesa**: tus juegos de mesa en una Kallax, con el número de jugadores en el lomo. Los sin estrenar van encima con su plástico, y los prestados llevan un pósit: «Lo tiene Pedro desde hace 143 días». Con **«¿Qué jugamos esta noche?»** dices cuántos sois y cuánto tiempo tenéis, una ruleta elige y la caja sale volando de la Kallax. Tu colección de **BoardGameGeek** se importa de una vez: lo que no tiene partidas va encima, aún con su plástico.
 
-**Disquete de cartas**, para cualquier juego de cartas: los **mazos** son cajitas delante de la tele, con su récord («23V · 11D (68%)») y la lista, que cuenta las cartas sola. Las **carpetas** van a los cubos de abajo de la Kallax, con el número de cartas y el valor estimado.
+**Disquete de cartas**, para cualquier juego de cartas: los **mazos** son cajitas delante de la tele, con su récord («23V · 11D (68%)») y la lista, que cuenta las cartas sola. Las **carpetas** van a los cubos de abajo de la Kallax, con el número de cartas y el valor estimado. Ambos se rellenan solos con el CSV que exportan ManaBox, Dragon Shield o Delver Lens.
 
 **«Compartir mi habitación»** crea un enlace con tu colección comprimida dentro, sin cuentas ni servidor. Quien lo abre ve tu habitación de visita, sin tocar la suya.
 
@@ -93,6 +93,7 @@ En Netlify se sirve en `/disketeboy/`, con sus funciones en `netlify/functions/d
 - **Todo lo que se ve está hecho con código**: muebles con geometría simple y portadas, lomos, alfombra, cielo y ventana pintados en canvas. Nada de dibujos con IA ni assets ajenos. Las portadas reales de Steam son de sus autores.
 - La habitación **solo se redibuja cuando algo se mueve**, para no gastar batería.
 - La colección se guarda en el navegador (`localStorage`) y se valida al leerla. Se puede exportar e importar como copia de seguridad.
+- **Se instala como una app** en el móvil y en el ordenador («Añadir a pantalla de inicio»), con su icono de disquete (`manifest.webmanifest` e `icons/`).
 
 | Archivo | Qué hace |
 |---|---|
@@ -117,8 +118,8 @@ En Netlify se sirve en `/disketeboy/`, con sus funciones en `netlify/functions/d
 
 ```bash
 npm ci                                        # en la raíz: Playwright y axe-core
-node --test disketeboy/tests/unit/*.test.mjs  # 68 pruebas unitarias
-node disketeboy/tests/e2e/run.mjs             # 23 pruebas en Chromium (E2E_SHOTS=1 guarda capturas)
+node --test disketeboy/tests/unit/*.test.mjs  # 70 pruebas unitarias
+node disketeboy/tests/e2e/run.mjs             # 25 pruebas en Chromium (E2E_SHOTS=1 guarda capturas)
 ```
 
 En GitHub se ejecutan solas con `.github/workflows/disketeboy.yml` cada vez que cambia algo en `disketeboy/`.

@@ -92,7 +92,7 @@ En Reddit gana el vídeo corto y sin voz. Guion (el grabado lo sigue casi tal cu
 ## 6. Lo siguiente (hoja de ruta)
 
 1. **Cuentas opcionales y sincronizar** entre móvil y ordenador (Supabase), y enlaces de visita cortos.
-2. **Importar de ManaBox o Moxfield** (cartas). La de BoardGameGeek ya está hecha.
+2. **Importar mazos de Moxfield o Archidekt** (cartas). Ya están hechas la de BoardGameGeek y la del CSV de ManaBox para las carpetas.
 3. **El resumen del año de tu habitación** en diciembre.
 4. **Escanear el código de barras** con la cámara para añadir juegos físicos.
 5. **Mascota y temas** como ventajas para mecenas.

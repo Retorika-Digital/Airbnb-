@@ -84,3 +84,22 @@ test('el enlace de visita lleva mazos y carpetas (sin las listas)', async () => 
   assert.deepEqual([d.kind, d.tcg, d.format, d.wins, d.losses, d.list], ['mazo', 'mtg', 'Modern', 4, 2, '']);
   assert.deepEqual([c.kind, c.tcg, c.cards, c.value, c.status], ['carpeta', 'pokemon', 165, 120, 'completa']);
 });
+
+test('precios escritos de cualquier manera', async () => {
+  const { parseAmount } = await import('../../js/cards.js');
+  assert.deepEqual(['1,50', '1.234,56', '$1,234.56', '0.25 €', '12', '1,234', 'N/A', ''].map(parseAmount), [1.5, 1234.56, 1234.56, 0.25, 12, 1234, null, null]);
+});
+
+test('el CSV de ManaBox (o de cualquier app) llena la carpeta: cartas y valor', async () => {
+  const { parseCardCsv } = await import('../../js/cards.js');
+  const manabox = [
+    'Name,Set code,Set name,Collector number,Foil,Rarity,Quantity,ManaBox ID,Scryfall ID,Purchase price,Misprint,Altered,Condition,Language,Purchase price currency',
+    '"Lightning Bolt",M10,Magic 2010,146,normal,common,4,1,abc,1.50,false,false,near_mint,en,EUR',
+    '"Atraxa, Praetors\' Voice",C16,Commander 2016,28,foil,mythic,1,2,def,25.00,false,false,near_mint,en,EUR',
+    '',
+  ].join('\r\n');
+  assert.deepEqual(parseCardCsv(manabox), { rows: 2, cards: 5, value: 31, hasPrice: true }, 'la coma dentro de comillas no corta la fila');
+  assert.deepEqual(parseCardCsv('﻿Nombre;Cantidad;Precio\nRayo;4;1,50\nAnillo solar;1;2,25\n'), { rows: 2, cards: 5, value: 8.25, hasPrice: true }, 'Excel en español: punto y coma y coma decimal');
+  assert.deepEqual(parseCardCsv('Card\nSol Ring\nForest\n'), { rows: 2, cards: 2, value: 0, hasPrice: false }, 'sin cantidad: una por fila');
+  assert.equal(parseCardCsv('solo cabecera').rows, 0);
+});

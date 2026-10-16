@@ -7,7 +7,7 @@ Lo que se ha ido haciendo mientras dormías, tanda por tanda.
 > - **Extras**: importar de Steam y de BoardGameGeek, el ticket de la DisketePrinter, el enlace «Visita mi habitación», la ruleta de «¿Qué jugamos esta noche?», 3 temas de habitación y un gato.
 > - **Cómo verlo**: `node disketeboy/server.mjs` y abre http://localhost:5180/?demo=1. Las capturas están en el [README](../README.md), y el **vídeo para Reddit** en [`docs/video/`](video/).
 > - **Idiomas**: español e inglés. Sale en el idioma del navegador y se cambia en Ajustes.
-> - **Calidad**: 68 pruebas unitarias y 23 en navegador, todas verdes, y axe-core sin errores de accesibilidad.
+> - **Calidad**: 70 pruebas unitarias y 25 en navegador, todas verdes, y axe-core sin errores de accesibilidad.
 > - **Lo que te toca a ti**: está en [LANZAMIENTO.md](LANZAMIENTO.md), en el apartado «Antes de publicar nada»: dominio, comprobar el nombre, clave de Steam y crear la página de Ko-fi. El botón de donar ya está hecho: solo hay que pegar el enlace en `js/config.js`.
 
 ## Tanda 1: la consola DisketeBoy
@@ -294,3 +294,16 @@ Para r/boardgames es el gancho: casi todo el mundo tiene allí su colección apu
   - Los reintentos del 202 y la clave.
   - Cómo se colocan los juegos y que no se dupliquen.
   - El recorrido completo, simulado, con axe-core en la pantalla nueva.
+
+## Tanda 15: se instala como una app y las carpetas leen CSV
+
+- **Instalable**: con «Añadir a pantalla de inicio» en el móvil (o «Instalar» en Chrome), DisketeBoy se abre a pantalla completa, como una app, con su **icono de disquete rojo**. Lleva su manifiesto y los iconos de 192 y 512 px, incluido el que Android recorta en círculo.
+- **Carpetas desde CSV**: en la ficha de una carpeta, «Importar CSV (ManaBox, Dragon Shield…)» lee el archivo que exportan esas apps, cuenta las cartas y suma su valor (cantidad × precio).
+  - Entiende comillas con comas dentro («Atraxa, Praetors' Voice»).
+  - Entiende el CSV de Excel en español, con punto y coma y coma decimal («1,50»).
+  - Entiende precios como «$1,234.56» o «1.234,56 €».
+  - Si el archivo no tiene columna de precio, solo cuenta las cartas.
+- **Pruebas**: 70 unitarias (antes 68) y 25 en navegador (antes 23):
+  - Leer CSV de distintas apps y formatos de precio.
+  - Importar un CSV a una carpeta de verdad en el navegador.
+  - Que el manifiesto y los iconos estén y respondan.
