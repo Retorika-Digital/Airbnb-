@@ -7,7 +7,7 @@ Lo que se ha ido haciendo mientras dormías, tanda por tanda.
 > - **Extras**: 24 logros con trofeos en el alféizar, «Mi resumen» para compartir, importar de Steam y de BoardGameGeek, el ticket de la DisketePrinter, el enlace «Visita mi habitación», la ruleta de «¿Qué jugamos esta noche?», 3 temas de habitación y un gato.
 > - **Cómo verlo**: `node disketeboy/server.mjs` y abre http://localhost:5180/?demo=1. Las capturas están en el [README](../README.md), y el **vídeo para Reddit** en [`docs/video/`](video/).
 > - **Idiomas**: español e inglés. Sale en el idioma del navegador y se cambia en Ajustes.
-> - **Calidad**: 84 pruebas unitarias y 27 en navegador, todas verdes, y axe-core sin errores de accesibilidad. Además, una revisión independiente del código, con sus arreglos.
+> - **Calidad**: 84 pruebas unitarias y 28 en navegador, todas verdes, y axe-core sin errores de accesibilidad. Además, una revisión independiente del código, con sus arreglos.
 > - **Lo que te toca a ti**: está en [LANZAMIENTO.md](LANZAMIENTO.md), en el apartado «Antes de publicar nada»: dominio, comprobar el nombre, clave de Steam y crear la página de Ko-fi. El botón de donar ya está hecho: solo hay que pegar el enlace en `js/config.js`.
 
 ## Tanda 1: la consola DisketeBoy
@@ -354,3 +354,13 @@ Me pediste que no me quedara en prototipo y que hubiera detalles y animaciones q
   - Los mazos y carpetas de la habitación se repintan cuando cambian sus cifras.
 - **Algo que he aprendido esta noche**: el confeti dejaba su lienzo a pantalla completa puesto para siempre, y eso ralentizaba el navegador de pruebas y tapaba los botones para el lector de pantalla. Ahora el lienzo solo existe mientras caen papelitos.
 - **Pruebas**: 84 unitarias (antes 70) y 27 en navegador (antes 25), todas verdes. Se prueban los logros (incluido el gato secreto), «Mi resumen», el confeti, el ambiente, las temporadas y cada arreglo de la revisión.
+
+## Tanda 17: buscar en las listas y corregir títulos
+
+Con la demo o tras importar Steam salen 50, 200 u 800 juegos, y bajar con la cruceta hasta la «S» se hacía eterno.
+
+- **Buscador** arriba de cada lista larga (más de 8): videojuegos, juegos de mesa, mazos y carpetas.
+  - Filtra mientras escribes, sin acentos ni mayúsculas: «pokemon» encuentra «Pokémon».
+  - Si entras en un juego y vuelves, la búsqueda sigue ahí.
+- **Corregir el título** desde la ficha de cualquier juego, mazo o carpeta, por si Steam lo trae en mayúsculas o te equivocaste al escribirlo. Un título vacío no se guarda. La caja de la habitación se repinta con el título nuevo.
+- **Pruebas**: 28 en navegador (antes 27). La nueva busca en la lista de videojuegos y en la Kallax, corrige un título y comprueba que uno vacío no se guarda.

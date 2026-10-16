@@ -9,7 +9,7 @@ import { demoCollection } from './demo.js';
 import { TCGS, TCG_IDS, tcg, DECK_STATUSES, DECK_STATUS_LABEL, BINDER_STATUSES, BINDER_STATUS_LABEL, deckCount, recordText, euros, cardsStats, parseCardCsv } from './cards.js';
 import { sfx, setSound } from './audio.js';
 import { whatToPlay, playersText, minutesText, lentText, boardStats, pickOne, TIME_OPTIONS, mapBggGames } from './boards.js';
-import { clamp } from './util.js';
+import { clamp, titleKey } from './util.js';
 import { donateUrl } from './config.js';
 import { t, tp, mark, num, LANGS, LANG_NAME, getLang } from './i18n.js';
 
@@ -218,10 +218,46 @@ export function createDevice(root, actions) {
   }
 
   const p = (text, cls) => h('p', { class: cls || 'note', text });
+  /** Buscador para listas largas: oculta lo que no encaja, sin repintar la pantalla. */
+  const searchBox = (id) => {
+    const input = h('input', {
+      id,
+      type: 'search',
+      'data-nav': '',
+      class: 'search',
+      placeholder: t('Buscar…'),
+      'aria-label': t('Buscar en la lista'),
+      autocomplete: 'off',
+      value: current.params.q || '',
+      oninput: (e) => {
+        current.params.q = e.target.value;
+        filterList(e.target);
+      },
+    });
+    requestAnimationFrame(() => input.value && filterList(input));
+    return input;
+  };
+  function filterList(input) {
+    const q = titleKey(input.value);
+    for (const el of input.closest('.view').querySelectorAll('.item.game')) el.hidden = !!q && !(el.dataset.key || '').includes(q);
+  }
+  const gameItem = (g, meta) => {
+    const el = item(g.title, () => go('ficha', { id: g.id }), { meta, cls: 'game' });
+    el.dataset.key = titleKey(g.title);
+    return el;
+  };
   const logrosMeta = () => {
     const list = actions.logrosList?.() || [];
     return list.length ? `${list.filter((l) => l.got).length}/${list.length}` : '';
   };
+  /** Campo para corregir el título (un título vacío no se guarda). */
+  const titleField = (g, upd, id, label = t('Título')) =>
+    h(
+      'label',
+      { class: 'item field' },
+      h('span', { class: 'item-label', text: label }),
+      h('input', { id, 'data-nav': '', maxlength: '120', value: g.title, autocomplete: 'off', onchange: (e) => e.target.value.trim() && upd({ title: e.target.value }) }),
+    );
   const statRow = (k, v) => h('div', { class: 'stat' }, h('dt', { text: k }), h('dd', { text: v }));
 
   // ---------------------------------------------------------------- pantallas
@@ -316,8 +352,9 @@ export function createDevice(root, actions) {
           'div',
           { class: 'list' },
           stepper(t('Ver'), `${label} (${games.length})`, setFilter, { id: 'filtro' }),
+          games.length > 8 ? searchBox('l-buscar') : null,
           games.length
-            ? games.map((g) => item(g.title, () => go('ficha', { id: g.id }), { meta: metaLine(g), cls: 'game' }))
+            ? games.map((g) => gameItem(g, metaLine(g)))
             : item(t('Nada por aquí. Añadir un juego'), () => go('nuevo')),
         ),
       );
@@ -360,6 +397,7 @@ export function createDevice(root, actions) {
         h(
           'div',
           { class: 'list' },
+          titleField(g, upd, 'f-titulo'),
           stepper(t('Estado'), t(STATUS_LABEL[g.status]), (dir) => upd({ status: cycle(STATUSES, g.status, dir) }), { id: 'f-estado' }),
           stepper(t('Nota'), stars(g.score), (dir) => upd({ score: cycle(scores, g.score, dir) }), { id: 'f-nota' }),
           stepper(t('Plataforma'), platform(g.platform).short, (dir) => upd({ platform: cycle(PLATFORMS.map((x) => x.id), g.platform, dir) }), { id: 'f-plataforma' }),
@@ -597,8 +635,9 @@ export function createDevice(root, actions) {
             current.params = { filter: cycle(filters, filter, dir) };
             render(0);
           }, { id: 'b-filtro' }),
+          list.length > 8 ? searchBox('b-buscar') : null,
           list.length
-            ? list.map((g) => item(g.title, () => go('ficha', { id: g.id }), { meta: boardMeta(g), cls: 'game' }))
+            ? list.map((g) => gameItem(g, boardMeta(g)))
             : store.visiting()
               ? p(t('Nada por aquí.'))
               : item(t('Nada por aquí. Añadir uno'), () => go('mesaNuevo')),
@@ -653,6 +692,7 @@ export function createDevice(root, actions) {
             sfx.select();
             toast(fresh ? t('¡{title} estrenado! Fuera plástico.', { title: g.title }) : t('Partida apuntada: ya van {n}', { n: g.plays + 1 }));
           }, { cls: 'primary', id: 'bf-jugado' }),
+          titleField(g, upd, 'bf-titulo'),
           stepper(t('Estado'), t(BOARD_STATUS_LABEL[g.status]), (dir) => upd({ status: cycle(BOARD_STATUSES, g.status, dir) }), { id: 'bf-estado' }),
           stepper(t('Nota'), stars(g.score), (dir) => upd({ score: cycle(SCORES, g.score, dir) }), { id: 'bf-nota' }),
           field('bf-min', t('Jugadores mín.'), g.minPlayers, '1', '20', 'minPlayers'),
@@ -833,8 +873,9 @@ export function createDevice(root, actions) {
         h(
           'div',
           { class: 'list' },
+          list.length > 8 ? searchBox('c-buscar') : null,
           list.length
-            ? list.map((g) => item(g.title, () => go('ficha', { id: g.id }), { meta: meta(g), cls: 'game' }))
+            ? list.map((g) => gameItem(g, meta(g)))
             : store.visiting()
               ? p(t('Nada por aquí.'))
               : item(kind === 'mazo' ? t('Aún no hay mazos. Crear uno') : t('Aún no hay carpetas. Crear una'), () => go(kind === 'mazo' ? 'mazoNuevo' : 'carpetaNueva')),
@@ -877,6 +918,7 @@ export function createDevice(root, actions) {
             sfx.back();
             toast(t('Derrota apuntada. La próxima, mejor robo.'));
           }, { id: 'cf-perdi' }),
+          titleField(g, upd, 'cf-titulo', t('Nombre del mazo')),
           stepper(t('Juego'), tcg(g.tcg).short, (dir) => upd({ tcg: cycle(TCG_IDS, g.tcg, dir) }), { id: 'cf-juego' }),
           h('label', { class: 'item field' }, h('span', { class: 'item-label', text: t('Formato') }), format),
           stepper(t('Estado'), t(DECK_STATUS_LABEL[g.status]), (dir) => upd({ status: cycle(DECK_STATUSES, g.status, dir) }), { id: 'cf-estado' }),
@@ -989,6 +1031,7 @@ export function createDevice(root, actions) {
         h(
           'div',
           { class: 'list' },
+          titleField(g, upd, 'pf-titulo', t('Nombre de la carpeta')),
           stepper(t('Juego'), tcg(g.tcg).short, (dir) => upd({ tcg: cycle(TCG_IDS, g.tcg, dir) }), { id: 'pf-juego' }),
           stepper(t('Estado'), t(BINDER_STATUS_LABEL[g.status]), (dir) => upd({ status: cycle(BINDER_STATUSES, g.status, dir) }), { id: 'pf-estado' }),
           stepper(t('Nota'), stars(g.score), (dir) => upd({ score: cycle(SCORES, g.score, dir) }), { id: 'pf-nota' }),

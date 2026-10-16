@@ -150,6 +150,30 @@ try {
     await page.close();
   });
 
+  await check('buscar en la lista y corregir el título desde la ficha', async () => {
+    const page = await newPage(browser);
+    await page.goto(`${BASE}/?demo=1`);
+    await booted(page);
+    await page.evaluate(() => window.disketeboy.device.go('lista', { filter: 'todos' }));
+    await page.fill('#l-buscar', 'hollow');
+    const visible = await page.$$eval('#screen .item.game', (els) => els.filter((e) => !e.hidden).map((e) => e.querySelector('.item-label').textContent));
+    eq(visible.sort().join(' | '), 'Hollow Knight | Hollow Knight: Silksong', 'la búsqueda filtra sin repintar');
+    await page.click('#screen .item.game:not([hidden]) >> nth=0');
+    await page.waitForSelector('#f-titulo');
+    await page.fill('#f-titulo', 'Hollow Knight (Voidheart)');
+    await page.keyboard.press('Tab');
+    await page.waitForFunction(() => window.disketeboy.store.getGames().some((g) => g.title === 'Hollow Knight (Voidheart)'));
+    await page.fill('#f-titulo', '   ');
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => window.disketeboy.store.getGames().some((g) => g.title === 'Hollow Knight (Voidheart)')), 'un título vacío no se guarda');
+    await page.evaluate(() => window.disketeboy.device.go('mesaLista', { filter: 'todos' }));
+    await page.fill('#b-buscar', 'aventureros');
+    eq(await page.$$eval('#screen .item.game', (els) => els.filter((e) => !e.hidden).length), 1, 'también en la Kallax');
+    eq(page.errors.join('\n'), '', 'errores en consola');
+    await page.close();
+  });
+
   await check('un título con HTML se muestra como texto (sin XSS)', async () => {
     const page = await newPage(browser);
     await page.goto(BASE);

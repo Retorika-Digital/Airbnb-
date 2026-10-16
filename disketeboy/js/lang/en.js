@@ -554,4 +554,6 @@ export default {
   "Mi resumen de DisketeBoy": "My DisketeBoy recap",
   "{list} y {n} más": "{list} and {n} more",
   "Arrancando": "Starting up",
+  "Buscar…": "Search…",
+  "Buscar en la lista": "Search the list",
 };

@@ -62,7 +62,7 @@ Coges una caja, la giras y **en la contraportada está tu reseña**, con tu nota
 
 **Tu habitación, a tu gusto**: en Ajustes eliges el tema (*Crema*, *Gamer RGB* con tira LED o *Retro 90*) y si quieres al gato, que duerme en la alfombra y ronronea si lo tocas. El tema y el gato viajan en el enlace de visita. Están pensados como futuras ventajas para mecenas; ahora son gratis para todos.
 
-> Prototipo en desarrollo. Está en esta carpeta para no mezclarlo con retorika Home; cuando guste, se pasa a su propio repositorio.
+> Vive en esta carpeta para no mezclarlo con retorika Home; cuando guste, se pasa a su propio repositorio.
 
 ## Arrancar
 
@@ -89,6 +89,7 @@ En Netlify se sirve en `/disketeboy/`, con sus funciones en `netlify/functions/d
 ## Controles
 
 - **Consola:** cruceta o flechas, **A** o Enter para aceptar, **B** o Escape para volver. **SELECT** baja la consola para ver la habitación y **START** vuelve al menú. También funciona con ratón, con el dedo y con lector de pantalla.
+- **Listas largas:** a partir de 9 juegos sale un buscador arriba. El título de cualquier juego, mazo o carpeta se corrige desde su ficha.
 - **Habitación:**
   - Arrastra para mirar alrededor y usa la rueda o pellizca para acercarte.
   - Toca una caja para cogerla y vuelve a tocarla para darle la vuelta.
@@ -130,7 +131,7 @@ En Netlify se sirve en `/disketeboy/`, con sus funciones en `netlify/functions/d
 ```bash
 npm ci                                        # en la raíz: Playwright y axe-core
 node --test disketeboy/tests/unit/*.test.mjs  # 84 pruebas unitarias
-node disketeboy/tests/e2e/run.mjs             # 27 pruebas en Chromium (E2E_SHOTS=1 guarda capturas)
+node disketeboy/tests/e2e/run.mjs             # 28 pruebas en Chromium (E2E_SHOTS=1 guarda capturas)
 ```
 
 En GitHub se ejecutan solas con `.github/workflows/disketeboy.yml` cada vez que cambia algo en `disketeboy/`.

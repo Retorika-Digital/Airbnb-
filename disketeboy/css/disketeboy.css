@@ -672,3 +672,6 @@ html:lang(en) .dkb[data-disk='cartas'] .floppy-label::before { content: 'CARDS';
 /* Pantalla de logros en la consola */
 .screen .item.logro-row .item-label { white-space: normal; }
 .screen .item.logro-row.locked { opacity: 0.55; }
+
+/* Buscador de las listas de la consola */
+.screen .search { width: 100%; margin: 0 0 calc(var(--u) * 1); }
