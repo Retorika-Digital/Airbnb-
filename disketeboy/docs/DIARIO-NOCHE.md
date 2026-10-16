@@ -166,3 +166,14 @@ Lo que se ha ido haciendo mientras dormías, tanda por tanda.
 - **Estadísticas de cartas**: mazos, carpetas, cartas, valor total, récord total y **tu mejor mazo** (con al menos 3 partidas).
 - La demo trae **5 mazos y 3 carpetas**, y el enlace de visita también los lleva (sin las listas, para que no sea eterno).
 - **Pruebas**: 51 unitarias (antes 44), con el contador de cartas, el récord y que los mazos y las carpetas vayan a su sitio. Y 18 en navegador (antes 17), con el recorrido del disquete verde y axe-core sin errores en sus 8 pantallas.
+
+## Tanda 9: capturas, colecciones exageradas y un fallo de verdad
+
+- **Capturas para el README** en `docs/capturas/`: consola, habitación de día y de noche, contraportada, Kallax, ruleta, mazo, ticket, visita, móvil y **una estantería con 800 juegos ordenados por color**, como un arcoíris. Esa es la imagen para Reddit.
+- **Fallo encontrado gracias a las capturas**: si se recolocaban las cajas mientras aún estaban cayendo, **se quedaban invisibles para siempre**, y la estantería salía vacía. Podía pasar de verdad: al importar de Steam llegan los colores de los lomos y, si ordenas por color, las cajas se recolocan en plena caída.
+  - Arreglado: si una caja estaba esperando su turno para caer y le toca moverse, primero aparece.
+  - Prueba de regresión: **sin el arreglo da 58 cajas invisibles, con el arreglo 0**. Lo comprobé quitando el arreglo a propósito.
+- **Colecciones exageradas**:
+  - El escritorio admite como mucho **12 juegos «jugando»** y la caja de abandonados **24**. El resto va a la estantería, en vez de levantar torres hasta el techo.
+  - Las pilas de la vergüenza enormes **crecen en altura** en vez de invadir toda la habitación.
+- **Pruebas**: 53 unitarias y 19 en navegador, todas verdes.

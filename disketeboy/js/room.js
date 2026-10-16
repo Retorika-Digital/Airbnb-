@@ -847,6 +847,10 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
       delay = 0;
       arc = 0;
     }
+    // Si sustituimos una animación que aún no había empezado (una caja esperando
+    // su turno para caer), ejecutamos su arranque: si no, la caja se quedaría invisible.
+    const prev = tweens.get(key);
+    if (prev && !prev.began) prev.onStart?.();
     tweens.set(key, { obj, pos, quat, scale, dur: dur * 1000, start: performance.now() + delay * 1000, arc, fn, onStart, onDone, began: false });
     kick();
   }

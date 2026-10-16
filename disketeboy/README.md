@@ -1,6 +1,28 @@
 # DisketeBoy 💾
 
-**Apunta tus videojuegos en una consola retro y míralos amontonarse en tu habitación 3D.**
+**Apunta tus videojuegos, juegos de mesa y cartas en una consola retro y míralos amontonarse en tu habitación 3D.**
+
+<p>
+  <img src="docs/capturas/estanteria-800.jpg" width="100%" alt="800 juegos en las estanterías, ordenados por color como un arcoíris, con la pila de la vergüenza en la alfombra">
+</p>
+<p>
+  <img src="docs/capturas/consola.jpg" width="49%" alt="La consola DisketeBoy con el disquete de videojuegos y la habitación detrás">
+  <img src="docs/capturas/habitacion-noche.jpg" width="49%" alt="La habitación de noche: estantería, cartel de la pila de la vergüenza, escritorio con tele de tubo y caja de abandonados">
+</p>
+<p>
+  <img src="docs/capturas/contraportada.jpg" width="49%" alt="La contraportada de Hollow Knight con la reseña, la nota 10/10 y las horas">
+  <img src="docs/capturas/kallax.jpg" width="49%" alt="La Kallax con los juegos de mesa de pie y los sin estrenar encima">
+</p>
+<p>
+  <img src="docs/capturas/ruleta.jpg" width="32%" alt="La ruleta de ¿Qué jugamos esta noche? eligiendo Aventureros al Tren">
+  <img src="docs/capturas/mazo.jpg" width="32%" alt="Un mazo de cartas cogido con su récord de victorias">
+  <img src="docs/capturas/ticket.jpg" width="32%" alt="El ticket de la DisketePrinter con el resumen de la colección">
+</p>
+<p>
+  <img src="docs/capturas/visita.jpg" width="49%" alt="Modo visita en la habitación de Laura">
+  <img src="docs/capturas/movil-consola.jpg" width="24%" alt="La consola en el móvil">
+  <img src="docs/capturas/movil-habitacion.jpg" width="24%" alt="La habitación en el móvil">
+</p>
 
 Gestionas la colección desde la DisketeBoy, una consola de diseño propio con un disquete por colección. Detrás está tu habitación, y cada juego aparece en ella según su estado:
 
@@ -70,8 +92,8 @@ En Netlify se sirve en `/disketeboy/`, con sus funciones en `netlify/functions/d
 
 ```bash
 npm ci                                        # en la raíz: Playwright y axe-core
-node --test disketeboy/tests/unit/*.test.mjs  # 51 pruebas unitarias
-node disketeboy/tests/e2e/run.mjs             # 18 pruebas en Chromium (E2E_SHOTS=1 guarda capturas)
+node --test disketeboy/tests/unit/*.test.mjs  # 53 pruebas unitarias
+node disketeboy/tests/e2e/run.mjs             # 19 pruebas en Chromium (E2E_SHOTS=1 guarda capturas)
 ```
 
 En GitHub se ejecutan solas con `.github/workflows/disketeboy.yml` cada vez que cambia algo en `disketeboy/`.

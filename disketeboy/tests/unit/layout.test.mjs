@@ -88,3 +88,20 @@ test('ordenar por nota, A-Z, horas y color', () => {
   assert.deepEqual(sortGames(games, 'horas').map((g) => g.title), ['c', 'b', 'A']);
   assert.deepEqual(sortGames(games, 'color').map((g) => g.title), ['A', 'c', 'b'], 'rojo, verde, azul');
 });
+
+test('el escritorio y la caja de abandonados no crecen hasta el techo', () => {
+  const games = [...Array.from({ length: 40 }, () => game({ status: 'jugando' })), ...Array.from({ length: 40 }, () => game({ status: 'abandonado' }))];
+  const { placements, counts } = computeLayout(games);
+  assert.equal(counts.escritorio, 12);
+  assert.equal(counts.caja, 24);
+  assert.equal(counts.estanteria, 44, 'lo que sobra va a la estantería');
+  const deskTop = Math.max(...games.filter((g) => placements.get(g.id).zone === 'escritorio').map((g) => placements.get(g.id).y));
+  assert.ok(deskTop < 0.74 + 0.2, `torre de ${deskTop.toFixed(2)} m`);
+});
+
+test('una pila de la vergüenza enorme crece en altura sin salirse de sus columnas', () => {
+  const games = Array.from({ length: 150 }, () => game({ status: 'pendiente' }));
+  const { placements } = computeLayout(games);
+  const xs = games.map((g) => placements.get(g.id).x);
+  assert.ok(Math.max(...xs) - Math.min(...xs) < 1.5, 'la pila no invade toda la habitación');
+});

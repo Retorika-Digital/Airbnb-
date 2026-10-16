@@ -49,6 +49,8 @@ const PILE_COLUMNS = [
   [0.5, 0.12], [-0.42, -0.04], [0.56, 0.5], [-0.12, 0.56], [0.24, 0.62], [-0.5, 0.6], [0.7, 0.3],
 ];
 const PILE_MAX = 5;
+const DESK_MAX = 12; // más allá, lo que juegas a la vez va a la estantería
+const BIN_MAX = 24;
 
 const gameColor = (g) => g.color || colorFor(g.title);
 
@@ -145,8 +147,10 @@ export function shelfDecor(used, bookcases) {
 /** La pila de la vergüenza: columnas de cajas tumbadas, un poco torcidas. */
 function pile(games, out) {
   const heights = [];
+  // Pilas enormes: columnas más altas antes que invadir toda la habitación
+  const perCol = Math.min(14, Math.max(PILE_MAX, Math.ceil(games.length / PILE_COLUMNS.length)));
   games.forEach((g, i) => {
-    const col = Math.floor(i / PILE_MAX);
+    const col = Math.floor(i / perCol);
     const [ox, oz] = PILE_COLUMNS[col] || [((col * 37) % 11) / 10 - 0.5, 0.7 + ((col * 13) % 5) / 10];
     const r = rng(g.id);
     const colYaw = (rng(`col${col}`)() - 0.5) * 0.9;
@@ -283,10 +287,17 @@ export function computeLayout(all, { tidy = false, sort = 'plataforma' } = {}) {
   const zones = { estanteria: [], pila: [], escritorio: [], caja: [] };
   for (const g of games) zones[tidy ? 'estanteria' : ZONE_OF_STATUS[g.status] || 'pila'].push(g);
   const byAdded = (a, b) => a.addedAt.localeCompare(b.addedAt) || a.id.localeCompare(b.id);
-  const { overflow, bookcases, used } = shelve(sortGames(zones.estanteria, sort), placements);
+  // El escritorio y la caja de abandonados tienen un límite: lo que no cabe va a la estantería
+  const onDesk = zones.escritorio.sort(byAdded);
+  const inBin = zones.caja.sort(byAdded);
+  const spill = [...onDesk.splice(DESK_MAX), ...inBin.splice(BIN_MAX)];
+  const { overflow, bookcases, used } = shelve(sortGames([...zones.estanteria, ...spill], sort), placements);
   pile([...zones.pila.sort(byAdded), ...overflow], placements);
-  desk(zones.escritorio.sort(byAdded), placements);
-  bin(zones.caja.sort(byAdded), placements);
+  desk(onDesk, placements);
+  bin(inBin, placements);
+  zones.estanteria.push(...spill);
+  zones.escritorio = onDesk;
+  zones.caja = inBin;
   kallax(boards, all.filter((g) => g.kind === 'carpeta'), placements, tidy);
   decks(all.filter((g) => g.kind === 'mazo'), placements);
   const inZone = (z) => [...placements.values()].filter((p) => p.zone === z).length;

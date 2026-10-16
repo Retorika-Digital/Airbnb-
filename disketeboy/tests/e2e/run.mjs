@@ -214,6 +214,21 @@ try {
     await page.close();
   });
 
+  await check('regresión: cambiar el orden mientras caen las cajas no deja cajas invisibles', async () => {
+    const page = await newPage(browser);
+    await page.goto(BASE);
+    await booted(page);
+    await page.evaluate(() => {
+      const { store } = window.disketeboy;
+      store.importGames(Array.from({ length: 60 }, (_, i) => ({ title: `Caja ${String(i).padStart(2, '0')}`, platform: 'pc', status: 'jugado', score: i % 11 })));
+      store.setSettings({ sort: 'nota' });
+    });
+    await idle(page);
+    const hidden = await page.evaluate(() => [...window.disketeboy.room.debug.entries.values()].filter((e) => !e.mesh.visible).length);
+    eq(hidden, 0, 'cajas invisibles');
+    await page.close();
+  });
+
   await check('cambiar el estado mueve la caja de zona', async () => {
     const page = await newPage(browser);
     await page.goto(`${BASE}/?demo=1`);
