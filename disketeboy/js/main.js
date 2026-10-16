@@ -61,16 +61,19 @@ const TIPS = [
   mark('«Mi resumen» está en el menú de la consola ✨'),
 ];
 let tipTimer = 0;
+let fadeTimer = 0;
 let tipAt = 0;
 let helpText = '';
 function showHelp(text) {
   helpEl.classList.add('is-fading');
-  setTimeout(() => {
+  clearTimeout(fadeTimer);
+  fadeTimer = setTimeout(() => {
     helpEl.textContent = text;
     helpEl.classList.remove('is-fading');
   }, 300);
 }
 function startTips() {
+  if (!room) return;
   helpText ||= helpEl.textContent;
   clearInterval(tipTimer);
   // Se alternan la ayuda de siempre y un consejo nuevo cada vez
@@ -82,6 +85,8 @@ function startTips() {
 }
 function stopTips() {
   clearInterval(tipTimer);
+  clearTimeout(fadeTimer);
+  helpEl.classList.remove('is-fading');
   if (helpText) helpEl.textContent = helpText;
 }
 
@@ -246,6 +251,7 @@ async function startRoom() {
 }
 
 function showFallback() {
+  lightBtn.hidden = true;
   document.getElementById('room-fallback').hidden = false;
   canvas.hidden = true;
 }
@@ -439,7 +445,19 @@ function konamiStep(name) {
   lower();
   setTimeout(() => room.wave(), wasDown ? 0 : 550);
 }
-document.addEventListener('keydown', (e) => !e.repeat && KONAMI_KEYS[e.key] && konamiStep(KONAMI_KEYS[e.key]), true);
+document.addEventListener(
+  'keydown',
+  (e) => {
+    if (e.repeat || !KONAMI_KEYS[e.key]) return;
+    // Escribiendo (una reseña, un título…) o con el ticket o «Mi resumen» abiertos, no cuenta
+    if (e.target.closest?.('input, textarea, select, [contenteditable]') || !ticketEl.hidden || document.querySelector('.story')) {
+      konamiAt = 0;
+      return;
+    }
+    konamiStep(KONAMI_KEYS[e.key]);
+  },
+  true,
+);
 
 document.addEventListener('keydown', (e) => {
   if (!ticketEl.hidden) {

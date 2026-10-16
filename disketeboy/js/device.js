@@ -252,13 +252,31 @@ export function createDevice(root, actions) {
     const list = actions.logrosList?.() || [];
     return list.length ? `${list.filter((l) => l.got).length}/${list.length}` : '';
   };
-  /** Campo para corregir el título (un título vacío no se guarda). */
+  /** Campo para corregir el título. Vacío no se guarda: vuelve el que había. */
   const titleField = (g, upd, id, label = t('Título')) =>
     h(
       'label',
       { class: 'item field' },
       h('span', { class: 'item-label', text: label }),
-      h('input', { id, 'data-nav': '', maxlength: '120', value: g.title, autocomplete: 'off', onchange: (e) => (e.target.value.trim() ? upd({ title: e.target.value }) : (e.target.value = g.title)) }),
+      h('input', {
+        id,
+        'data-nav': '',
+        maxlength: '120',
+        value: g.title,
+        autocomplete: 'off',
+        onchange: (e) => {
+          if (!e.target.value.trim()) {
+            e.target.value = store.getGame(g.id)?.title ?? g.title;
+            return;
+          }
+          upd({ title: e.target.value });
+          // Con el campo enfocado la pantalla no se repinta: la cabecera se cambia aquí
+          const title = store.getGame(g.id)?.title ?? e.target.value;
+          const head = e.target.closest('.view')?.querySelector('.view-head h2');
+          if (head) head.textContent = title;
+          screen.setAttribute('aria-label', t('Pantalla de la DisketeBoy: {title}', { title }));
+        },
+      }),
     );
   const statRow = (k, v) => h('div', { class: 'stat' }, h('dt', { text: k }), h('dd', { text: v }));
 

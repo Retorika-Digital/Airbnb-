@@ -429,3 +429,16 @@ Con tantas cosas que se pueden tocar, había que contarlas sin llenar la pantall
 - Al subir la consola, la ayuda vuelve a la de siempre.
 - **Pruebas**: la del móvil espera a que salga el primer consejo.
 
+## Segunda revisión independiente (tandas 17 a 22) y sus arreglos
+
+Otra revisión del código de la segunda mitad de la noche, como la de la tanda 16. Encontró 8 fallos reales, y están todos arreglados:
+
+- **El buscador no ocultaba nada en pantalla** (el más gordo). Marcaba los juegos que no encajaban como ocultos, pero una regla de estilo los seguía mostrando. La prueba solo miraba esa marca; ahora comprueba lo que se ve de verdad.
+- **El código Konami podía colarse mientras escribías**: si en una reseña movías el cursor con las flechas y luego escribías «ba…», la consola se bajaba a media frase. Ahora no cuenta dentro de los campos de texto, ni con el ticket o «Mi resumen» abiertos. Hay una prueba que teclea el código dentro de una reseña.
+- **La lluvia tapaba a los murciélagos** de Halloween (y a las motas de polvo): se dibujaba la última a la fuerza.
+- **Un consejo podía quedarse puesto** si subías la consola justo en el fundido.
+- **Al corregir un título con Enter**, la cabecera seguía con el nombre viejo, y si luego lo vaciabas, volvía el de antes de la corrección. La prueba ya mira la cabecera.
+- **Con «movimiento reducido»**, los corazones del gato subían más deprisa en vez de quedarse quietos; ahora aparecen y se desvanecen sin moverse.
+- **Con la luz apagada**, la pantalla de la lámpara del techo seguía brillando.
+- **Sin 3D**, el botón «🌙 Apagar la luz» no hacía nada y los consejos hablaban de un flexo que no está. Ahora no salen.
+

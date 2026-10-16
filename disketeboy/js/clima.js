@@ -83,7 +83,6 @@ export function createRain({ win, onThunder = () => {}, reduced = false }) {
   const plane = (z, material) => {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(win.w, win.h), material);
     m.position.set(win.x, win.y, win.z + z);
-    m.renderOrder = 1;
     group.add(m);
     return m;
   };

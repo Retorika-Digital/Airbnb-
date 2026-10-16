@@ -159,13 +159,15 @@ try {
     await booted(page);
     await page.evaluate(() => window.disketeboy.device.go('lista', { filter: 'todos' }));
     await page.fill('#l-buscar', 'hollow');
-    const visible = await page.$$eval('#screen .item.game', (els) => els.filter((e) => !e.hidden).map((e) => e.querySelector('.item-label').textContent));
+    // Se mira lo que se ve de verdad, no el atributo hidden
+    const visible = await page.$$eval('#screen .item.game', (els) => els.filter((e) => e.offsetParent !== null).map((e) => e.querySelector('.item-label').textContent));
     eq(visible.sort().join(' | '), 'Hollow Knight | Hollow Knight: Silksong', 'la búsqueda filtra sin repintar');
     await page.click('#screen .item.game:not([hidden]) >> nth=0');
     await page.waitForSelector('#f-titulo');
     await page.fill('#f-titulo', 'Hollow Knight (Voidheart)');
     await page.keyboard.press('Tab');
     await page.waitForFunction(() => window.disketeboy.store.getGames().some((g) => g.title === 'Hollow Knight (Voidheart)'));
+    eq(await page.textContent('#screen .view-head h2'), 'Hollow Knight (Voidheart)', 'la cabecera dice el título nuevo');
     await page.fill('#f-titulo', '   ');
     await page.keyboard.press('Tab');
     await page.waitForTimeout(200);
@@ -173,7 +175,7 @@ try {
     eq(await page.inputValue('#f-titulo'), 'Hollow Knight (Voidheart)', 'vuelve el título de antes');
     await page.evaluate(() => window.disketeboy.device.go('mesaLista', { filter: 'todos' }));
     await page.fill('#b-buscar', 'aventureros');
-    eq(await page.$$eval('#screen .item.game', (els) => els.filter((e) => !e.hidden).length), 1, 'también en la Kallax');
+    eq(await page.$$eval('#screen .item.game', (els) => els.filter((e) => e.offsetParent !== null).length), 1, 'también en la Kallax');
     eq(page.errors.join('\n'), '', 'errores en consola');
     await page.close();
   });
@@ -604,6 +606,16 @@ try {
       window.disketeboy.store.updateGame(g.id, { status: 'terminado' });
     });
     await page.waitForFunction(async () => (await import('./js/fx.js')).confettiCount() > 0, null, { timeout: 5000 });
+    // Escribiendo la reseña, el código no cuenta (ni baja la consola a media frase)
+    await page.evaluate(() => window.disketeboy.raise());
+    const reviewed = await page.evaluate(() => window.disketeboy.store.getVideoGames()[0].id);
+    await page.evaluate((id) => window.disketeboy.device.go('resena', { id }), reviewed);
+    await page.focus('#r-texto');
+    for (const key of ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a']) await page.keyboard.press(key);
+    expect(!(await page.evaluate(() => document.body.classList.contains('device-down'))), 'la consola sigue arriba');
+    expect(!(await page.evaluate(() => window.disketeboy.logros.list().find((l) => l.id === 'konami').got)), 'sin logro al escribir');
+    await page.keyboard.press('Escape');
+    await page.evaluate(() => window.disketeboy.lower());
     // Código Konami con el teclado: ola de cajas, aviso y otro logro secreto
     for (const key of ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a']) await page.keyboard.press(key);
     await page.waitForFunction(() => window.disketeboy.logros.list().find((l) => l.id === 'konami').got);

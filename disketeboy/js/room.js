@@ -1186,7 +1186,7 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
   function stepFloaters(now) {
     for (let i = floaters.length - 1; i >= 0; i--) {
       const f = floaters[i];
-      const k = (now - f.t0) / (REDUCED ? 500 : 1500);
+      const k = (now - f.t0) / (REDUCED ? 900 : 1500);
       if (k < 0) continue;
       if (k >= 1) {
         scene.remove(f.s);
@@ -1194,7 +1194,8 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
         floaters.splice(i, 1);
         continue;
       }
-      f.s.position.set(f.x0 + Math.sin(k * 7 + f.phase) * 0.02, f.y0 + k * 0.26, f.z0);
+      const move = REDUCED ? 0 : 1;
+      f.s.position.set(f.x0 + Math.sin(k * 7 + f.phase) * 0.02 * move, f.y0 + k * 0.26 * move, f.z0);
       f.s.material.opacity = Math.min(1, k * 6) * (1 - k * k);
       f.s.scale.setScalar(0.085 * (0.7 + 0.3 * Math.min(1, k * 4)));
     }
@@ -1803,6 +1804,7 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
       bulbMat.color.set('#4a4236');
     }
     tvGlow.intensity = lightsOn ? 0 : night ? 2.6 : 0.6;
+    diffuserMat.color.set(lightsOn ? '#ffe2b0' : '#3b342b');
     invalidate();
   }
   function lampHit(x, y) {
