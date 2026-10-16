@@ -5,7 +5,7 @@ Lo que se ha ido haciendo mientras dormías, tanda por tanda.
 > **Resumen rápido para el café ☕**
 > - **Qué hay**: una consola propia (la DisketeBoy) con **3 disquetes**: videojuegos, juegos de mesa y cartas. Detrás, una **habitación 3D** donde cada juego acaba en su sitio: la pila de la vergüenza, la estantería, el escritorio, la caja de abandonados, la Kallax o las cajitas de mazo.
 > - **Extras**: importar de Steam, el ticket de la DisketePrinter, el enlace «Visita mi habitación», la ruleta de «¿Qué jugamos esta noche?», 3 temas de habitación y un gato.
-> - **Cómo verlo**: `node disketeboy/server.mjs` y abre http://localhost:5180/?demo=1. Las capturas están en el [README](../README.md).
+> - **Cómo verlo**: `node disketeboy/server.mjs` y abre http://localhost:5180/?demo=1. Las capturas están en el [README](../README.md), y el **vídeo para Reddit** en [`docs/video/`](video/).
 > - **Idiomas**: español e inglés. Sale en el idioma del navegador y se cambia en Ajustes.
 > - **Calidad**: 62 pruebas unitarias y 22 en navegador, todas verdes, y axe-core sin errores de accesibilidad.
 > - **Lo que te toca a ti**: está en [LANZAMIENTO.md](LANZAMIENTO.md), en el apartado «Antes de publicar nada»: dominio, comprobar el nombre, clave de Steam y crear la página de Ko-fi. El botón de donar ya está hecho: solo hay que pegar el enlace en `js/config.js`.
@@ -259,3 +259,17 @@ Los subreddits grandes del plan de lanzamiento son en inglés, así que tocaba.
   - Un navegador en inglés lo ve todo en inglés, con la demo traducida.
   - Se cambia a español desde Ajustes, y se recuerda.
   - axe-core revisa los Ajustes en inglés.
+
+## Tanda 13: el vídeo para Reddit
+
+- **Un vídeo de 25 segundos**, en inglés y en español (`docs/video/`, 720p, menos de 3 MB cada uno):
+  1. En la consola: «Importar de Steam», se escribe el perfil y salen 109 juegos.
+  2. **¡Lluvia de cajas!** La consola baja y las cajas caen en la habitación.
+  3. La cámara va a la **pila de la vergüenza**, con su cartel y el gato.
+  4. «Ordenar habitación»: todo vuela a la **estantería por colores**.
+  5. Se coge Hollow Knight, se gira y, con un zoom, se lee **la reseña de detrás**.
+  6. Cartel final: *DisketeBoy · Video games · Board games · Cards · Free, no sign-up*.
+- En el README, arriba del todo, va un **GIF** de la versión en español.
+- **Cómo está grabado**: el navegador de este entorno dibuja el 3D muy despacio, así que grabar la pantalla habría salido a tirones. En vez de eso, el reloj de la página es de mentira y solo avanza 1/30 de segundo entre foto y foto, incluidas las animaciones CSS de la consola. Salen 756 fotos perfectas que ffmpeg convierte en vídeo.
+- La herramienta se queda en `tools/video.mjs`: si cambias la web, `node disketeboy/tools/video.mjs` (o `… es`) lo vuelve a grabar en unos 3 minutos.
+- Los juegos de Steam del vídeo son de mentira (nombres conocidos, sin portadas), igual que en las pruebas. Las portadas que se ven están dibujadas con código.

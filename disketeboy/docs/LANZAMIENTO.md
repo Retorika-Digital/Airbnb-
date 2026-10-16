@@ -20,7 +20,9 @@ Cómo sacarlo a Reddit para que la gente lo use, lo comparta y done. Está orden
 
 ## 2. Qué enseñar: el vídeo de 20 segundos
 
-En Reddit gana el vídeo corto y sin voz. Guion:
+**Ya está grabado**: [`docs/video/disketeboy-en.mp4`](video/disketeboy-en.mp4) y [`disketeboy-es.mp4`](video/disketeboy-es.mp4) (25 s, 720p, menos de 3 MB). Súbelo directamente a Reddit como vídeo. Si cambias algo de la web, se vuelve a grabar con `node disketeboy/tools/video.mjs`.
+
+En Reddit gana el vídeo corto y sin voz. Guion (el grabado lo sigue casi tal cual):
 1. (0–3 s) Se mete el disquete en la consola: *clic*, pantalla verde.
 2. (3–8 s) «Importar de Steam» y **lluvia de cajas** cayendo en la habitación.
 3. (8–12 s) Las que nunca has abierto forman la **pila de la vergüenza**, con su cartel.

@@ -3,6 +3,12 @@
 **Apunta tus videojuegos, juegos de mesa y cartas en una consola retro y míralos amontonarse en tu habitación 3D.**
 
 <p>
+  <img src="docs/video/disketeboy-es.gif" width="100%" alt="Vídeo: se importa una biblioteca de Steam, llueven cajas en la habitación, se forma la pila de la vergüenza, todo vuela a la estantería por colores y detrás de una caja aparece la reseña">
+</p>
+
+▶️ Vídeo de 25 s para Reddit: [en inglés](docs/video/disketeboy-en.mp4) · [en español](docs/video/disketeboy-es.mp4). Se vuelve a grabar con `node disketeboy/tools/video.mjs` (o `… es`).
+
+<p>
   <img src="docs/capturas/estanteria-800.jpg" width="100%" alt="800 juegos en las estanterías, ordenados por color como un arcoíris, con la pila de la vergüenza en la alfombra">
 </p>
 <p>
@@ -100,6 +106,7 @@ En Netlify se sirve en `/disketeboy/`, con sus funciones en `netlify/functions/d
 | `js/config.js` | Lo que se cambia a mano antes de publicar: el enlace de donaciones |
 | `js/i18n.js` | Idiomas: `t('texto en español')` lo traduce con el diccionario |
 | `js/lang/en.js` | El diccionario inglés (una prueba vigila que no falte ni sobre nada) |
+| `tools/video.mjs` | Graba el vídeo promocional fotograma a fotograma |
 | `api/steam.mjs` | Lee tu biblioteca pública de Steam |
 | `api/cover.mjs` | Plan B para las portadas de Steam (solo admite ids numéricos) |
 
