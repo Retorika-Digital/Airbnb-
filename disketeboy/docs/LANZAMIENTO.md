@@ -9,12 +9,12 @@ Cómo sacarlo a Reddit para que la gente lo use, lo comparta y done. Está orden
 - [ ] **Comprobar el nombre.** Que «DisketeBoy» esté libre como dominio y como marca (EUIPO y OEPM). La terminación *Boy* recuerda a Nintendo: el diseño ya es propio, pero si el nombre diera problemas, es mejor cambiarlo **antes** de lanzar que después.
 - [ ] **Clave de Steam** en las variables de entorno de Netlify (`STEAM_API_KEY`, gratis en steamcommunity.com/dev/apikey). Sin ella, la importación ofrece la demo.
 - [ ] **Probar en móviles de verdad**: un iPhone (Safari) y un Android de gama media (Chrome). La mitad de Reddit entra desde el móvil.
-- [ ] **Página de donaciones** (Ko-fi, Buy Me a Coffee o Patreon) y un botón discreto en Créditos y en el ticket.
-- [ ] **Vista previa del enlace** (`og:image`): la captura del arcoíris de 800 juegos. Así, cada enlace compartido se ve bonito en Reddit, WhatsApp y Discord.
+- [ ] **Página de donaciones** (Ko-fi, Buy Me a Coffee o Patreon). El botón ya está hecho: pega el enlace en `js/config.js` (`DONATE_URL`) y aparece en Créditos y bajo el ticket. Mientras esté vacío, no sale nada.
+- [x] **Vista previa del enlace**: `og.jpg` (1200×630, la estantería arcoíris con el gato y el logo, sin texto en ningún idioma) y sus etiquetas en `index.html`. Así, cada enlace compartido se ve bonito en Reddit, WhatsApp y Discord. **Al publicar**, cambia `og:image` por la dirección completa (`https://tu-dominio/og.jpg`): algunas webs no entienden la dirección corta.
 
 **Muy recomendable**
 - [ ] **Estadísticas sin cookies** (Plausible o GoatCounter), para saber de qué subreddit viene la gente. Sin cookies no hace falta banner.
-- [ ] **Un texto corto de privacidad**: todo se guarda en tu navegador, Steam solo lee lo que tu perfil ya tiene público, y el enlace de visita no pasa por ningún servidor.
+- [x] **Un texto corto de privacidad** en Ajustes → Privacidad: todo se guarda en tu navegador, Steam solo lee lo que tu perfil ya tiene público, y el enlace de visita no pasa por ningún servidor. Si añades estadísticas, cuéntalo también ahí.
 
 ## 2. Qué enseñar: el vídeo de 20 segundos
 

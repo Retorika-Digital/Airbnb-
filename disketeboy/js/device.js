@@ -10,6 +10,7 @@ import { TCGS, TCG_IDS, tcg, DECK_STATUSES, DECK_STATUS_LABEL, BINDER_STATUSES, 
 import { sfx, setSound } from './audio.js';
 import { whatToPlay, playersText, minutesText, lentText, boardStats, pickOne, TIME_OPTIONS } from './boards.js';
 import { clamp } from './util.js';
+import { donateUrl } from './config.js';
 
 const PALETTE_LABEL = { verde: 'Verde clásico', ambar: 'Ámbar', hielo: 'Hielo', gris: 'Gris' };
 const SORT_LABEL = { plataforma: 'Plataforma', nota: 'Nota', color: 'Color', az: 'A-Z', horas: 'Horas' };
@@ -928,19 +929,40 @@ export function createDevice(root, actions) {
           item('Cargar copia de seguridad', () => file.click(), { id: 'a-importar' }),
           item('Cargar colección de demo', loadDemo, { id: 'a-demo' }),
           item('Borrar toda la colección', () => go('confirmar', { text: '¿Borrar TODA tu colección? No se puede deshacer (guarda antes una copia).', yes: 'Sí, borrarlo todo', action: 'vaciar' }), { cls: 'danger', id: 'a-vaciar' }),
+          item('Privacidad', () => go('privacidad'), { id: 'a-privacidad' }),
           item('Créditos', () => go('creditos'), { id: 'a-creditos' }),
         ),
         file,
       );
     },
 
+    privacidad() {
+      return view(
+        'Privacidad',
+        p('Tu colección se guarda solo en este navegador. No hay cuentas, ni cookies, ni anuncios.'),
+        p('Steam: solo se lee la biblioteca que tu perfil ya enseña en público. Pasa por nuestro servidor para hablar con Steam y no se guarda.'),
+        p('Las portadas se cargan desde Steam.'),
+        p('El enlace de visita lleva tu colección dentro del propio enlace, detrás de la #, y nunca pasa por ningún servidor.'),
+        p('Guarda de vez en cuando una copia de seguridad: si borras los datos del navegador, la colección se va con ellos.'),
+        h('div', { class: 'list' }, item('Volver', back)),
+      );
+    },
+
     creditos() {
+      const donate = donateUrl();
       return view(
         'Créditos',
         p('DisketeBoy · prototipo hecho con cariño en España.'),
         p('Todo lo que ves está hecho con código: ni dibujos con IA ni assets ajenos. Las portadas de Steam son de sus autores.'),
-        p('Gracias a quienes apoyan el proyecto: ¡aquí saldrá tu nombre!'),
-        h('div', { class: 'list' }, item('Volver', back)),
+        p('Es gratis y lo seguirá siendo. Gracias a quienes apoyan el proyecto: ¡aquí saldrá tu nombre!'),
+        h(
+          'div',
+          { class: 'list' },
+          donate
+            ? h('a', { class: 'item', 'data-nav': '', id: 'a-donar', href: donate, target: '_blank', rel: 'noopener' }, h('span', { class: 'item-label', text: '☕ Invítame a un café' }))
+            : null,
+          item('Volver', back),
+        ),
       );
     },
 

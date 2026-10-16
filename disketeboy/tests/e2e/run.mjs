@@ -302,6 +302,34 @@ try {
     await page.close();
   });
 
+  await check('donaciones: el botón solo sale cuando hay enlace, y tras imprimir el ticket', async () => {
+    const page = await newPage(browser);
+    await page.goto(`${BASE}/?demo=1`);
+    await booted(page);
+    await page.evaluate(() => window.disketeboy.device.go('creditos', {}));
+    await page.waitForSelector('#screen .list');
+    expect(!(await page.$('#a-donar')), 'sin enlace configurado no hay botón de donar');
+    await page.close();
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, locale: 'es-ES' });
+    await ctx.route(/fonts\.(googleapis|gstatic)|steamstatic/, (r) => r.abort());
+    await ctx.route(/\/js\/config\.js$/, async (r) => {
+      const res = await r.fetch();
+      r.fulfill({ response: res, body: (await res.text()).replace("DONATE_URL = ''", "DONATE_URL = 'https://ko-fi.com/disketeboy'") });
+    });
+    const withLink = await ctx.newPage();
+    await withLink.goto(`${BASE}/?demo=1`);
+    await booted(withLink);
+    await withLink.evaluate(() => window.disketeboy.device.go('creditos', {}));
+    await withLink.waitForSelector('#a-donar');
+    eq(await withLink.getAttribute('#a-donar', 'href'), 'https://ko-fi.com/disketeboy', 'enlace en Créditos');
+    eq(await withLink.getAttribute('#a-donar', 'rel'), 'noopener', 'se abre aparte y sin acceso a la página');
+    await withLink.evaluate(() => window.disketeboy.device.go('menu', {}));
+    await withLink.click('#m-ticket');
+    await withLink.waitForSelector('#t-donar:not([hidden])');
+    eq(await withLink.getAttribute('#t-donar a', 'href'), 'https://ko-fi.com/disketeboy', 'invitación bajo el ticket');
+    await ctx.close();
+  });
+
   await check('copia de seguridad: exportar, vaciar y restaurar', async () => {
     const page = await newPage(browser);
     await page.goto(`${BASE}/?demo=1`);
@@ -527,7 +555,7 @@ try {
     await page.goto(`${BASE}/?demo=1`);
     await booted(page);
     await axe(page, 'menú');
-    for (const [screen, params] of [['lista', { filter: 'todos' }], ['nuevo', {}], ['steam', {}], ['ajustes', {}], ['stats', {}], ['pila', {}]]) {
+    for (const [screen, params] of [['lista', { filter: 'todos' }], ['nuevo', {}], ['steam', {}], ['ajustes', {}], ['stats', {}], ['pila', {}], ['privacidad', {}], ['creditos', {}]]) {
       await page.evaluate(([s, p]) => window.disketeboy.device.go(s, p), [screen, params]);
       await page.waitForTimeout(150);
       await axe(page, screen);

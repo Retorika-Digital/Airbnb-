@@ -66,6 +66,8 @@ STEAM_API_KEY=xxxx node disketeboy/server.mjs
 
 En Netlify se sirve en `/disketeboy/`, con sus funciones en `netlify/functions/disketeboy-*.mjs`.
 
+**Antes de publicar**: pon tu página de Ko-fi (o similar) en `js/config.js`, y la dirección completa de `og.jpg` en la etiqueta `og:image` de `index.html`. El resto de la lista está en [docs/LANZAMIENTO.md](docs/LANZAMIENTO.md).
+
 ## Controles
 
 - **Consola:** cruceta o flechas, **A** o Enter para aceptar, **B** o Escape para volver. **SELECT** baja la consola para ver la habitación y **START** vuelve al menú. También funciona con ratón, con el dedo y con lector de pantalla.
@@ -92,6 +94,7 @@ En Netlify se sirve en `/disketeboy/`, con sus funciones en `netlify/functions/d
 | `js/boards.js` | Juegos de mesa: «¿Qué jugamos esta noche?», préstamos (funciones puras) |
 | `js/cards.js` | Cartas: juegos de cartas, contar la lista de un mazo, récord y estadísticas (funciones puras) |
 | `js/share.js` | «Visita mi habitación»: la colección comprimida en el enlace |
+| `js/config.js` | Lo que se cambia a mano antes de publicar: el enlace de donaciones |
 | `api/steam.mjs` | Lee tu biblioteca pública de Steam |
 | `api/cover.mjs` | Plan B para las portadas de Steam (solo admite ids numéricos) |
 
@@ -99,8 +102,8 @@ En Netlify se sirve en `/disketeboy/`, con sus funciones en `netlify/functions/d
 
 ```bash
 npm ci                                        # en la raíz: Playwright y axe-core
-node --test disketeboy/tests/unit/*.test.mjs  # 56 pruebas unitarias
-node disketeboy/tests/e2e/run.mjs             # 20 pruebas en Chromium (E2E_SHOTS=1 guarda capturas)
+node --test disketeboy/tests/unit/*.test.mjs  # 58 pruebas unitarias
+node disketeboy/tests/e2e/run.mjs             # 21 pruebas en Chromium (E2E_SHOTS=1 guarda capturas)
 ```
 
 En GitHub se ejecutan solas con `.github/workflows/disketeboy.yml` cada vez que cambia algo en `disketeboy/`.

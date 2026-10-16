@@ -523,6 +523,10 @@ body.device-up .room-tip { display: none; }
 .ticket-paper img { display: block; width: 100%; height: auto; animation: print 1.4s steps(14) both; }
 @keyframes print { from { transform: translateY(-100%); } }
 .sheet-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 14px; }
+.sheet-donate { margin: 14px 0 0; font-size: 14px; }
+.sheet-donate[hidden] { display: none; }
+.sheet-donate a { color: #f2c14e; text-underline-offset: 3px; }
+.sheet-donate a:hover, .sheet-donate a:focus-visible { color: #fbf3e4; }
 
 /* ---------------------------------------------------------------- avisos */
 .toast {

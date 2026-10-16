@@ -188,6 +188,12 @@ async function printTicket() {
   shareBtn.hidden = !navigator.canShare;
   shareBtn.onclick = () => shareCanvas(canvasTicket, 'disketeboy-ticket.png', 'Mi colección en DisketeBoy');
   document.getElementById('t-descargar').onclick = () => download(canvasTicket, 'disketeboy-ticket.png');
+  // El momento «¡qué chulo!»: aquí, y no al entrar, va la invitación a donar
+  const { donateUrl } = await import('./config.js');
+  const donate = donateUrl();
+  const donateEl = document.getElementById('t-donar');
+  donateEl.hidden = !donate;
+  if (donate) donateEl.querySelector('a').href = donate;
 }
 
 function closeTicket() {

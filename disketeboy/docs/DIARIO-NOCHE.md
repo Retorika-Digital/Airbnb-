@@ -6,8 +6,8 @@ Lo que se ha ido haciendo mientras dormías, tanda por tanda.
 > - **Qué hay**: una consola propia (la DisketeBoy) con **3 disquetes**: videojuegos, juegos de mesa y cartas. Detrás, una **habitación 3D** donde cada juego acaba en su sitio: la pila de la vergüenza, la estantería, el escritorio, la caja de abandonados, la Kallax o las cajitas de mazo.
 > - **Extras**: importar de Steam, el ticket de la DisketePrinter, el enlace «Visita mi habitación», la ruleta de «¿Qué jugamos esta noche?», 3 temas de habitación y un gato.
 > - **Cómo verlo**: `node disketeboy/server.mjs` y abre http://localhost:5180/?demo=1. Las capturas están en el [README](../README.md).
-> - **Calidad**: 56 pruebas unitarias y 20 en navegador, todas verdes, y axe-core sin errores de accesibilidad.
-> - **Lo que te toca a ti**: está en [LANZAMIENTO.md](LANZAMIENTO.md), en el apartado «Antes de publicar nada»: dominio, comprobar el nombre, clave de Steam y página de donaciones.
+> - **Calidad**: 58 pruebas unitarias y 21 en navegador, todas verdes, y axe-core sin errores de accesibilidad.
+> - **Lo que te toca a ti**: está en [LANZAMIENTO.md](LANZAMIENTO.md), en el apartado «Antes de publicar nada»: dominio, comprobar el nombre, clave de Steam y crear la página de Ko-fi. El botón de donar ya está hecho: solo hay que pegar el enlace en `js/config.js`.
 
 ## Tanda 1: la consola DisketeBoy
 
@@ -210,3 +210,26 @@ Lo que se ha ido haciendo mientras dormías, tanda por tanda.
   - El tema y el gato se guardan, y un tema inventado se ignora.
   - Viajan en el enlace de visita sin pisar los tuyos.
   - Los botones de Ajustes encienden la tira LED y esconden al gato.
+
+## Tanda 11: lista para publicar
+
+- **Vista previa de los enlaces**: al pegar el enlace en Reddit, WhatsApp o Discord sale `og.jpg`, con la estantería arcoíris de 800 juegos, la pila, el gato y el logo de DisketeBoy.
+  - La imagen no lleva texto en ningún idioma, así que sirve para la versión en español y para la inglesa.
+  - Al publicar hay que poner su dirección completa en `index.html`. Está apuntado en la lista de lanzamiento.
+- **Botón de donar, listo y escondido**:
+  - Pegas tu enlace de Ko-fi (o similar) en `js/config.js` y aparece en dos sitios: en Créditos («☕ Invítame a un café») y bajo el ticket de la DisketePrinter, justo en el momento «¡qué chulo!».
+  - Nunca sale en una ventana al entrar.
+  - Solo acepta enlaces `https://`, y se abren aparte.
+  - Mientras esté vacío, no sale nada.
+- **Ajustes → Privacidad**: cinco frases claras.
+  - Todo se guarda en tu navegador: sin cuentas, sin cookies y sin anuncios.
+  - Steam solo lee lo que tu perfil ya enseña en público, y no se guarda.
+  - Las portadas vienen de Steam.
+  - El enlace de visita no pasa por ningún servidor.
+  - Conviene guardar copias de seguridad.
+- La descripción de la página ya habla también de juegos de mesa y cartas.
+- **Pruebas**: 58 unitarias (antes 56) y 21 en navegador (antes 20):
+  - El botón de donar no sale sin enlace.
+  - Con enlace, sale en Créditos y bajo el ticket.
+  - Un enlace que no es `https://` se ignora.
+  - axe-core revisa también Privacidad y Créditos.
