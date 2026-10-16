@@ -67,9 +67,54 @@ const actions = {
     }
   },
   printTicket,
+  shareVisit,
+  leaveVisit,
 };
 
 const device = createDevice(deviceEl, actions);
+
+// ------------------------------------------------------------------ visitas
+async function shareVisit() {
+  const { encodeRoom, visitUrl, LONG_URL } = await import('./share.js');
+  const url = visitUrl(location.origin + location.pathname, await encodeRoom(store.getGames(), { name: store.getSettings().name }));
+  const long = url.length > LONG_URL ? ` Ojo: tu colección es enorme y el enlace mide ${Math.round(url.length / 1000)} mil caracteres; alguna app podría cortarlo.` : '';
+  if (navigator.share && matchMedia('(pointer: coarse)').matches) {
+    try {
+      await navigator.share({ title: 'Mi habitación en DisketeBoy', text: '¡Pasa a ver mi colección!', url });
+      return;
+    } catch {
+      /* cancelado: probamos a copiarlo */
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    device.toast(`¡Enlace copiado! Quien lo abra verá tu habitación de visita.${long}`);
+  } catch {
+    window.prompt('Copia este enlace para compartir tu habitación:', url);
+  }
+  window.disketeboy.lastVisitUrl = url;
+}
+
+function leaveVisit() {
+  location.replace(location.pathname);
+}
+
+async function maybeVisit() {
+  if (!location.hash.startsWith('#visita=')) return;
+  try {
+    const { decodeRoom } = await import('./share.js');
+    const { name, games } = await decodeRoom(location.hash.slice('#visita='.length));
+    store.startVisit(games, name);
+    document.getElementById('visit-name').textContent = name || 'alguien';
+    document.getElementById('visit-banner').hidden = false;
+    document.getElementById('i-editar').hidden = true;
+    body.classList.add('is-visit');
+  } catch (err) {
+    device.toast(err.message);
+  }
+}
+window.addEventListener('hashchange', () => location.hash.startsWith('#visita=') && location.reload());
+document.getElementById('visit-leave').addEventListener('click', leaveVisit);
 
 // ------------------------------------------------------------------ habitación
 function onInspect(game) {
@@ -211,10 +256,10 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ------------------------------------------------------------------ arranque
-if (params.get('demo') === '1' && !store.getGames().length) store.importGames(DEMO_GAMES);
+// Para las pruebas automáticas y para curiosos desde la consola del navegador.
+window.disketeboy = { store, get room() { return room; }, device, lower, raise, shareVisit };
 canvas.tabIndex = 0;
+await maybeVisit();
+if (!store.visiting() && params.get('demo') === '1' && !store.getGames().length) store.importGames(DEMO_GAMES);
 device.boot();
 startRoom();
-
-// Para las pruebas automáticas y para curiosos desde la consola del navegador.
-window.disketeboy = { store, get room() { return room; }, device, lower, raise };

@@ -303,6 +303,38 @@ try {
     await page.close();
   });
 
+  await check('«Visita mi habitación»: el enlace enseña tu colección sin tocar la de quien lo abre', async () => {
+    const page = await newPage(browser);
+    page.on('dialog', (d) => d.dismiss());
+    await page.goto(`${BASE}/?demo=1`);
+    await booted(page);
+    await page.evaluate(() => window.disketeboy.store.setSettings({ name: 'Laura' }));
+    await page.click('#m-compartir');
+    await page.waitForFunction(() => window.disketeboy.lastVisitUrl);
+    const url = await page.evaluate(() => window.disketeboy.lastVisitUrl);
+    expect(url.includes('#visita='), 'el enlace lleva la colección tras la #');
+    const visitor = await newPage(browser);
+    await visitor.goto(BASE);
+    await visitor.evaluate(() => localStorage.setItem('dkb:v1', JSON.stringify({ games: [{ id: 'mio', title: 'Mi juego' }] })));
+    await visitor.goto(url);
+    await booted(visitor);
+    expect(await visitor.isVisible('#visit-banner'), 'franja de visita');
+    eq(await visitor.textContent('#visit-name'), 'Laura', 'nombre de quien comparte');
+    eq(await visitor.evaluate(() => window.disketeboy.store.getGames().length), 26, 'se ve la colección visitada');
+    expect(await visitor.isHidden('#m-nuevo'), 'de visita no se puede añadir');
+    await visitor.click('#m-coleccion');
+    await visitor.click('#screen .item.game >> nth=0');
+    expect(await visitor.isHidden('#f-estado'), 'la ficha es de solo lectura');
+    eq(JSON.parse(await visitor.evaluate(() => localStorage.getItem('dkb:v1'))).games[0].title, 'Mi juego', 'la colección propia sigue intacta');
+    await shot(visitor, '08-visita');
+    await visitor.click('#visit-leave');
+    await visitor.waitForFunction(() => !location.hash && window.disketeboy && !window.disketeboy.store.visiting());
+    eq(await visitor.evaluate(() => window.disketeboy.store.getGames().map((g) => g.title).join()), 'Mi juego', 'al salir vuelves a tu habitación');
+    eq(visitor.errors.join('\n') + page.errors.join('\n'), '', 'errores en consola');
+    await page.close();
+    await visitor.close();
+  });
+
   await check('datos corruptos y sin 3D: la consola sigue funcionando', async () => {
     const page = await newPage(browser);
     await page.goto(BASE);

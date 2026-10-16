@@ -114,3 +114,21 @@ Lo que se ha ido haciendo mientras dormías, tanda por tanda.
   - La habitación no estaba dentro de ninguna zona de la página. Ahora todo va dentro de `<main>`.
 - **CI propio** (`.github/workflows/disketeboy.yml`): solo se ejecuta cuando cambia algo de DisketeBoy y guarda las capturas como artefacto.
 - **Arreglo**: con «movimiento reducido» activado en el sistema, las cajas ya no vuelan: se colocan en una décima de segundo y sin retrasos. Hay una prueba que lo comprueba.
+
+## Tanda 6: «Visita mi habitación», el cartel de la pila y colecciones enormes
+
+- **«Compartir mi habitación»** (en el menú): crea un enlace que lleva tu colección comprimida dentro, sin cuentas ni servidor.
+  - Quien lo abre ve **tu habitación de visita**, con una franja: «👀 Estás de visita en la habitación de Laura · Crear la mía».
+  - Puede mirarlo todo (coger cajas, leer tus reseñas, imprimir tu ticket), pero **no tocar nada**, y **su propia colección no se toca**. Hay una prueba que lo comprueba.
+  - El enlace es corto: **la demo de 26 juegos, con reseñas, ocupa 1.362 caracteres**, y 300 juegos caben en menos de 8.000.
+  - Los datos van tras la `#` del enlace, que nunca llega a ningún servidor.
+  - En el móvil abre el menú de compartir del sistema y en el ordenador lo copia.
+  - Tu nombre para las visitas se pone en Ajustes.
+  - **Esto es lo que hace que la gente comparta en Reddit**: cada comentario con un enlace a una habitación es publicidad.
+- **Cartel «PILA DE LA VERGÜENZA»** escrito a rotulador en un cartón clavado en un palito junto a la pila. Solo aparece si tienes algo pendiente.
+- **Colecciones enormes (Steam con cientos de juegos)**:
+  - Antes cada caja se dibujaba 6 veces, una por cara. Ahora **las de la estantería se dibujan de una vez**: el lomo lleva debajo una franja del color del plástico y los laterales usan esa franja.
+  - Las cajas que enseñan portada usan 3 materiales, y al volver a la estantería sueltan la portada para ahorrar memoria.
+  - Con más de 300 juegos, los lomos van a media resolución.
+  - **Con 800 juegos: de 4.525 a 1.447 llamadas de dibujo** (3 veces menos) y ordenar la habitación pasa de 4,9 s a 2,4 s.
+- 35 pruebas unitarias (antes 32) y 16 en navegador (antes 15).

@@ -180,14 +180,25 @@ export function drawCover(g, image = null) {
   return c;
 }
 
+// Bajo el lomo va una franja del color de la caja: los laterales de la caja 3D
+// usan ese trozo de la textura, y así cada caja de la estantería se dibuja de una vez.
+export const SPINE_STRIP = 8;
+
+/** Tamaño del lomo en píxeles (sin la franja); `small` para colecciones grandes. */
+export function spineSize(platformId, small = false) {
+  const box = boxFor(platformId);
+  const H = (box.h / box.d > 8 ? 512 : 256) / (small ? 2 : 1);
+  return { W: Math.max(small ? 16 : 24, Math.round((H * box.d) / box.h)), H };
+}
+
 /** Lomo: color del juego, franja de plataforma, título en vertical y ★ si está terminado. */
-export function drawSpine(g) {
-  const box = boxFor(g.platform);
+export function drawSpine(g, { strip = '#1c1b20', small = false } = {}) {
   const pl = platform(g.platform);
-  const H = box.h / box.d > 8 ? 512 : 256;
-  const W = Math.max(24, Math.round((H * box.d) / box.h));
-  const c = canvas(W, H);
+  const { W, H } = spineSize(g.platform, small);
+  const c = canvas(W, H + SPINE_STRIP);
   const ctx = c.getContext('2d');
+  ctx.fillStyle = strip;
+  ctx.fillRect(0, H, W, SPINE_STRIP);
   const color = gameColor(g);
   ctx.fillStyle = color;
   ctx.fillRect(0, 0, W, H);

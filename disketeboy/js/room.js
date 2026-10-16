@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { computeLayout, BOOKCASE, BOOKCASE_SPOTS, DESK, PILE, BIN, ROOM } from './layout.js';
 import { boxFor, platform } from './platforms.js';
-import { drawCover, drawSpine, drawBack, loadCover, loadSpineColor, dominantColor, gameColor, wrap } from './covers.js';
+import { drawCover, drawSpine, drawBack, loadCover, loadSpineColor, dominantColor, gameColor, wrap, spineSize, SPINE_STRIP } from './covers.js';
 import { sfx } from './audio.js';
 import { rng, hexToHsl, hslToHex } from './util.js';
 
@@ -134,6 +134,28 @@ function cardboardPaint(label) {
       ctx.fillText(label, 0, 0, w * 0.9);
       ctx.restore();
     }
+  });
+}
+
+function signPaint() {
+  return paint(384, 224, (ctx, w, h) => {
+    ctx.fillStyle = '#c99a62';
+    ctx.fillRect(0, 0, w, h);
+    const r = rng('cartel');
+    for (let i = 0; i < 900; i++) {
+      ctx.fillStyle = r() < 0.5 ? '#ffffff12' : '#00000012';
+      ctx.fillRect(r() * w, r() * h, 3, 1);
+    }
+    ctx.strokeStyle = '#7a5a36';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(8, 8, w - 16, h - 16);
+    ctx.fillStyle = '#1d1a16';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '900 54px "Comic Sans MS", "Segoe Print", "Marker Felt", cursive';
+    ctx.fillText('PILA DE LA', w / 2, h * 0.36, w - 40);
+    ctx.fillStyle = '#b3261e';
+    ctx.fillText('VERGÜENZA', w / 2, h * 0.7, w - 40);
   });
 }
 
@@ -642,6 +664,17 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
   binGroup.rotation.y = -0.18;
   scene.add(binGroup);
 
+  // Cartel clavado junto a la pila de la vergüenza
+  const pileSign = new THREE.Group();
+  pileSign.add(boxMesh(0.016, 0.46, 0.016, woodDark, 0, 0.23, -0.006));
+  const signBoard = boxMesh(0.34, 0.2, 0.008, [kraft, kraft, kraft, kraft, mat({ map: toTexture(signPaint()), roughness: 0.95 }), kraft], 0, 0.44, 0.006);
+  signBoard.rotation.z = -0.06;
+  pileSign.add(signBoard);
+  pileSign.position.set(PILE.x - 0.34, 0, PILE.z - 0.16);
+  pileSign.rotation.set(0, 0.32, 0.05);
+  pileSign.visible = false;
+  scene.add(pileSign);
+
   // Pósteres de tus favoritos en la pared derecha
   const posters = [-1.58, -0.9].map((z) => {
     const frame = boxMesh(0.02, 0.62, 0.45, mat({ color: '#1d1a16', roughness: 0.4 }), ROOM.maxX - 0.012, 1.55, z, { cast: false });
@@ -659,73 +692,102 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
   camera.add(dim);
 
   // ---------------------------------------------------------------- cajas
+  // Las cajas de la estantería se dibujan de un trazo: un solo material (el lomo,
+  // con una franja de color que usan los laterales). Las que enseñan la portada
+  // usan tres: lomo y laterales, portada y contraportada.
   const boxesGroup = new THREE.Group();
   scene.add(boxesGroup);
   const entries = new Map();
   const geometries = new Map();
-  const caseMats = new Map();
+  const placeholder = mat({ color: '#2a2622', roughness: 0.5 });
   const colorQueue = {};
   let colorTimer = 0;
   let order = [];
+  let small = false; // lomos a media resolución en colecciones grandes
 
-  const geometryFor = (pid) => {
+  function geometryFor(pid, full) {
     const type = platform(pid).box;
-    if (!geometries.has(type)) {
+    const key = `${type}:${small}:${full}`;
+    if (!geometries.has(key)) {
       const b = boxFor(pid);
-      geometries.set(type, new THREE.BoxGeometry(b.w, b.h, b.d));
+      const geo = new THREE.BoxGeometry(b.w, b.h, b.d);
+      const { H } = spineSize(pid, small);
+      const s = SPINE_STRIP / (H + SPINE_STRIP);
+      const uv = geo.attributes.uv;
+      // Caras: 0 +x, 1 -x (lomo), 2 +y, 3 -y, 4 +z (portada), 5 -z (contraportada)
+      for (const f of full ? [0, 2, 3] : [0, 2, 3, 4, 5]) for (let v = 0; v < 4; v++) uv.setXY(f * 4 + v, 0.5, s / 2);
+      for (let v = 4; v < 8; v++) uv.setY(v, s + uv.getY(v) * (1 - s));
+      uv.needsUpdate = true;
+      geo.clearGroups();
+      if (full) {
+        geo.addGroup(0, 24, 0);
+        geo.addGroup(24, 6, 1);
+        geo.addGroup(30, 6, 2);
+      } else {
+        geo.addGroup(0, 36, 0);
+      }
+      geometries.set(key, geo);
     }
-    return geometries.get(type);
-  };
-  const caseMaterial = (g) => {
-    const type = platform(g.platform).box;
-    if (CARDBOARD.has(type)) {
+    return geometries.get(key);
+  }
+
+  const stripColor = (g) => {
+    if (CARDBOARD.has(platform(g.platform).box)) {
       const { h, s, l } = hexToHsl(gameColor(g));
-      return mat({ color: hslToHex(h, s, Math.max(10, l - 12)), roughness: 0.85 });
+      return hslToHex(h, s, Math.max(10, l - 12));
     }
-    if (!caseMats.has(g.platform)) caseMats.set(g.platform, mat({ color: PLASTIC[g.platform] || '#1c1b20', roughness: 0.38 }));
-    return caseMats.get(g.platform);
+    return PLASTIC[g.platform] || '#1c1b20';
   };
-  const ownsMaterial = (m) => ![...caseMats.values()].includes(m);
+  const spineMaterial = (g) => mat({ map: toTexture(drawSpine(g, { strip: stripColor(g), small })), roughness: 0.45 });
+  const owns = (m) => Boolean(m) && m !== placeholder;
 
   function setSlot(e, slot, material) {
     const old = e.mesh.material[slot];
     e.mesh.material[slot] = material;
-    if (old && old !== material && ownsMaterial(old) && !e.mesh.material.includes(old)) {
+    if (owns(old) && old !== material && !e.mesh.material.includes(old)) {
       old.map?.dispose();
       old.dispose();
     }
   }
 
   function buildMaterials(e) {
-    const g = e.game;
-    const plain = caseMaterial(g);
-    const spine = mat({ map: toTexture(drawSpine(g)), roughness: 0.5 });
-    e.mesh.material = [plain, spine, plain, plain, plain, plain];
+    e.mesh.geometry = geometryFor(e.game.platform, false);
+    e.mesh.material = [spineMaterial(e.game), placeholder, placeholder];
     e.front = 'none';
     e.back = false;
   }
 
   function disposeEntry(e) {
-    const seen = new Set();
-    for (const m of e.mesh.material) {
-      if (seen.has(m) || !ownsMaterial(m)) continue;
-      seen.add(m);
+    for (const m of new Set(e.mesh.material)) {
+      if (!owns(m)) continue;
       m.map?.dispose();
       m.dispose();
     }
     boxesGroup.remove(e.mesh);
   }
 
+  /** Al quedarse en la estantería vuelve a dibujarse de un trazo y suelta portada y contraportada. */
+  function slim(e) {
+    if (!entries.has(e.id) || e.zone !== 'estanteria' || inspected === e || (e.front === 'none' && !e.back)) return;
+    e.version++;
+    e.front = 'none';
+    e.back = false;
+    setSlot(e, 1, placeholder);
+    setSlot(e, 2, placeholder);
+    e.mesh.geometry = geometryFor(e.game.platform, false);
+  }
+
   /** Portada visible: primero la dibujada y, si es de Steam, luego la real. */
   function ensureFront(e) {
     if (e.front !== 'none') return;
     e.front = 'art';
-    setSlot(e, 4, mat({ map: toTexture(drawCover(e.game)), roughness: 0.42 }));
+    e.mesh.geometry = geometryFor(e.game.platform, true);
+    setSlot(e, 1, mat({ map: toTexture(drawCover(e.game)), roughness: 0.42 }));
     const version = e.version;
     loadCover(e.game).then((img) => {
-      if (!img || !entries.has(e.id) || e.version !== version) return;
+      if (!img || !entries.has(e.id) || e.version !== version || e.front === 'none') return;
       e.front = 'real';
-      setSlot(e, 4, mat({ map: toTexture(drawCover(e.game, img)), roughness: 0.42 }));
+      setSlot(e, 1, mat({ map: toTexture(drawCover(e.game, img)), roughness: 0.42 }));
       if (!e.game.color) queueColor(e.id, dominantColor(img));
       invalidate();
     });
@@ -734,8 +796,9 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
 
   function ensureBack(e) {
     if (e.back) return;
+    ensureFront(e);
     e.back = true;
-    setSlot(e, 5, mat({ map: toTexture(drawBack(e.game)), roughness: 0.5 }));
+    setSlot(e, 2, mat({ map: toTexture(drawBack(e.game)), roughness: 0.5 }));
   }
 
   function queueColor(id, color) {
@@ -790,11 +853,10 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
   }
 
   // Brillo al pasar por encima / al señalar una zona
-  const glow = new Map();
   function setGlow(e, amount) {
     if (!e) return;
     for (const m of new Set(e.mesh.material)) {
-      if (!ownsMaterial(m)) continue;
+      if (!owns(m)) continue;
       m.emissive?.set('#ffcf7a');
       m.emissiveIntensity = amount;
     }
@@ -871,6 +933,19 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
       tweenTo(id, e.mesh, { scale: 0.001, dur: 0.35, fn: ease.out, onDone: () => disposeEntry(e) });
     }
 
+    // Colecciones grandes: lomos a media resolución (menos memoria de vídeo)
+    const wantSmall = games.length > 300;
+    if (wantSmall !== small) {
+      small = wantSmall;
+      for (const e of entries.values()) {
+        const old = e.mesh.material;
+        e.version++;
+        buildMaterials(e);
+        for (const m of new Set(old)) if (owns(m)) (m.map?.dispose(), m.dispose());
+        if (e.zone !== 'estanteria' || inspected === e) ensureFront(e);
+      }
+    }
+
     let fallIndex = 0;
     let moveIndex = 0;
     const fewShadows = games.length > 600;
@@ -881,7 +956,7 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
       const quat = placementQuat(p);
       let e = entries.get(g.id);
       if (!e) {
-        const mesh = new THREE.Mesh(geometryFor(g.platform), []);
+        const mesh = new THREE.Mesh(geometryFor(g.platform, false), []);
         mesh.castShadow = !fewShadows;
         mesh.receiveShadow = true;
         mesh.userData.id = g.id;
@@ -920,30 +995,23 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
       const prev = e.game;
       e.game = g;
       if (prev.platform !== g.platform) {
-        e.mesh.geometry = geometryFor(g.platform);
         e.version++;
         const old = e.mesh.material;
         buildMaterials(e);
-        for (const m of new Set(old)) if (ownsMaterial(m)) (m.map?.dispose(), m.dispose());
+        for (const m of new Set(old)) if (owns(m)) (m.map?.dispose(), m.dispose());
         if (p.zone !== 'estanteria' || inspected === e) ensureFront(e);
       } else if (!sameLook(prev, g)) {
         e.version++;
-        setSlot(e, 1, mat({ map: toTexture(drawSpine(g)), roughness: 0.5 }));
+        setSlot(e, 0, spineMaterial(g));
         if (e.front !== 'none' && (prev.title !== g.title || (e.front === 'art' && prev.color !== g.color))) {
           e.front = 'none';
           ensureFront(e);
-        }
-        if (CARDBOARD.has(platform(g.platform).box)) {
-          const plain = caseMaterial(g);
-          for (const slot of [0, 2, 3]) setSlot(e, slot, plain);
-          if (e.front === 'none') setSlot(e, 4, plain);
-          if (!e.back) setSlot(e, 5, plain);
         }
       }
       if (!sameBack(prev, g) && e.back) {
         e.back = false;
         if (inspected === e) ensureBack(e);
-        else setSlot(e, 5, caseMaterial(g));
+        else setSlot(e, 2, placeholder);
       }
       if (p.zone !== 'estanteria') ensureFront(e);
 
@@ -953,6 +1021,7 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
       e.zone = p.zone;
       if (moved && inspected !== e) {
         const far = zoneChanged || e.mesh.position.distanceTo(pos) > 0.35;
+        const entry = e;
         tweenTo(g.id, e.mesh, {
           pos,
           quat,
@@ -960,11 +1029,15 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
           delay: far ? Math.min(1.4, moveIndex++ * 0.025) : 0,
           arc: far ? 0.35 : 0,
           fn: ease.inOut,
-          onDone: far ? () => sfx.thud(0.4) : undefined,
+          onDone: () => {
+            if (far) sfx.thud(0.4);
+            slim(entry);
+          },
         });
       }
     }
     order = [...layout.placements.keys()].filter((id) => entries.has(id));
+    pileSign.visible = layout.counts.pila > 0;
     updateDecor(layout.decor);
     updatePosters(games);
     crtMat.map?.dispose();
@@ -1059,7 +1132,18 @@ export function createRoom(canvas, { hour = null, onInspect = () => {}, onReleas
   }
 
   function putBack(e) {
-    tweenTo(e.id, e.mesh, { pos: e.home.pos, quat: e.home.quat, scale: 1, dur: 0.6, arc: 0.1, fn: ease.inOut, onDone: () => sfx.thud(0.35) });
+    tweenTo(e.id, e.mesh, {
+      pos: e.home.pos,
+      quat: e.home.quat,
+      scale: 1,
+      dur: 0.6,
+      arc: 0.1,
+      fn: ease.inOut,
+      onDone: () => {
+        sfx.thud(0.35);
+        slim(e);
+      },
+    });
   }
 
   function dropInspect() {

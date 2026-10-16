@@ -19,6 +19,7 @@ export const SORTS = ['plataforma', 'nota', 'color', 'az', 'horas'];
 export const LIMITS = { title: 120, review: 2000, games: 2000 };
 
 let state = null;
+let visit = null; // { name } mientras se visita la habitación de otra persona
 const listeners = new Set();
 
 const CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g;
@@ -75,6 +76,7 @@ function cleanSettings(raw) {
     sound: s.sound !== false,
     sort: SORTS.includes(s.sort) ? s.sort : 'plataforma',
     tidy: s.tidy === true,
+    name: cleanText(s.name, 30).replace(/\s+/g, ' '),
   };
 }
 
@@ -104,7 +106,8 @@ const get = () => (state ??= read());
 
 function save(change) {
   try {
-    localStorage.setItem(KEY, JSON.stringify(state));
+    // De visita no se guarda nada: tu colección sigue intacta.
+    if (!visit) localStorage.setItem(KEY, JSON.stringify(state));
   } catch {
     // Modo privado o almacenamiento lleno: seguimos en memoria sin romper nada.
   }
@@ -125,7 +128,18 @@ export function subscribe(fn) {
 /** Solo para tests: olvida el estado en memoria y vuelve a leer. */
 export function _reload() {
   state = null;
+  visit = null;
 }
+
+/** Entra de visita en la habitación de otra persona (solo en memoria). */
+export function startVisit(games, name = '') {
+  const settings = get().settings;
+  visit = { name: cleanText(name, 30) };
+  state = normalize({ games, settings: { ...settings, tidy: false } });
+  save({ type: 'reset' });
+}
+
+export const visiting = () => visit;
 
 export const getGames = () => get().games;
 export const getGame = (id) => get().games.find((g) => g.id === id) || null;

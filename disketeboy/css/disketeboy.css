@@ -73,6 +73,28 @@ body.device-down #room:active { cursor: grabbing; }
 body.device-down .room-ui { opacity: 1; visibility: visible; transform: none; transition: opacity 0.35s 0.2s, transform 0.35s 0.2s; }
 .room-help { margin: 0; flex-basis: 100%; font-size: 13px; color: #fbf3e4; text-shadow: 0 1px 3px #000c; }
 
+.visit-banner {
+  position: fixed;
+  left: 50%;
+  top: max(10px, env(safe-area-inset-top));
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100vw - 24px);
+  padding: 6px 6px 6px 14px;
+  border-radius: 999px;
+  background: #2b2622f0;
+  color: #fbf3e4;
+  font: 600 14px/1.25 var(--font-ui);
+  box-shadow: 0 6px 20px #0009;
+  transform: translateX(-50%);
+}
+.visit-banner[hidden] { display: none; }
+.visit-banner .chip { padding: 8px 12px; box-shadow: none; white-space: nowrap; }
+body.is-visit .room-ui { top: calc(max(10px, env(safe-area-inset-top)) + 58px); }
+.screen .quote { font-style: italic; }
+
 .chip {
   border: 0;
   border-radius: 999px;

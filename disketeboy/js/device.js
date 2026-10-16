@@ -184,6 +184,7 @@ export function createDevice(root, actions) {
   }
 
   const p = (text, cls) => h('p', { class: cls || 'note', text });
+  const statRow = (k, v) => h('div', { class: 'stat' }, h('dt', { text: k }), h('dd', { text: v }));
 
   // ---------------------------------------------------------------- pantallas
   const SCREENS = {
@@ -216,6 +217,24 @@ export function createDevice(root, actions) {
     menu() {
       const games = store.getGames();
       const st = store.stats(games);
+      const visit = store.visiting();
+      if (visit) {
+        return view(
+          visit.name ? `Habitación de ${visit.name}` : 'De visita',
+          p('Estás de visita: puedes mirarlo todo, pero no tocar nada.'),
+          h(
+            'div',
+            { class: 'list' },
+            item('Su colección', () => go('lista', { filter: 'todos' }), { meta: String(st.total), id: 'm-coleccion' }),
+            item('Su pila de la vergüenza', () => go('pila'), { meta: String(st.by.pendiente), id: 'm-pila' }),
+            item('Ver su habitación', () => actions.lower(), { id: 'm-habitacion' }),
+            item('Estadísticas', () => go('stats'), { id: 'm-stats' }),
+            item('Imprimir su ticket', () => actions.printTicket(), { id: 'm-ticket' }),
+            item('Ajustes', () => go('ajustes'), { id: 'm-ajustes' }),
+            item('Crear mi propia habitación', () => actions.leaveVisit(), { cls: 'primary', id: 'm-salir' }),
+          ),
+        );
+      }
       return view(
         'Videojuegos',
         h(
@@ -229,6 +248,7 @@ export function createDevice(root, actions) {
           item('Ver mi habitación', () => actions.lower(), { id: 'm-habitacion' }),
           item('Estadísticas', () => go('stats'), { id: 'm-stats' }),
           item('Imprimir ticket', () => actions.printTicket(), { id: 'm-ticket' }),
+          games.length ? item('Compartir mi habitación', () => actions.shareVisit(), { id: 'm-compartir' }) : null,
           item('Ajustes', () => go('ajustes'), { id: 'm-ajustes' }),
           item('Expulsar disquete', ejectDisk, { id: 'm-expulsar' }),
         ),
@@ -260,6 +280,15 @@ export function createDevice(root, actions) {
     ficha({ id }) {
       const g = store.getGame(id);
       if (!g) return view('Juego borrado', p('Este juego ya no está en tu colección.'), h('div', { class: 'list' }, item('Volver', back)));
+      if (store.visiting()) {
+        return view(
+          g.title,
+          p(platform(g.platform).name, 'sub'),
+          h('dl', { class: 'stats' }, statRow('Estado', STATUS_LABEL[g.status]), statRow('Nota', g.score === null ? 'Sin nota' : `${g.score}/10`), statRow('Horas', String(g.hours))),
+          p(g.review ? `“${g.review}”` : 'Sin reseña.', 'note quote'),
+          h('div', { class: 'list' }, item('Ver en la habitación', () => actions.showInRoom(id), { id: 'f-ver' }), item('Volver', back)),
+        );
+      }
       const upd = (patch) => {
         store.updateGame(id, patch);
         sfx.save();
@@ -427,8 +456,8 @@ export function createDevice(root, actions) {
 
     stats() {
       const st = store.stats();
-      const pct = st.total ? Math.round(((st.by.terminado) / st.total) * 100) : 0;
-      const row = (k, v) => h('div', { class: 'stat' }, h('dt', { text: k }), h('dd', { text: v }));
+      const pct = st.total ? Math.round((st.by.terminado / st.total) * 100) : 0;
+      const row = statRow;
       return view(
         'Estadísticas',
         h(
@@ -451,13 +480,27 @@ export function createDevice(root, actions) {
     ajustes() {
       const s = store.getSettings();
       const file = h('input', { type: 'file', accept: 'application/json,.json', hidden: true, onchange: (e) => restore(e.target.files?.[0]) });
+      const looks = [
+        stepper('Pantalla', PALETTE_LABEL[s.palette], (dir) => store.setSettings({ palette: cycle(PALETTES, s.palette, dir) }), { id: 'a-paleta' }),
+        stepper('Sonido', s.sound ? 'Sí' : 'No', () => store.setSettings({ sound: !s.sound }), { id: 'a-sonido' }),
+      ];
+      if (store.visiting()) return view('Ajustes', h('div', { class: 'list' }, ...looks, item('Volver', back)));
+      const nameInput = h('input', {
+        id: 'a-nombre',
+        'data-nav': '',
+        maxlength: '30',
+        placeholder: 'Para tus visitas',
+        autocomplete: 'nickname',
+        value: s.name,
+        onchange: (e) => store.setSettings({ name: e.target.value }),
+      });
       return view(
         'Ajustes',
         h(
           'div',
           { class: 'list' },
-          stepper('Pantalla', PALETTE_LABEL[s.palette], (dir) => store.setSettings({ palette: cycle(PALETTES, s.palette, dir) }), { id: 'a-paleta' }),
-          stepper('Sonido', s.sound ? 'Sí' : 'No', () => store.setSettings({ sound: !s.sound }), { id: 'a-sonido' }),
+          h('label', { class: 'item field' }, h('span', { class: 'item-label', text: 'Tu nombre' }), nameInput),
+          ...looks,
           stepper('Ordenar estantería', SORT_LABEL[s.sort], (dir) => store.setSettings({ sort: cycle(SORTS, s.sort, dir) }), { id: 'a-orden' }),
           item('Guardar copia de seguridad', backup, { id: 'a-exportar' }),
           item('Cargar copia de seguridad', () => file.click(), { id: 'a-importar' }),
@@ -584,7 +627,7 @@ export function createDevice(root, actions) {
     const start = () => {
       if (booted) return;
       booted = true;
-      if (store.getGames().length) insertDisk('videojuegos');
+      if (store.getGames().length || store.visiting()) insertDisk('videojuegos');
       else {
         current = { name: 'disquetes', params: {} };
         render(0);
